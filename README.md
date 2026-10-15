@@ -24,11 +24,20 @@ pnpm test         # core + store logic (vitest)
 pnpm e2e          # Playwright on an iPhone 14 viewport
 pnpm build        # static export in apps/web/out
 pnpm icons        # regenerate icons + iOS splash screens from docs/imports/tally-ho.png
-pnpm deploy       # build the app and upload apps/web/out to Vercel (a preview URL)
+pnpm deploy       # build and ship the app to its Vercel production URL
 pnpm deploy:storybook
 ```
 
 `pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, offline after one visit, prototype-data migration, no theme flash, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
+
+## Deploy (Vercel)
+Deploys upload the locally built static files (`vercel deploy --prebuilt`); nothing is built on Vercel. One-time setup:
+```sh
+npx vercel login
+npx vercel link --cwd apps/web          # create/link the "tally-ho" project
+npx vercel link --cwd apps/storybook    # optional: a separate project for Storybook
+```
+Then `pnpm deploy`. It always goes to the **production** URL: an installed PWA is tied to the address it was installed from, so install it from that URL and every deploy reaches the phone. `sw.js` is served uncached so updates are noticed.
 
 ## Layout
 | Path | What |

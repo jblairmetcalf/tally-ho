@@ -15,8 +15,8 @@
     "format": "biome check --write .",
     "e2e": "pnpm --filter @tally/storybook build && playwright test",
     "icons": "tsx scripts/icons.ts",
-    "deploy": "pnpm --filter @tally/web build && npx --yes vercel deploy apps/web/out",
-    "deploy:storybook": "pnpm --filter @tally/storybook build && npx --yes vercel deploy apps/storybook/storybook-static"
+    "deploy": "pnpm --filter @tally/web build && node scripts/vercel-output.mjs apps/web/out apps/web && npx --yes vercel deploy --prebuilt --prod --cwd apps/web",
+    "deploy:storybook": "pnpm --filter @tally/storybook build && node scripts/vercel-output.mjs apps/storybook/storybook-static apps/storybook && npx --yes vercel deploy --prebuilt --prod --cwd apps/storybook"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",

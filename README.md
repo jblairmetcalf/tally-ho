@@ -30,14 +30,56 @@ pnpm deploy:storybook
 
 `pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, offline after one visit, prototype-data migration, no theme flash, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
 
-## Deploy (Vercel)
-Deploys upload the locally built static files (`vercel deploy --prebuilt`); nothing is built on Vercel. One-time setup:
+## Ship it
+
+### 1. Push to GitHub
+The repo is `github.com/jblairmetcalf/tally-ho`, on branch `main`.
 ```sh
-npx vercel login
-npx vercel link --cwd apps/web          # create/link the "tally-ho" project
-npx vercel link --cwd apps/storybook    # optional: a separate project for Storybook
+pnpm lint && pnpm typecheck && pnpm test   # optional: the same checks CI runs first
+git add -A
+git commit -m "What changed"
+git push
 ```
-Then `pnpm deploy`. It always goes to the **production** URL: an installed PWA is tied to the address it was installed from, so install it from that URL and every deploy reaches the phone. `sw.js` is served uncached so updates are noticed.
+Each push to `main` (and each pull request) runs **CI** (`.github/workflows/ci.yml`) in two jobs:
+1. Lint, typecheck and unit tests.
+2. The Playwright suites: the app, plus every Storybook story in both themes.
+
+Results are under the repo's **Actions** tab. A failed run uploads its Playwright traces as an artifact. To open one: `pnpm exec playwright show-trace <trace.zip>`.
+
+### 2. Deploy to Vercel
+`pnpm deploy` builds the static app on your machine and uploads it to Vercel's **production** URL with `vercel deploy --prebuilt --prod`. Vercel builds nothing, so what ships is exactly what you built.
+
+**One-time setup:**
+```sh
+npx vercel login                       # opens the browser
+npx vercel link --cwd apps/web         # Set up? Yes · your account · existing project? No · name: tally-ho
+npx vercel link --cwd apps/storybook   # optional: a separate project for Storybook
+```
+The links are saved in `apps/web/.vercel` and `apps/storybook/.vercel`. Both are gitignored, and later builds don't touch them.
+
+**Every release:**
+```sh
+pnpm deploy             # the app → https://<your-project>.vercel.app
+pnpm deploy:storybook   # optional: the design system
+```
+
+### 3. Install on iPhone
+1. Open the **production** URL in Safari. Don't use a preview URL: an installed web app is tied to the address it was installed from, and preview URLs change on every deploy.
+2. Tap **Share**, then **Add to Home Screen**.
+3. Open it once while online. That caches the whole app, so it works offline from then on.
+
+### 4. Updates
+After `pnpm deploy`, swipe Tally Ho! closed and reopen it. The app checks the network for a new version each time it opens, and `sw.js` is served uncached, so the update arrives right away. Scores live on the phone and are kept across updates.
+
+### Troubleshooting
+- **`No existing credentials found`:** run `npx vercel login`, then `pnpm deploy` again.
+- **Vercel asks to set up a project on every deploy:** run `npx vercel link --cwd apps/web` once.
+- **The phone shows an old version:** close and reopen the app. If it's still stale, delete it from the Home Screen and add it again from the production URL. Deleting it also erases its scores.
+- **No sound on iPhone:**
+  - Check that the speaker button in the Home header is lit.
+  - Turn the volume up.
+  - In Settings, turn on **Play sounds on silent**. It appears on iOS 17 and later; on older versions, turn off the Ring/Silent switch instead.
+- **`pnpm storybook` fails with `EADDRINUSE`:** something else is already on port 6116. Find it with `lsof -iTCP:6116 -sTCP:LISTEN` and stop it.
 
 ## Layout
 | Path | What |

@@ -46,7 +46,8 @@ export default defineConfig({
       timeout: 240_000,
     },
     {
-      command: `pnpm --filter @tally/storybook build && node scripts/serve.mjs apps/storybook/storybook-static ${STORYBOOK}`,
+      // Built by `pnpm e2e` first: storybook.spec.ts lists stories from its index.json.
+      command: `node scripts/serve.mjs apps/storybook/storybook-static ${STORYBOOK}`,
       url: `http://localhost:${STORYBOOK}/iframe.html`,
       reuseExistingServer: !process.env.CI,
       timeout: 240_000,

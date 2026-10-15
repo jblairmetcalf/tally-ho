@@ -1,7 +1,15 @@
 /**
  * The prototype's 8-bit sound design, verbatim: a tiny Web Audio synth with one function per cue.
- * Nothing is loaded from the network. The AudioContext is created lazily and unlocked on the
- * first pointerdown (iOS requires a gesture).
+ * Nothing is loaded from the network.
+ *
+ * iOS needs care, all handled here:
+ *   · Audio may only start inside a real gesture (touchend / click / keydown — not pointerdown).
+ *     The app calls `SFX.unlock()` on every such gesture; the first one also plays a one-sample
+ *     silent buffer, which is what actually unlocks WebKit's audio.
+ *   · A backgrounded PWA comes back with its context `interrupted` (not just `suspended`), so
+ *     anything other than `running` is resumed, and notes are scheduled only once it runs.
+ *   · The Ring/Silent switch mutes web audio unless the audio session is `playback`
+ *     (`navigator.audioSession`, Safari 17+). `setPlayInSilent` chooses.
  */
 
 type Wave = OscillatorType
@@ -14,24 +22,67 @@ interface ToneOpts {
 
 let ctx: AudioContext | null = null
 let muted = false
+let unlocked = false
+let playInSilent = true
+
+/** Safari 17+: how the page's audio mixes with the system and the Ring/Silent switch. */
+type AudioSessionType =
+  | 'auto'
+  | 'playback'
+  | 'transient'
+  | 'transient-solo'
+  | 'ambient'
+  | 'play-and-record'
+const audioSession = (): { type: AudioSessionType } | undefined =>
+  typeof navigator === 'undefined'
+    ? undefined
+    : (navigator as Navigator & { audioSession?: { type: AudioSessionType } }).audioSession
+
+function applySession() {
+  const session = audioSession()
+  if (!session) return
+  try {
+    session.type = playInSilent ? 'playback' : 'ambient'
+  } catch {
+    /* read-only in some builds */
+  }
+}
 
 function ac(): AudioContext | null {
   if (typeof window === 'undefined') return null
-  if (!ctx) {
+  if (!ctx || ctx.state === 'closed') {
     const A =
       window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!A) return null
+    applySession()
     ctx = new A()
+    unlocked = false
   }
-  if (ctx.state === 'suspended') void ctx.resume()
+  // 'suspended' before the first gesture, 'interrupted' after iOS backgrounds the app.
+  if (ctx.state !== 'running') ctx.resume().catch(() => {})
   return ctx
+}
+
+/** Run `fn` once the context is actually running (iOS resumes asynchronously). */
+function whenRunning(c: AudioContext, fn: () => void) {
+  if (c.state === 'running') fn()
+  else
+    c.resume()
+      .then(() => {
+        if (c.state === 'running') fn()
+      })
+      .catch(() => {})
 }
 
 function tone(f: number, d: number, o: ToneOpts = {}): void {
   if (muted) return
   const c = ac()
   if (!c) return
+  whenRunning(c, () => play(c, f, d, o))
+}
+
+function play(c: AudioContext, f: number, d: number, o: ToneOpts): void {
   const { type = 'square', vol = 0.12, at = 0, to = null } = o
   const t = c.currentTime + at + 0.01
   const osc = c.createOscillator()
@@ -60,8 +111,29 @@ export const SFX = {
     muted = m
   },
   isMuted: () => muted,
+  /**
+   * Play through the iPhone's Ring/Silent switch (Safari 17+). On: sounds always play, and
+   * music from other apps pauses while they do. Off: the iOS default — silent means silent.
+   */
+  setPlayInSilent(on: boolean) {
+    playInSilent = on
+    applySession()
+  },
+  /** True where the Ring/Silent behaviour can be chosen (iOS Safari 17+). */
+  canPlayInSilent: () => !!audioSession(),
+  /** Call from a real user gesture (touchend, click, keydown). Safe to call on every one. */
   unlock() {
-    ac()
+    const c = ac()
+    if (!c || unlocked) return
+    try {
+      const src = c.createBufferSource()
+      src.buffer = c.createBuffer(1, 1, 22050)
+      src.connect(c.destination)
+      src.start(0)
+      unlocked = true
+    } catch {
+      /* try again on the next gesture */
+    }
   },
   /** A key press, a nav tap. */
   tap: () => tone(1046, 0.035, { vol: 0.06 }),
@@ -104,7 +176,10 @@ export const SFX = {
   lose: () => seq([392, 370, 349, 311], 0.26, { type: 'triangle', vol: 0.12 }),
 }
 
-export type SfxCue = Exclude<keyof typeof SFX, 'setMuted' | 'isMuted' | 'unlock'>
+export type SfxCue = Exclude<
+  keyof typeof SFX,
+  'setMuted' | 'isMuted' | 'unlock' | 'setPlayInSilent' | 'canPlayInSilent'
+>
 export const SFX_CUES: SfxCue[] = [
   'tap',
   'pick',

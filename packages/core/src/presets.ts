@@ -21,7 +21,13 @@ export const DEFAULT_PLAYERS: Player[] = [
   { id: 'alder', name: 'Alder', color: 2 },
 ]
 
-export const DEFAULT_PREFS: Prefs = { theme: 'system', muted: false, haptics: true, wakeLock: true }
+export const DEFAULT_PREFS: Prefs = {
+  theme: 'system',
+  muted: false,
+  haptics: true,
+  wakeLock: true,
+  soundInSilent: true,
+}
 
 /** An empty household: no games, no samples. */
 export function emptyStore(): Store {

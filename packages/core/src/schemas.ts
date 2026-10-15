@@ -59,6 +59,8 @@ export const PrefsSchema = z.object({
   muted: z.boolean(),
   haptics: z.boolean(),
   wakeLock: z.boolean(),
+  /** iOS: play sounds even with the Ring/Silent switch on. Added after v3 shipped: defaults on. */
+  soundInSilent: z.boolean().default(true),
 })
 export type Prefs = z.infer<typeof PrefsSchema>
 

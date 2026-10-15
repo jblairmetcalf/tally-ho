@@ -90,10 +90,18 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
     Haptics.setEnabled(!silent && prefs.haptics)
   }, [prefs.haptics, silent])
   useEffect(() => {
+    if (!silent) SFX.setPlayInSilent(prefs.soundInSilent)
+  }, [prefs.soundInSilent, silent])
+  useEffect(() => {
     if (silent) return
+    // iOS only starts audio inside these gestures (not pointerdown), and a backgrounded PWA
+    // returns with its audio interrupted, so unlock on every one: it's a no-op once running.
     const u = () => SFX.unlock()
-    window.addEventListener('pointerdown', u, { once: true })
-    return () => window.removeEventListener('pointerdown', u)
+    const events = ['touchend', 'click', 'keydown'] as const
+    for (const e of events) window.addEventListener(e, u, { capture: true, passive: true })
+    return () => {
+      for (const e of events) window.removeEventListener(e, u, { capture: true })
+    }
   }, [silent])
 
   return (

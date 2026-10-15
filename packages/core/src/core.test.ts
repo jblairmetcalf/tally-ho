@@ -187,6 +187,12 @@ describe('migrate', () => {
     expect(s.presets.length).toBeGreaterThan(8)
   })
 
+  it('turns on sound-in-silent for stores saved before the pref existed', () => {
+    const saved = JSON.parse(JSON.stringify(freshStore(clock)))
+    delete saved.prefs.soundInSilent
+    expect(migrate(saved)?.prefs.soundInSilent).toBe(true)
+  })
+
   it('rejects garbage', () => {
     expect(migrate({ nope: 1 })).toBeNull()
     expect(migrate(null)).toBeNull()

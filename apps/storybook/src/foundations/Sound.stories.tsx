@@ -180,7 +180,7 @@ export const Sound: Story = {
           {[
             [
               'Unlock on first touch',
-              'iOS needs a gesture before audio plays: the app calls SFX.unlock() on the first pointerdown.',
+              'iOS only starts audio inside a gesture (touchend, click or keydown — not pointerdown), so the app calls SFX.unlock() on every one; it also revives audio iOS interrupted while the app was in the background, and (Safari 17+) can play through the Ring/Silent switch.',
             ],
             [
               'One cue per moment',

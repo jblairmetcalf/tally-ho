@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+storybook-static
+test-results
+playwright-report
+*.tsbuildinfo
+.turbo
+.DS_Store
+.vercel

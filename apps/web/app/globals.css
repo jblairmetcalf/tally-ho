@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "../../../packages/ui/src/styles/index.css";
+
+@source "../../../packages/ui/src";
+@source "../../../packages/app/src";
+
+html,
+body {
+  margin: 0;
+  background: var(--page);
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}

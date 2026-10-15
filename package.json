@@ -1,0 +1,32 @@
+{
+  "name": "tally-ho",
+  "private": true,
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@tally/web",
+    "storybook": "turbo run dev --filter=@tally/storybook",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "e2e": "playwright test",
+    "icons": "tsx scripts/icons.ts",
+    "deploy": "pnpm --filter @tally/web build && npx --yes vercel deploy apps/web/out",
+    "deploy:storybook": "pnpm --filter @tally/storybook build && npx --yes vercel deploy apps/storybook/storybook-static"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@biomejs/biome": "2.5.15",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^22.0.0",
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.7",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.3"
+  }
+}

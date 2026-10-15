@@ -1,0 +1,172 @@
+/*
+ * Tally Ho! tokens. Two themes share one semantic vocabulary.
+ *   dark  — the prototype's ink world, matched to the app icon (default)
+ *   light — "Daylight": cream card-table paper, same jewel accents
+ * Components use these variables (or the Tailwind utilities mapped below), never raw hex.
+ * Brand illustration (the fox, the icon) is the only place raw colour is allowed.
+ */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* surfaces */
+  --page: #13112e;
+  --sunk: #1b1840;
+  --surface: #24204d;
+  --surface-hi: #2f2a60;
+  --line: #3e3878;
+
+  /* text */
+  --text: #f5f2ff;
+  --muted: #a29bd0;
+  --faint: #8d86be; /* prototype #6a64a0, lifted to 4.5:1 on surface (AA) */
+  /* the prototype's dimmer faint: placeholders only (exempt from contrast, should recede) */
+  --faint-deco: #6a64a0;
+
+  /* jewel accents: fill / pressed edge / readable small text */
+  --jade: #00d4aa;
+  --jade-deep: #00977a;
+  --jade-text: #00d4aa;
+  --jade-rgb: 0 212 170;
+  --amber: #ffb800;
+  --amber-deep: #c98f00;
+  --amber-text: #ffb800;
+  --amber-rgb: 255 184 0;
+  --fox: #ff6a1f;
+  --fox-deep: #c9480a;
+  --fox-rgb: 255 106 31;
+  --coral: #ff4d6d;
+  --coral-deep: #c42848;
+  --coral-text: #ff4d6d;
+  --coral-rgb: 255 77 109;
+  --lav: #a78bfa;
+  --lav-rgb: 167 139 250;
+  --cream: #f7e9d2;
+
+  /* the icon's ink: text on jewel fills, and the brand disc in every theme */
+  --ink: #13112e;
+  --on-accent: #13112e;
+
+  /* big amber display type (champion, victory) */
+  --amber-display: #ffb800;
+  --display-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+
+  /* shade & glass */
+  --drop: rgb(0 0 0 / 0.35);
+  --drop-soft: rgb(0 0 0 / 0.25);
+  --zebra: rgb(0 0 0 / 0.14);
+  --scrim: rgb(8 6 24 / 0.66);
+  --nav-glass: rgb(36 32 77 / 0.94);
+  --nav-fade: rgb(19 17 46 / 0.92);
+  --veil: rgb(13 11 34 / 0.9);
+  --pattern-alpha: 0.07;
+  --glow-jade: 0.16;
+  --glow-lav: 0.1;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --page: #fff4e2;
+  --sunk: #f6e6cb;
+  --surface: #ffffff;
+  --surface-hi: #fff9ef;
+  --line: #e6d3b3;
+
+  --text: #13112e;
+  --muted: #5b5486;
+  --faint: #696292;
+  --faint-deco: #a39cbf;
+
+  --jade: #00d4aa;
+  --jade-deep: #00977a;
+  --jade-text: #007660;
+  --amber: #ffb800;
+  --amber-deep: #c98f00;
+  --amber-text: #8a5a00;
+  --fox: #ff6a1f;
+  --fox-deep: #c9480a;
+  --coral: #ff4d6d;
+  --coral-deep: #c42848;
+  --coral-text: #c42848;
+  --lav: #a78bfa;
+  --cream: #f7e9d2;
+
+  --amber-display: #ffb800;
+  --display-shadow: 0 3px 0 #13112e;
+
+  --drop: rgb(19 17 46 / 0.2);
+  --drop-soft: rgb(19 17 46 / 0.12);
+  --zebra: rgb(19 17 46 / 0.04);
+  --scrim: rgb(19 17 46 / 0.45);
+  --nav-glass: rgb(255 255 255 / 0.94);
+  --nav-fade: rgb(255 244 226 / 0.92);
+  --veil: rgb(255 244 226 / 0.92);
+  --pattern-alpha: 0.12;
+  --glow-jade: 0.14;
+  --glow-lav: 0.12;
+}
+
+:root {
+  /* type */
+  --f-display: var(--font-lilita, "Lilita One"), "Arial Rounded MT Bold", "Trebuchet MS", system-ui,
+    sans-serif;
+  --f-body: var(--font-nunito, "Nunito"), ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
+    sans-serif;
+
+  /* shape */
+  --r: 16px;
+  --r-sm: 12px;
+  --r-btn: 14px;
+  --r-nav: 22px;
+  --r-sheet: 26px;
+
+  /* motion */
+  --spring: cubic-bezier(0.25, 1.45, 0.45, 1);
+  --nav-h: 76px;
+
+  /* player chips: the prototype's eight */
+  --p0: #00d4aa;
+  --p1: #ffb800;
+  --p2: #ff7a3d;
+  --p3: #a78bfa;
+  --p4: #ff4d6d;
+  --p5: #5cc8ff;
+  --p6: #f7e9d2;
+  --p7: #8be07a;
+}
+
+/* Tailwind utilities over the same tokens: bg-surface, text-muted, border-line, font-display … */
+@theme inline {
+  --color-page: var(--page);
+  --color-sunk: var(--sunk);
+  --color-surface: var(--surface);
+  --color-surface-hi: var(--surface-hi);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-jade: var(--jade);
+  --color-jade-deep: var(--jade-deep);
+  --color-jade-text: var(--jade-text);
+  --color-amber: var(--amber);
+  --color-amber-deep: var(--amber-deep);
+  --color-amber-text: var(--amber-text);
+  --color-fox: var(--fox);
+  --color-coral: var(--coral);
+  --color-coral-text: var(--coral-text);
+  --color-lav: var(--lav);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-on-accent: var(--on-accent);
+
+  --font-display: var(--f-display);
+  --font-body: var(--f-body);
+
+  --radius-card: var(--r);
+  --radius-sm: var(--r-sm);
+  --radius-btn: var(--r-btn);
+
+  --ease-spring: var(--spring);
+}

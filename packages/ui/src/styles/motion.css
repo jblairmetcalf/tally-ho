@@ -1,0 +1,51 @@
+/*
+ * Every keyframe from the prototype, verbatim, plus `dangerGlow` for low-score-wins games.
+ * The reduced-motion block at the bottom is the single kill switch: do not bypass it.
+ */
+
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes badgeIn{from{transform:scale(0) rotate(-120deg)}to{transform:none}}
+@keyframes letterDrop{from{opacity:0;transform:translateY(-40px) rotate(-20deg)}}
+@keyframes crownDrop{0%{opacity:0;transform:translateY(-26px) rotate(-30deg)}55%{opacity:1;transform:translateY(3px) rotate(10deg)}75%{transform:translateY(-3px) rotate(-4deg)}100%{transform:none}}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.08) rotate(-1.5deg)}65%{transform:scale(.97) rotate(1deg)}100%{transform:none}}
+@keyframes deltaUp{0%{opacity:0;transform:translate(-50%,10px) scale(.4)}20%{opacity:1;transform:translate(-50%,-14px) scale(1.25)}70%{opacity:1;transform:translate(-50%,-30px) scale(1)}100%{opacity:0;transform:translate(-50%,-48px) scale(.9)}}
+@keyframes ribbon{0%{transform:translateX(-120vw) rotate(-4deg) skewX(-12deg)}22%{transform:translateX(0) rotate(-4deg) skewX(4deg)}32%{transform:translateX(0) rotate(-4deg)}74%{transform:translateX(0) rotate(-4deg)}100%{transform:translateX(120vw) rotate(-4deg) skewX(-12deg)}}
+@keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes sheetOut{from{transform:translateY(var(--from,0px))}to{transform:translateY(105%)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,30px) scale(.8)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(0,212,170,.6)}100%{box-shadow:0 0 0 10px rgba(0,212,170,0)}}
+@keyframes matchGlow{0%,100%{box-shadow:0 0 0 3px rgba(255,106,31,.25)}50%{box-shadow:0 0 0 7px rgba(255,106,31,.05),0 0 28px rgba(255,106,31,.35)}}
+@keyframes dangerGlow{0%,100%{box-shadow:0 0 0 3px rgba(255,77,109,.25)}50%{box-shadow:0 0 0 7px rgba(255,77,109,.05),0 0 28px rgba(255,77,109,.35)}}
+@keyframes grow{from{transform:scaleX(0)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes rowIn{0%{transform:translateY(-14px);background:rgba(0,212,170,.3)}100%{transform:none}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes stamp{0%{opacity:0;transform:scale(2.6) rotate(-14deg)}60%{opacity:1;transform:scale(.9) rotate(-3deg)}100%{transform:scale(1) rotate(-3deg)}}
+@keyframes wobble{0%,100%{transform:none}20%{transform:rotate(-2.5deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg) translateY(2px)}80%{transform:rotate(1deg)}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+@keyframes flicker{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) scale(1.04)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes wink{0%,100%{transform:scaleY(1)}40%,60%{transform:scaleY(.08)}}
+@keyframes earTwitch{0%,100%{transform:none}40%{transform:rotate(-10deg)}70%{transform:rotate(6deg)}}
+
+/** The names, for the Motion foundations story. */
+/* rise pop badgeIn letterDrop crownDrop bump deltaUp ribbon sheetIn sheetOut fadeIn fadeOut toastIn
+   livePulse matchGlow dangerGlow grow draw rowIn bob spin stamp wobble shake flicker blink wink earTwitch */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .chart .ln {
+    stroke-dashoffset: 0;
+  }
+}

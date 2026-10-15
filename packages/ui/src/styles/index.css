@@ -1,0 +1,7 @@
+/*
+ * @tally/ui styles. Import AFTER `@import "tailwindcss"` in an app's global CSS, and add
+ * `@source` for packages/ui/src and packages/app/src so Tailwind sees their class names.
+ */
+@import "./tokens.css";
+@import "./motion.css";
+@import "./components.css";

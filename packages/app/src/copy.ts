@@ -181,9 +181,6 @@ export const COPY = {
     themes: { system: 'System', dark: 'Dark', light: 'Light' },
     sound: 'Sound',
     soundHint: 'Chimes, fanfares and the sad trombone.',
-    soundInSilent: 'Play sounds on silent',
-    soundInSilentHint:
-      "Ignores the iPhone's Ring/Silent switch. Music from other apps pauses while sounds play.",
     haptics: 'Haptics',
     hapticsHint: 'A little buzz when you score.',
     wakeLock: 'Keep screen awake during games',

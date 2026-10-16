@@ -187,10 +187,10 @@ describe('migrate', () => {
     expect(s.presets.length).toBeGreaterThan(8)
   })
 
-  it('turns on sound-in-silent for stores saved before the pref existed', () => {
+  it('drops prefs it no longer knows (the short-lived soundInSilent)', () => {
     const saved = JSON.parse(JSON.stringify(freshStore(clock)))
-    delete saved.prefs.soundInSilent
-    expect(migrate(saved)?.prefs.soundInSilent).toBe(true)
+    saved.prefs.soundInSilent = true
+    expect(migrate(saved)?.prefs).not.toHaveProperty('soundInSilent')
   })
 
   it('rejects garbage', () => {

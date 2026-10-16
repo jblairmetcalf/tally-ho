@@ -26,7 +26,6 @@ export const DEFAULT_PREFS: Prefs = {
   muted: false,
   haptics: true,
   wakeLock: true,
-  soundInSilent: true,
 }
 
 /** An empty household: no games, no samples. */

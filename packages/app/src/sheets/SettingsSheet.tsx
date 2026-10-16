@@ -362,19 +362,6 @@ export function SettingsSheet() {
           <Setting title={C.sound} hint={C.soundHint}>
             <Switch checked={!prefs.muted} label={C.sound} onChange={() => a.toggleMute()} />
           </Setting>
-          {SFX.canPlayInSilent() && (
-            <Setting title={C.soundInSilent} hint={C.soundInSilentHint}>
-              <Switch
-                checked={prefs.soundInSilent}
-                label={C.soundInSilent}
-                onChange={(v) => {
-                  a.setPref('soundInSilent', v)
-                  SFX.setPlayInSilent(v)
-                  a.play('tap')
-                }}
-              />
-            </Setting>
-          )}
           <Setting title={C.haptics} hint={C.hapticsHint}>
             <Switch
               checked={prefs.haptics}

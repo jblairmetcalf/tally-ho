@@ -78,7 +78,7 @@ After `pnpm deploy`, swipe Tally Ho! closed and reopen it. The app checks the ne
 - **No sound on iPhone:**
   - Check that the speaker button in the Home header is lit.
   - Turn the volume up.
-  - In Settings, turn on **Play sounds on silent**. It appears on iOS 17 and later; on older versions, turn off the Ring/Silent switch instead.
+  - Turn off the Ring/Silent switch. Tally Ho!'s sounds mix with your music instead of stopping it, and iOS mutes every mixing app on silent (native games too).
 - **`pnpm storybook` fails with `EADDRINUSE`:** something else is already on port 6116. Find it with `lsof -iTCP:6116 -sTCP:LISTEN` and stop it.
 
 ## Layout

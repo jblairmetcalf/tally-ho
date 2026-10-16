@@ -8,3 +8,4 @@ playwright-report
 .turbo
 .DS_Store
 .vercel
+.env*

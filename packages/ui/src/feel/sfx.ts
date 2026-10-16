@@ -2,14 +2,16 @@
  * The prototype's 8-bit sound design, verbatim: a tiny Web Audio synth with one function per cue.
  * Nothing is loaded from the network.
  *
- * iOS needs care, all handled here:
- *   · Audio may only start inside a real gesture (touchend / click / keydown — not pointerdown).
- *     The app calls `SFX.unlock()` on every such gesture; the first one also plays a one-sample
- *     silent buffer, which is what actually unlocks WebKit's audio.
- *   · A backgrounded PWA comes back with its context `interrupted` (not just `suspended`), so
- *     anything other than `running` is resumed, and notes are scheduled only once it runs.
- *   · The Ring/Silent switch mutes web audio unless the audio session is `playback`
- *     (`navigator.audioSession`, Safari 17+). `setPlayInSilent` chooses.
+ * Making it "just work" on iOS:
+ *   · The audio session is `ambient` (Safari 17+ `navigator.audioSession`): sound effects mix
+ *     with music already playing instead of stopping it — what native games do. The trade-off
+ *     iOS imposes on every mixing app: the Ring/Silent switch mutes them.
+ *   · Audio can only start inside a real gesture (touchend / click / keydown — not pointerdown).
+ *     The app calls `SFX.unlock()` on every one; it is a no-op while audio is running.
+ *   · Resuming an AudioContext after iOS backgrounds the app is unreliable, so on the way out
+ *     (`SFX.sleep()`, on page hide) the context is closed, and the next gesture builds a fresh
+ *     one — synchronously, inside the gesture, where iOS allows it.
+ *   · Muted means no context at all, so a muted Tally Ho! never touches the audio session.
  */
 
 type Wave = OscillatorType
@@ -22,10 +24,7 @@ interface ToneOpts {
 
 let ctx: AudioContext | null = null
 let muted = false
-let unlocked = false
-let playInSilent = true
 
-/** Safari 17+: how the page's audio mixes with the system and the Ring/Silent switch. */
 type AudioSessionType =
   | 'auto'
   | 'playback'
@@ -33,56 +32,59 @@ type AudioSessionType =
   | 'transient-solo'
   | 'ambient'
   | 'play-and-record'
-const audioSession = (): { type: AudioSessionType } | undefined =>
-  typeof navigator === 'undefined'
-    ? undefined
-    : (navigator as Navigator & { audioSession?: { type: AudioSessionType } }).audioSession
 
-function applySession() {
-  const session = audioSession()
-  if (!session) return
+/** Mix with other apps' audio (and never interrupt their music). Must be set before audio starts. */
+function mixWithOthers() {
+  if (typeof navigator === 'undefined') return
+  const session = (navigator as Navigator & { audioSession?: { type: AudioSessionType } })
+    .audioSession
+  if (!session || session.type === 'ambient') return
   try {
-    session.type = playInSilent ? 'playback' : 'ambient'
+    session.type = 'ambient'
   } catch {
-    /* read-only in some builds */
+    /* read-only in some builds: iOS's default for web audio mixes too */
+  }
+}
+mixWithOthers()
+
+const AudioCtor = (): typeof AudioContext | undefined =>
+  typeof window === 'undefined'
+    ? undefined
+    : (window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+
+/** A fresh context, primed with a one-sample silent buffer (what actually unlocks WebKit). */
+function create(): AudioContext | null {
+  const A = AudioCtor()
+  if (!A) return null
+  mixWithOthers()
+  try {
+    const c = new A()
+    const src = c.createBufferSource()
+    src.buffer = c.createBuffer(1, 1, 22050)
+    src.connect(c.destination)
+    src.start(0)
+    if (c.state !== 'running') c.resume().catch(() => {})
+    return c
+  } catch {
+    return null
   }
 }
 
-function ac(): AudioContext | null {
-  if (typeof window === 'undefined') return null
-  if (!ctx || ctx.state === 'closed') {
-    const A =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!A) return null
-    applySession()
-    ctx = new A()
-    unlocked = false
-  }
-  // 'suspended' before the first gesture, 'interrupted' after iOS backgrounds the app.
-  if (ctx.state !== 'running') ctx.resume().catch(() => {})
-  return ctx
-}
-
-/** Run `fn` once the context is actually running (iOS resumes asynchronously). */
-function whenRunning(c: AudioContext, fn: () => void) {
-  if (c.state === 'running') fn()
-  else
-    c.resume()
-      .then(() => {
-        if (c.state === 'running') fn()
-      })
-      .catch(() => {})
+function close() {
+  const c = ctx
+  ctx = null
+  c?.close().catch(() => {})
 }
 
 function tone(f: number, d: number, o: ToneOpts = {}): void {
   if (muted) return
-  const c = ac()
+  // Normally unlock() (from the same gesture) already made a running context. Cues fired by
+  // timers (lead change, fanfare) reuse it; if there is none yet, try — it may stay silent.
+  if (!ctx || ctx.state === 'closed') ctx = create()
+  const c = ctx
   if (!c) return
-  whenRunning(c, () => play(c, f, d, o))
-}
-
-function play(c: AudioContext, f: number, d: number, o: ToneOpts): void {
+  if (c.state !== 'running') c.resume().catch(() => {})
   const { type = 'square', vol = 0.12, at = 0, to = null } = o
   const t = c.currentTime + at + 0.01
   const osc = c.createOscillator()
@@ -107,33 +109,32 @@ function seq(notes: number[], step: number, o: ToneOpts = {}): void {
 }
 
 export const SFX = {
+  /** The sound toggle. Muting releases the audio entirely; unmuting waits for the next tap. */
   setMuted(m: boolean) {
     muted = m
+    if (m) close()
   },
   isMuted: () => muted,
   /**
-   * Play through the iPhone's Ring/Silent switch (Safari 17+). On: sounds always play, and
-   * music from other apps pauses while they do. Off: the iOS default — silent means silent.
+   * Call from every real user gesture (touchend, click, keydown). Builds a running context if
+   * there isn't one — the only moment iOS reliably allows it. A no-op while audio runs.
    */
-  setPlayInSilent(on: boolean) {
-    playInSilent = on
-    applySession()
-  },
-  /** True where the Ring/Silent behaviour can be chosen (iOS Safari 17+). */
-  canPlayInSilent: () => !!audioSession(),
-  /** Call from a real user gesture (touchend, click, keydown). Safe to call on every one. */
   unlock() {
-    const c = ac()
-    if (!c || unlocked) return
-    try {
-      const src = c.createBufferSource()
-      src.buffer = c.createBuffer(1, 1, 22050)
-      src.connect(c.destination)
-      src.start(0)
-      unlocked = true
-    } catch {
-      /* try again on the next gesture */
+    if (muted) return
+    // Safari's extra state (a call, Siri, another app's audio) isn't in the DOM typings.
+    const state = ctx?.state as AudioContextState | 'interrupted' | undefined
+    if (state === 'running') return
+    if (ctx && state === 'suspended') {
+      // Created moments ago (touchend → click of one tap) or paused: resuming in a gesture works.
+      ctx.resume().catch(() => {})
+      return
     }
+    close()
+    ctx = create()
+  },
+  /** Call when the app is hidden: release the audio so the next gesture starts clean. */
+  sleep() {
+    close()
   },
   /** A key press, a nav tap. */
   tap: () => tone(1046, 0.035, { vol: 0.06 }),
@@ -176,10 +177,7 @@ export const SFX = {
   lose: () => seq([392, 370, 349, 311], 0.26, { type: 'triangle', vol: 0.12 }),
 }
 
-export type SfxCue = Exclude<
-  keyof typeof SFX,
-  'setMuted' | 'isMuted' | 'unlock' | 'setPlayInSilent' | 'canPlayInSilent'
->
+export type SfxCue = Exclude<keyof typeof SFX, 'setMuted' | 'isMuted' | 'unlock' | 'sleep'>
 export const SFX_CUES: SfxCue[] = [
   'tap',
   'pick',

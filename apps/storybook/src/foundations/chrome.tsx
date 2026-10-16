@@ -18,7 +18,7 @@ export interface PageProps {
 /** A foundations page: a playful header and a column of sections, in one theme. */
 export function Page({ theme, eyebrow = 'Foundations', title, lede, children }: PageProps) {
   return (
-    <ThemeRoot theme={theme} className="min-h-dvh">
+    <ThemeRoot theme={theme} className="selectable min-h-dvh">
       <div className="mx-auto flex max-w-[1120px] flex-col gap-14 px-6 pt-12 pb-24">
         <header className="flex flex-col gap-3">
           <Eyebrow className="text-jade-text">

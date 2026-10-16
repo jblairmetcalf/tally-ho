@@ -18,6 +18,30 @@
     -webkit-tap-highlight-color: transparent;
     position: relative;
     isolation: isolate;
+    /* Feel like a native app: no text selection, no long-press callout, no drag ghosts,
+       no double-tap-zoom delay. Text fields opt back in below; docs use .selectable. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    cursor: default;
+  }
+  :where(.tally) :where(img, svg, a) {
+    -webkit-user-drag: none;
+  }
+  :where(.tally) :where(input, textarea, [contenteditable="true"]),
+  .tally.selectable,
+  .tally .selectable,
+  .tally .selectable * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+  :where(.tally) :where(input, textarea) {
+    cursor: text;
+  }
+  :where(.tally) :where(button, [role="button"], [role="radio"], [role="switch"], a) {
+    cursor: pointer;
   }
   /* the suit wallpaper, tinted per theme */
   .tally::before {
@@ -37,6 +61,11 @@
   :where(.tally) *::before,
   :where(.tally) *::after {
     box-sizing: border-box;
+  }
+  /* touch-action doesn't inherit: every element pans and pinches but never waits for a
+     double-tap zoom. Elements that need more (the sheet's grab handle) set their own. */
+  :where(.tally) * {
+    touch-action: manipulation;
   }
   :where(.tally) :where(button, input) {
     font: inherit;

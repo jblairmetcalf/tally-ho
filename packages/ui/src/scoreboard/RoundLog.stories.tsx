@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useState } from 'react'
 import { Button } from '../primitives/Button'
-import { players, rounds, SAMPLES } from './fixtures'
+import { nameOf, players, rounds, SAMPLES } from './fixtures'
 import { RoundLog } from './RoundLog'
 
 const three = players(3)
@@ -79,6 +79,25 @@ export const SixPlayers: Story = {
     ),
   },
 }
+
+/**
+ * Family sync: each round remembers who scored it. `nameOf` turns on a tiny initial chip in
+ * their colour after the round number (grey for someone not in this game). Rounds from before
+ * sync have no `by` and show nothing.
+ */
+export const ScoredBy: Story = {
+  args: {
+    nameOf,
+    rounds: rounds(ids, [
+      [23, 41, 12],
+      [0, 18, 33],
+      [37, 37, 9],
+      [15, 0, 44],
+    ]).map((r, i) => ({ ...r, by: [undefined, ids[0], ids[1], 'rowan'][i] })),
+  },
+}
+/** The same, read-only (a finished game's Detail sheet). */
+export const ScoredByReadOnly: Story = { args: { ...ScoredBy.args, editable: false } }
 
 /** Add a round: the newest row slides in with a jade flash (`freshKey`). */
 export const FreshRow: Story = {

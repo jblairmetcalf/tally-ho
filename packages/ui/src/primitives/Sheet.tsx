@@ -2,8 +2,10 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import {
   type CSSProperties,
+  createContext,
   type PointerEvent,
   type ReactNode,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -15,6 +17,9 @@ import { IconButton } from './IconButton'
 const CLOSE_MS = 290
 /** Drag the grab handle further than this to dismiss. */
 const DISMISS_PX = 100
+
+/** How many sheets deep we are: a Sheet rendered inside another's content is nested. */
+const SheetDepth = createContext(0)
 
 export interface SheetProps {
   open: boolean
@@ -30,6 +35,11 @@ export interface SheetProps {
  * slide in/out are the prototype's `sheetIn` / `.closing` keyframes, and the grab handle drags
  * exactly like the prototype: the sheet follows the finger, past 100px it leaves from where it
  * was let go, otherwise it springs back. Portals into the nearest ThemeRoot so tokens apply.
+ *
+ * Sheets nest: render a Sheet inside another's children and it portals after it into the same
+ * ThemeRoot, so it stacks on top with its own backdrop. Radix keeps the layers straight: Escape,
+ * outside taps and the focus trap belong to the top sheet; closing it hands focus back to what
+ * opened it. The sheet beneath sits under the top one's backdrop, so only the top one drags.
  */
 export function Sheet({ open, onClose, label, children }: SheetProps) {
   const [shown, setShown] = useState(open)
@@ -41,6 +51,13 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
   const drag = useRef<number | null>(null)
   const dyRef = useRef(0)
   const [anchor, setAnchor] = useState<HTMLSpanElement | null>(null)
+  const depth = useContext(SheetDepth)
+  const wrap = useRef<HTMLDivElement>(null)
+  // What opened the sheet, so closing hands focus back (Radix only knows a Dialog.Trigger).
+  const opener = useRef<{ el: HTMLElement | null; dialog: HTMLElement | null }>({
+    el: null,
+    dialog: null,
+  })
 
   if (open !== prevOpen) {
     setPrevOpen(open)
@@ -53,6 +70,22 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
     }
   }
   const closing = shown && !open
+
+  // Radix tracks its layers a render late, so for a beat after a nested sheet opens, Escape
+  // would close the sheet beneath. The DOM knows at once: the last sheet in the root is on top.
+  useEffect(() => {
+    if (!open) return
+    const key = (e: KeyboardEvent) => {
+      const el = wrap.current
+      if (e.key !== 'Escape' || !el) return
+      const sheets = el.parentElement?.querySelectorAll(':scope > .sheet-wrap')
+      if (!sheets || sheets[sheets.length - 1] !== el) return
+      e.preventDefault()
+      onClose()
+    }
+    document.addEventListener('keydown', key)
+    return () => document.removeEventListener('keydown', key)
+  }, [open, onClose])
 
   useEffect(() => {
     if (!closing) return
@@ -107,9 +140,34 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
           }}
         >
           <Dialog.Portal container={container}>
-            <div className={cx('sheet-wrap', closing && 'closing')}>
+            <div
+              ref={wrap}
+              className={cx('sheet-wrap', depth > 0 && 'nested', closing && 'closing')}
+            >
               <Dialog.Overlay className="backdrop" />
-              <Dialog.Content className="sheet" style={style} aria-describedby={undefined}>
+              <Dialog.Content
+                className="sheet"
+                style={style}
+                aria-describedby={undefined}
+                // Escape is ours (below), not Radix's: see `isTop`.
+                onEscapeKeyDown={(e) => e.preventDefault()}
+                onOpenAutoFocus={() => {
+                  const el = document.activeElement
+                  opener.current =
+                    el instanceof HTMLElement && el !== document.body
+                      ? { el, dialog: el.closest<HTMLElement>('[role="dialog"]') }
+                      : { el: null, dialog: null }
+                }}
+                onCloseAutoFocus={(e) => {
+                  // Back to the opener; if it's gone (an archived player's row), to the sheet
+                  // beneath, so focus never falls out of a still-open sheet.
+                  const { el, dialog } = opener.current
+                  const to = el?.isConnected ? el : dialog?.isConnected ? dialog : null
+                  if (!to) return
+                  e.preventDefault()
+                  to.focus({ preventScroll: true })
+                }}
+              >
                 <VisuallyHidden asChild>
                   <Dialog.Title>{label}</Dialog.Title>
                 </VisuallyHidden>
@@ -123,7 +181,9 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
                 >
                   <span />
                 </div>
-                <div className="sheet-body">{children}</div>
+                <div className="sheet-body">
+                  <SheetDepth.Provider value={depth + 1}>{children}</SheetDepth.Provider>
+                </div>
               </Dialog.Content>
             </div>
           </Dialog.Portal>

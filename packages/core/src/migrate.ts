@@ -99,11 +99,20 @@ function fromV2(v2: z.infer<typeof V2Store>): Store {
  */
 export function migrate(raw: unknown): Store | null {
   const v3 = StoreSchema.safeParse(raw)
-  if (v3.success) return v3.data
+  if (v3.success) return withRoundIds(v3.data)
   const v2 = V2Store.safeParse(raw)
   if (v2.success) {
     const out = StoreSchema.safeParse(fromV2(v2.data))
-    return out.success ? out.data : null
+    return out.success ? withRoundIds(out.data) : null
   }
   return null
+}
+
+/** Give every round a stable id (`<gameId>-r<n>`) if it lacks one. Idempotent. */
+export function withRoundIds(s: Store): Store {
+  const fix = (g: Game): Game =>
+    g.rounds.every((r) => r.id)
+      ? g
+      : { ...g, rounds: g.rounds.map((r, i) => (r.id ? r : { ...r, id: `${g.id}-r${i + 1}` })) }
+  return { ...s, games: s.games.map(fix), active: s.active ? fix(s.active) : null }
 }

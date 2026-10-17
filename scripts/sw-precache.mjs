@@ -19,7 +19,19 @@ async function walk(dir) {
 
 const urlOf = (file) => `/${relative(out, file).split(sep).join('/')}`
 
-const statics = (await walk(join(out, '_next', 'static'))).map(urlOf)
+const files = await walk(join(out, '_next', 'static'))
+
+/**
+ * The Firebase SDK chunks are only for signed-in family members, who load them on their first
+ * (online) sign-in; from then on the worker's cache-first rule keeps them for offline. Leaving
+ * them out of the install-time precache keeps them off every portfolio visitor's phone.
+ */
+const FIREBASE = /firestore\.googleapis\.com|identitytoolkit\.googleapis\.com/
+const familyOnly = new Set()
+for (const f of files)
+  if (f.endsWith('.js') && FIREBASE.test(await readFile(f, 'utf8'))) familyOnly.add(f)
+
+const statics = files.filter((f) => !familyOnly.has(f)).map(urlOf)
 const extras = [
   '/manifest.webmanifest',
   '/icon-192.png',
@@ -31,7 +43,8 @@ const precache = ['/', ...extras, ...statics].sort()
 
 const hash = createHash('sha256')
 hash.update(await readFile(join(out, 'index.html')))
-for (const p of statics) hash.update(p)
+// Every chunk (Firebase ones too) versions the caches, so an SDK update clears the old copy.
+for (const f of files) hash.update(urlOf(f))
 const version = hash.digest('hex').slice(0, 10)
 
 const swPath = join(out, 'sw.js')
@@ -41,4 +54,7 @@ const next = sw
   .replace(/const PRECACHE = \[\]/, `const PRECACHE = ${JSON.stringify(precache)}`)
 if (next === sw) throw new Error('sw-precache: placeholders not found in out/sw.js')
 await writeFile(swPath, next)
-console.log(`sw-precache: ${precache.length} files, version ${version}`)
+console.log(
+  `sw-precache: ${precache.length} files, version ${version}` +
+    (familyOnly.size ? ` (${familyOnly.size} Firebase chunks cached on first sign-in)` : ''),
+)

@@ -13,17 +13,31 @@ export function rng(seed: number): () => number {
 
 const DAY = 864e5
 const PLAN: [string, Game['goal'], number][] = [
-  ['Flip 7', 'score', 200],
-  ['Sushi Go', 'rounds', 3],
-  ['Flip 7', 'score', 200],
-  ['Skull King', 'rounds', 10],
-  ['Flip 7', 'score', 200],
-  ['Sushi Go', 'rounds', 3],
-  ['Flip 7', 'score', 200],
-  ['Flip 7', 'score', 200],
-  ['Sushi Go', 'rounds', 3],
-  ['Flip 7', 'score', 200],
+  ['The Fox in the Forest', 'score', 21],
+  ['Scout', 'rounds', 3],
+  ['Mille Bornes', 'score', 5000],
+  ['The Fox in the Forest', 'score', 21],
+  ['Scout', 'rounds', 3],
+  ['Uno', 'score', 500],
+  ['The Fox in the Forest', 'score', 21],
+  ['Mille Bornes', 'score', 5000],
+  ['Scout', 'rounds', 3],
+  ['The Fox in the Forest', 'score', 21],
 ]
+
+/** One round's score for a player of the given skill, shaped like the real game. */
+function roundScore(name: string, r: () => number, k: number): number {
+  switch (name) {
+    case 'The Fox in the Forest':
+      return Math.round(r() * 6 * k) // 0–6 a hand
+    case 'Scout':
+      return Math.round((r() * 14 - 2) * k) // a bad hand goes negative
+    case 'Mille Bornes':
+      return Math.round((2 + r() * 12) * k) * 100 // hundreds of kilometres
+    default:
+      return r() < 0.3 ? Math.round((40 + r() * 120) * k) : 0 // Uno: the hand's winner scores
+  }
+}
 
 /** Ten finished games between Kate, Blair and Alder, newest first. */
 export function makeSamples(clock: Clock, playerIds = ['kate', 'blair', 'alder']): Game[] {
@@ -51,17 +65,9 @@ export function makeSamples(clock: Clock, playerIds = ['kate', 'blair', 'alder']
     while (!res.done && guard++ < 40) {
       const sc: Record<string, number> = {}
       for (const p of playerIds) {
-        const k = skill[p] ?? 1
-        sc[p] =
-          name === 'Flip 7'
-            ? r() < 0.18
-              ? 0
-              : Math.round((8 + r() * 45) * k)
-            : name === 'Sushi Go'
-              ? Math.round((14 + r() * 30) * k)
-              : Math.round((r() * 10 - 3) * k) * 10 || 0
+        sc[p] = roundScore(name, r, skill[p] ?? 1) || 0
       }
-      g.rounds.push({ scores: sc })
+      g.rounds.push({ id: `${g.id}-r${g.rounds.length + 1}`, scores: sc })
       res = evaluate(g)
     }
     g.winnerId = res.done ? res.winner : (ranked(g)[0] ?? null)

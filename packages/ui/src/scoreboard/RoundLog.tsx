@@ -1,5 +1,5 @@
 import type { Round } from '@tally/core'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, useId } from 'react'
 import { Icon } from '../brand/Icon'
 import { paletteVar } from '../brand/palette'
 import { cx } from '../cx'
@@ -14,6 +14,11 @@ export interface RoundLogProps {
   /** Set/change it after scoring a round: the newest row slides in (`rowIn`). */
   freshKey?: string | number | null
   onEdit?: (idx: number) => void
+  /**
+   * Family sync: who scored each round. Given, rows whose round carries `by` show a tiny
+   * initial chip after the round number ("scored by Kate" to screen readers).
+   */
+  nameOf?: (id: string) => string
   className?: string
   style?: CSSProperties
 }
@@ -26,9 +31,11 @@ export function RoundLog({
   editable,
   freshKey = null,
   onEdit,
+  nameOf,
   className,
   style,
 }: RoundLogProps) {
+  const uid = useId()
   const order = rounds.map((r, i) => ({ r, i })).reverse()
   return (
     <section
@@ -50,9 +57,28 @@ export function RoundLog({
         const isTop = (v: number | null | undefined) =>
           v != null && best != null && v === best && (lowWins || best > 0)
         const fresh = k === 0 && freshKey != null
+        const by =
+          nameOf && r.by ? { name: nameOf(r.by), p: players.find((p) => p.id === r.by) } : null
+        const byId = by ? `${uid}-by-${i}` : undefined
         const cells = (
           <>
-            <span className="rn">{i + 1}</span>
+            <span className="rn">
+              {i + 1}
+              {by && (
+                <>
+                  <b
+                    className={cx('by', !by.p && 'by-guest')}
+                    style={by.p ? ({ '--c': paletteVar(by.p.color) } as CSSProperties) : undefined}
+                    aria-hidden="true"
+                  >
+                    {initial(by.name)}
+                  </b>
+                  <span id={byId} className="sr-only">
+                    {scoredBy(by.name)}
+                  </span>
+                </>
+              )}
+            </span>
             {players.map((p) => {
               const v = r.scores[p.id]
               return (
@@ -75,6 +101,7 @@ export function RoundLog({
             type="button"
             className={cx('log-row', fresh && 'fresh')}
             aria-label={`Edit round ${i + 1}`}
+            aria-describedby={byId}
             onClick={() => onEdit?.(i)}
           >
             {cells}
@@ -88,3 +115,6 @@ export function RoundLog({
     </section>
   )
 }
+
+const initial = (name: string) => (Array.from(name.trim())[0] ?? '?').toUpperCase()
+const scoredBy = (name: string) => `scored by ${name}`

@@ -24,10 +24,16 @@ import { EndGameSheet } from './sheets/EndGameSheet'
 import { GameDetailSheet } from './sheets/GameDetailSheet'
 import { NewGameSheet } from './sheets/NewGameSheet'
 import { SettingsSheet } from './sheets/SettingsSheet'
+import { SignInSheet } from './sheets/SignInSheet'
 import { createTallyStore, type SheetSpec, type TallyStore, type UiState } from './store'
+import type { CloudProvider } from './sync/cloudProvider'
+import { demoSession, type SessionApi, SessionContext, useSessionController } from './sync/session'
 
 export interface TallyAppProps {
-  /** Where data lives. Default: this phone's localStorage. */
+  /**
+   * Where data lives. Given: a static demo-like session over it (stories, tests). Default: the
+   * session controller (this phone's localStorage, or the family's Firestore when signed in).
+   */
   provider?: DataProvider
   clock?: Clock
   /** Starting UI state (stories: an open sheet, the victory overlay…). */
@@ -41,17 +47,61 @@ export interface TallyAppProps {
   silent?: boolean
   /** Use this store instead of creating one (tests). */
   store?: TallyStore
+  /** Inject a session (stories: a signed-in family, a fake SessionApi). */
+  session?: SessionApi
 }
 
 /** The whole app: theme, screens, nav, sheets, toasts, ribbon, victory and confetti. */
-export function TallyApp({
-  provider = localProvider,
+export function TallyApp(props: TallyAppProps) {
+  return props.session || props.provider || props.store ? (
+    <StaticRoot {...props} />
+  ) : (
+    <ControlledRoot {...props} />
+  )
+}
+
+/** The real thing: demo or family, from the session controller. */
+function ControlledRoot(props: TallyAppProps) {
+  return <Root {...props} api={useSessionController()} />
+}
+
+/** A fixed session: the one given, or a demo over the given provider. */
+function StaticRoot(props: TallyAppProps) {
+  const [demo] = useState(() => demoSession({ provider: props.provider ?? localProvider }))
+  const given = props.session
+  const api = given ? (props.provider ? { ...given, provider: props.provider } : given) : demo
+  return <Root {...props} api={api} />
+}
+
+const providerIds = new WeakMap<DataProvider, number>()
+let providerSeq = 0
+const providerId = (p: DataProvider) => {
+  let id = providerIds.get(p)
+  if (id == null) {
+    id = ++providerSeq
+    providerIds.set(p, id)
+  }
+  return id
+}
+
+/** Keyed on the session so a sign-in or sign-out swaps in a fresh store over its provider. */
+function Root({ api, ...props }: TallyAppProps & { api: SessionApi }) {
+  const key = `${api.session.mode}:${api.session.mode === 'family' ? api.session.member.email : ''}:${providerId(api.provider)}`
+  return (
+    <SessionContext.Provider value={api}>
+      <SessionApp key={key} {...props} provider={api.provider} />
+    </SessionContext.Provider>
+  )
+}
+
+function SessionApp({
+  provider,
   clock = systemClock,
   initialUi,
   embedded = false,
   silent = false,
   store: given,
-}: TallyAppProps) {
+}: TallyAppProps & { provider: DataProvider }) {
   const [store] = useState(
     () =>
       given ??
@@ -60,6 +110,11 @@ export function TallyApp({
         effects: createEffects({ silent, scroll: !embedded }),
       }),
   )
+  // A write the family record refused (a round after the game was won elsewhere).
+  useEffect(() => {
+    const cloud = provider as Partial<CloudProvider>
+    return cloud.onRejected?.(() => store.getState().actions.showToast(COPY.toast.syncRejected))
+  }, [provider, store])
   return (
     <TallyContext.Provider value={store}>
       <Shell embedded={embedded} silent={silent} />
@@ -153,6 +208,8 @@ function labelOf(spec: SheetSpec | null, gameName: (id: string) => string): stri
       return COPY.sheetLabel.detail(gameName(spec.id))
     case 'settings':
       return COPY.sheetLabel.settings
+    case 'signin':
+      return COPY.sheetLabel.signin
   }
 }
 
@@ -177,6 +234,7 @@ function SheetHost() {
   else if (spec?.type === 'end' && active) content = <EndGameSheet game={active} />
   else if (detail && isCompleted(detail)) content = <GameDetailSheet game={detail} />
   else if (spec?.type === 'settings') content = <SettingsSheet />
+  else if (spec?.type === 'signin') content = <SignInSheet />
 
   return (
     <Sheet

@@ -231,3 +231,71 @@ describe('fixtures', () => {
     expect(Object.values(wins).filter((w) => w === top).length).toBeGreaterThan(1)
   })
 })
+
+describe('changes from another phone (replaceData)', () => {
+  it('a remote round bumps the cards quietly: flash, no toast or ribbon', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    const remote = structuredClone(s().data)
+    remote.active!.rounds.push({ id: 'rx', scores: { kate: 5, blair: 9, alder: 1 } })
+    a.replaceData(remote)
+    expect(s().flash?.scores).toEqual({ kate: 5, blair: 9, alder: 1 })
+    expect(s().toast).toBeNull()
+    expect(s().banner).toBeNull()
+  })
+
+  it('every round has a stable id', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    a.submitRound(['1', '2', '3'])
+    a.submitRound(['1', '2', '3'])
+    const ids = s().data.active!.rounds.map((r) => r.id)
+    expect(ids.every(Boolean)).toBe(true)
+    expect(new Set(ids).size).toBe(2)
+  })
+
+  it('a game won elsewhere celebrates on a phone that is watching it', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    const remote = structuredClone(s().data)
+    const g = remote.active!
+    g.rounds.push({ id: 'rw', scores: { kate: 250, blair: 0, alder: 0 } })
+    g.completedAt = new Date(fixedClock.now()).toISOString()
+    g.winnerId = 'kate'
+    remote.games = [g, ...remote.games]
+    remote.active = null
+    a.replaceData(remote)
+    expect(s().finished?.id).toBe(g.id)
+    vi.advanceTimersByTime(500)
+    expect(s().victory?.winnerId).toBe('kate')
+  })
+
+  it('a game won elsewhere is a toast when you are on another screen', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    a.go('home')
+    const remote = structuredClone(s().data)
+    const g = remote.active!
+    g.completedAt = new Date(fixedClock.now()).toISOString()
+    g.winnerId = 'blair'
+    remote.games = [g, ...remote.games]
+    remote.active = null
+    a.replaceData(remote)
+    expect(s().victory).toBeNull()
+    expect(s().toast?.msg).toBe(COPY.toast.wonElsewhere('Blair', 'Flip 7'))
+  })
+
+  it('a game discarded elsewhere takes you home with a note', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    const remote = structuredClone(s().data)
+    remote.active = null
+    a.replaceData(remote)
+    expect(s().screen).toBe('home')
+    expect(s().toast?.msg).toBe(COPY.toast.endedElsewhere('Flip 7'))
+  })
+})

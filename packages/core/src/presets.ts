@@ -1,18 +1,26 @@
 import type { Player, Prefs, Preset, Store } from './schemas'
 
-/** The prototype's eight, plus three games where the lowest score wins. */
+/**
+ * The family's games. Race-to games end on points; Scout is a round per dealer (three of us)
+ * and Sushi Go is three rounds; the rest end when you say so (the flag crowns the leader).
+ */
 export const DEFAULT_PRESETS: Preset[] = [
+  { id: 'monopoly-deal', name: 'Monopoly Deal', goal: 'open', target: null, lowWins: false },
+  { id: 'high-society', name: 'High Society', goal: 'open', target: null, lowWins: false },
+  { id: 'scout', name: 'Scout', goal: 'rounds', target: 3, lowWins: false },
+  { id: 'mille-bornes', name: 'Mille Bornes', goal: 'score', target: 5000, lowWins: false },
+  { id: 'push', name: 'Push', goal: 'open', target: null, lowWins: false },
+  { id: 'spicy', name: 'Spicy', goal: 'open', target: null, lowWins: false },
+  {
+    id: 'the-fox-in-the-forest',
+    name: 'The Fox in the Forest',
+    goal: 'score',
+    target: 21,
+    lowWins: false,
+  },
+  { id: 'uno', name: 'Uno', goal: 'score', target: 500, lowWins: false },
   { id: 'flip-7', name: 'Flip 7', goal: 'score', target: 200, lowWins: false },
   { id: 'sushi-go', name: 'Sushi Go', goal: 'rounds', target: 3, lowWins: false },
-  { id: 'sushi-go-party', name: 'Sushi Go Party', goal: 'rounds', target: 3, lowWins: false },
-  { id: 'skull-king', name: 'Skull King', goal: 'rounds', target: 10, lowWins: false },
-  { id: 'uno', name: 'Uno', goal: 'score', target: 500, lowWins: false },
-  { id: 'cribbage', name: 'Cribbage', goal: 'score', target: 121, lowWins: false },
-  { id: 'spades', name: 'Spades', goal: 'score', target: 500, lowWins: false },
-  { id: 'rummy', name: 'Rummy', goal: 'score', target: 500, lowWins: false },
-  { id: 'hearts', name: 'Hearts', goal: 'score', target: 100, lowWins: true },
-  { id: 'golf', name: 'Golf', goal: 'rounds', target: 9, lowWins: true },
-  { id: 'skyjo', name: 'Skyjo', goal: 'score', target: 100, lowWins: true },
 ]
 
 export const DEFAULT_PLAYERS: Player[] = [

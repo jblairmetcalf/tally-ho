@@ -134,7 +134,7 @@ describe('stats', () => {
     const s = computeStats(freshStore(clock).games)
     expect(s.total).toBe(10)
     expect(s.standings.reduce((n, x) => n + x.wins, 0)).toBe(10)
-    expect(s.fav).toEqual({ name: 'Flip 7', count: 6 })
+    expect(s.fav).toEqual({ name: 'The Fox in the Forest', count: 4 })
     expect(s.best.n).toBeGreaterThanOrEqual(s.current.n)
     expect(s.big?.v).toBeGreaterThan(0)
   })
@@ -184,7 +184,7 @@ describe('migrate', () => {
     expect(s.games[0]!.winnerId).toBe('kate')
     expect(s.games[0]!.rounds[1]!.scores).toEqual({ kate: 90, 'mary-jo': null })
     expect(s.prefs.muted).toBe(true)
-    expect(s.presets.length).toBeGreaterThan(8)
+    expect(s.presets.map((p) => p.name)).toContain('Mille Bornes')
   })
 
   it('drops prefs it no longer knows (the short-lived soundInSilent)', () => {

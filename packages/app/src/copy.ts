@@ -29,14 +29,14 @@ export const COPY = {
     standings: 'Standings',
     wins: 'Wins',
     overTime: "Who's winning over time",
+    statsTitle: 'By the numbers',
     gamesPlayed: 'Games played',
-    longestStreak: (name: string | null) => (name ? `Longest streak · ${name}` : 'Longest streak'),
-    biggestRound: (big: { name: string; game: string } | null) =>
-      big ? `Biggest round · ${big.name}, ${big.game}` : 'Biggest round',
-    mostPlayed: (count: number | null) => `Most played · ${count != null ? `${count} games` : ''}`,
+    longestStreak: 'Longest streak',
+    biggestRound: 'Biggest round',
+    bigDetail: (name: string, game: string) => `${name}, ${game}`,
+    mostPlayed: 'Most played',
     dash: '–',
     recent: 'Recent games',
-    seeAll: 'See all',
   },
 
   history: {
@@ -85,6 +85,10 @@ export const COPY = {
     playerArchived: (name: string) => `${name} archived`,
     playerAdded: (name: string) => `${name} joined`,
     gameRemoved: (name: string) => `${name} removed`,
+    /** Sync: things that happened on another phone, or a write the family record refused. */
+    wonElsewhere: (winner: string, game: string) => `${winner} won ${game}!`,
+    endedElsewhere: (game: string) => `${game} was ended on another phone`,
+    syncRejected: 'That change came in after the game ended',
   },
   banner: {
     start: (name: string) => `${name}!`,
@@ -98,6 +102,10 @@ export const COPY = {
     what: 'What are we playing?',
     other: 'Other',
     otherPlaceholder: 'Game name',
+    /** New: the line under the games until one is picked, then how often it's been played. */
+    pickHint: 'Pick a game, or tap Other to name a new one.',
+    timesPlayed: (n: number) =>
+      n === 0 ? 'New to the record.' : `Played ${n} ${plural(n, 'time', 'times')} so far.`,
     lowTag: 'Low',
     howEnd: 'How does it end?',
     goals: { score: 'Score target', rounds: 'Rounds', open: 'Open-ended' },
@@ -125,6 +133,10 @@ export const COPY = {
     setRounds: 'Set a round count, or choose open-ended.',
     dealIn: (name: string) => `Deal in · ${name}`,
     start: 'Start game',
+    /** New (sync): someone's game is already on the table. */
+    inProgress: (game: string, by: string | null) =>
+      `${game} is in progress${by ? ` · started by ${by}` : ''}`,
+    resume: 'Resume',
   },
 
   editRound: {
@@ -188,7 +200,46 @@ export const COPY = {
     samples: 'Sample games',
     samplesHint: 'Remove the made-up history.',
     clearSamples: 'Clear',
-    done: 'Done',
+  },
+
+  /** New (sync): Settings › Family, the home header chip and badge. */
+  family: {
+    heading: 'Family',
+    demoHint: "You're trying the demo. Sign in to keep the family's scores on every phone.",
+    signIn: 'Family sign in',
+    resetDemo: 'Reset demo',
+    resetDemoHint: 'Fresh sample games, as if you just opened the app.',
+    demoChip: 'Demo',
+    signedInAs: (name: string) => `Signed in as ${name}`,
+    syncedHint: 'Scores sync to every family phone, even after time offline.',
+    exportRecord: 'Export family record',
+    exportHint: 'Every game, player and preset, as a file you can keep.',
+    exported: 'Family record saved',
+    signOut: 'Sign out',
+    signOutArmed: 'Tap again to sign out',
+    signOutFailed: "Couldn't sign out. Try again.",
+  },
+
+  /** New (sync): the sign-in sheet. */
+  signIn: {
+    title: 'Family sign in',
+    lede: "The family's scoreboard, on every phone. Use the email and password you were given.",
+    email: 'Email',
+    password: 'Password',
+    submit: 'Sign in',
+    signingIn: 'Signing in…',
+    forgot: 'Forgot password?',
+    needEmail: 'Enter your email first.',
+    needBoth: 'Enter your email and password.',
+    resetSent: (email: string) => `Reset link sent to ${email}`,
+    welcome: (name: string) => `Welcome, ${name}!`,
+    errors: {
+      'wrong-credentials': "That email and password don't match.",
+      'not-family': 'This scoreboard is just for the family.',
+      offline: 'Signing in needs the internet once. After that, Tally Ho! works offline.',
+      'too-many-attempts': 'Too many tries. Wait a minute and try again.',
+      unknown: "Couldn't sign in. Try again.",
+    },
   },
 
   victory: { rematch: 'Rematch', done: 'Done' },
@@ -199,6 +250,7 @@ export const COPY = {
     end: 'End game',
     detail: (name: string) => name,
     settings: 'Settings',
+    signin: 'Family sign in',
   },
 } as const
 

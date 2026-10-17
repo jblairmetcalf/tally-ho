@@ -9,6 +9,13 @@ Short on purpose. Read before changing anything.
 - `packages/app` — the store, the `DataProvider`, effects, screens and sheets. No `next/*`.
 - Packages are consumed as TypeScript source; there is no build step.
 
+## Modes and sync
+- Two modes, one seam: **demo** (`localProvider`, sample data, this phone only) and **family** (signed in; `cloudProvider` over Firestore + its offline cache, in `packages/app/src/sync`). Screens and the store never ask which: read the session with `useSession()` only for sign-in UI and the sync badge.
+- `docs/SYNC.md` is the contract: document shapes, labels, and what `firestore.rules` enforces. Change a synced field there, in the rules, and in `rules.test.ts` together.
+- Never hard-delete a game or player (games get `deletedAt`, players `archived`). A finished game is frozen except for `deletedAt`.
+- Firebase is loaded lazily (dynamic `import()`); demo mode must never pull it into the first paint.
+- Emulator tests (`pnpm test:rules`, `pnpm e2e:cloud`) need Java and run in CI; they skip cleanly without it.
+
 ## The original
 `docs/imports/Tally Ho!.html` is the reference. Port its behaviour, copy, timings, sounds and animations faithfully. When in doubt, do what it does.
 
@@ -23,4 +30,5 @@ Short on purpose. Read before changing anything.
 ## Commands
 - `pnpm typecheck` · `pnpm test` · `pnpm lint` (`pnpm format` to fix)
 - `pnpm dev` — the app on :3100 · `pnpm storybook` — Storybook on :6116
-- `pnpm e2e` — Playwright (iPhone 14)
+- `pnpm e2e` — Playwright (iPhone 14) · `pnpm e2e:cloud` / `pnpm test:rules` — against the Firebase emulators
+- `pnpm firebase:rules` — deploy `firestore.rules`

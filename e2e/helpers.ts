@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test'
-import { emptyStore, freshStore, type Store, systemClock } from '../packages/core/src'
+import { emptyStore, freshStore, type Preset, type Store, systemClock } from '../packages/core/src'
 
 export const KEY = 'tallyho.v3'
 
@@ -13,16 +13,26 @@ export async function seed(page: Page, store: Store) {
   )
 }
 
+/**
+ * A lowest-wins game for the specs, added beside the defaults (which include the Flip 7 race
+ * and Sushi Go rounds the other specs use).
+ */
+const TEST_PRESETS: Preset[] = [
+  { id: 'hearts', name: 'Hearts', goal: 'score', target: 100, lowWins: true },
+]
+
 /** A household with no history: Kate, Blair and Alder, sound off. */
 export function household(patch: Partial<Store['prefs']> = {}): Store {
   const s = emptyStore()
   s.prefs = { ...s.prefs, muted: true, ...patch }
+  s.presets = [...s.presets, ...TEST_PRESETS]
   return s
 }
 
 export function withSamples(patch: Partial<Store['prefs']> = {}): Store {
   const s = freshStore(systemClock)
   s.prefs = { ...s.prefs, muted: true, ...patch }
+  s.presets = [...s.presets, ...TEST_PRESETS]
   return s
 }
 

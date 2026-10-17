@@ -44,11 +44,15 @@ const withActive = (active: Game): Store => ({ ...played(), active })
 export const SCENARIOS = {
   firstRun: () => freshStore(fixedClock),
   empty: () => emptyStore(),
-  /** Blair's two most recent wins removed: Blair and Kate level on 3 — the champion card ties. */
+  /** The leader's latest wins dropped until the top two are level: the champion card ties. */
   deadHeat: () => {
     const s = played()
-    let drop = 2
-    const games = s.games.filter((g) => !(g.winnerId === 'blair' && drop-- > 0))
+    const wins = (games: Game[], id: string) => games.filter((g) => g.winnerId === id).length
+    const [first, second] = ['kate', 'blair', 'alder'].sort(
+      (a, b) => wins(s.games, b) - wins(s.games, a),
+    )
+    let drop = wins(s.games, first!) - wins(s.games, second!)
+    const games = s.games.filter((g) => !(g.winnerId === first && drop-- > 0))
     return { ...s, games }
   },
   flip7Race: () =>

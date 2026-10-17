@@ -31,6 +31,7 @@ export type SheetSpec =
   | { type: 'end' }
   | { type: 'detail'; id: string }
   | { type: 'settings' }
+  | { type: 'signin' }
 
 /** The last scored (or edited) round, for the bump / delta / fresh-row animations. */
 export interface Flash {
@@ -125,6 +126,13 @@ export interface CreateOptions {
 }
 
 const clone = <T>(o: T): T => structuredClone(o)
+
+let roundSeq = 0
+/** A round id unique across phones: time, a per-session counter and a random tail. */
+function roundId(): string {
+  roundSeq = (roundSeq + 1) % 1296
+  return `r${Date.now().toString(36)}${roundSeq.toString(36).padStart(2, '0')}${Math.random().toString(36).slice(2, 6)}`
+}
 
 /** A fresh id from a name: its slug, with -2, -3… when taken. */
 export function uniqueId(base: string, taken: Iterable<string>): string {
@@ -272,7 +280,7 @@ export function createTallyStore(
         g.playerIds.forEach((p, i) => {
           sc[p] = parseScore(vals[i])
         })
-        g.rounds.push({ scores: sc, at: new Date(clock.now()).toISOString() })
+        g.rounds.push({ id: roundId(), scores: sc, at: new Date(clock.now()).toISOString() })
         fx.play('submit')
         fx.burstFrom(btn, 22, { power: 9, spread: 1.6 })
         set((s) => ({ flash: { k: key(), gid: g.id, scores: sc }, foxWink: s.foxWink + 1 }))
@@ -467,8 +475,39 @@ export function createTallyStore(
         setData((x) => ({ ...x, prefs: { ...x.prefs, [k]: value } }))
       },
 
-      replaceData(s) {
-        set({ data: s })
+      replaceData(next) {
+        // A change from elsewhere (another phone, another tab). React to what it means for the
+        // game on screen, quietly: toasts and ribbons belong to the phone that scored.
+        const cur = get()
+        const was = cur.data.active
+        set({ data: next })
+        if (!was) return
+        const now = next.active
+        if (now?.id === was.id) {
+          const last = now.rounds.at(-1)
+          if (now.rounds.length > was.rounds.length && last)
+            set({ flash: { k: key(), gid: now.id, scores: last.scores } })
+          return
+        }
+        const done = next.games.find((g) => g.id === was.id && g.completedAt && g.winnerId)
+        if (done?.winnerId) {
+          const watching = cur.screen === 'game' && !cur.victory
+          if (watching) {
+            set({ finished: done })
+            fx.later(500, () => {
+              set({ victory: done })
+              fx.play('win')
+            })
+          } else {
+            fx.play('pick')
+            showToast(COPY.toast.wonElsewhere(nameOf(done.winnerId), done.name))
+          }
+          return
+        }
+        if (!now && cur.screen === 'game' && !cur.finished) {
+          go('home')
+          showToast(COPY.toast.endedElsewhere(was.name))
+        }
       },
 
       dispose() {

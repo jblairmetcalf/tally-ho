@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { COPY } from './copy'
 import { SCENARIOS } from './fixtures'
-import { Frames } from './StoryFrames'
+import { clickButton, Frames } from './StoryFrames'
 
 const meta: Meta<typeof Frames> = {
   title: 'Sheets/App sheets',
@@ -10,8 +11,51 @@ const meta: Meta<typeof Frames> = {
 export default meta
 type Story = StoryObj<typeof Frames>
 
+/** The games pill row in New game, most played first. */
+const gamePills = (frame: HTMLElement) => [
+  ...frame.querySelectorAll<HTMLButtonElement>(`[aria-label="${COPY.newGame.what}"] button`),
+]
+
+/** Type into a React-controlled input the way a keyboard would. */
+function typeInto(input: HTMLInputElement, value: string) {
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  set?.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+/** Nothing picked yet: "How does it end?" holds its full height as shimmering skeletons. */
 export const NewGame: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'new' }, sheetKey: 1 } },
+}
+
+/** The most played game picked: the real controls fade in where the skeletons were. */
+export const NewGamePicked: Story = {
+  args: {
+    ...NewGame.args,
+    act: (frame) => {
+      const first = gamePills(frame)[0]
+      first?.click()
+      return !!first
+    },
+  },
+}
+
+/** "Other": the name field takes the line under the games; nothing below moves. */
+export const NewGameOther: Story = {
+  args: {
+    ...NewGame.args,
+    act: (frame) => {
+      const other = gamePills(frame).at(-1)
+      const input = frame.querySelector<HTMLInputElement>('#other-name')
+      if (!other || !input) return false
+      if (other.getAttribute('aria-pressed') !== 'true') {
+        other.click()
+        return false
+      }
+      typeInto(input, 'Pictionary')
+      return true
+    },
+  },
 }
 
 export const EditRound: Story = {
@@ -35,4 +79,25 @@ export const GameDetail: Story = {
 
 export const Settings: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'settings' }, sheetKey: 1 } },
+}
+
+/** Editing a player opens a second sheet over Settings, with its own backdrop. */
+export const SettingsEditPlayer: Story = {
+  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.editPlayer('Kate')) },
+}
+
+/** Editing a game: name, how it ends, low-wins and delete, in a sheet over Settings. */
+export const SettingsEditGame: Story = {
+  args: {
+    ...Settings.args,
+    act: (frame) => {
+      const edit = [
+        ...frame.querySelectorAll<HTMLButtonElement>(
+          '[aria-labelledby="set-games"] button[aria-haspopup]',
+        ),
+      ][0]
+      edit?.click()
+      return !!edit
+    },
+  },
 }

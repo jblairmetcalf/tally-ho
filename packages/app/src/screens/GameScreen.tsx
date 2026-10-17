@@ -141,6 +141,7 @@ export function GameScreen({ game: g }: { game: Game }) {
           editable={!finished}
           freshKey={mine && !mine.edit ? mine.k : null}
           onEdit={(idx) => a.openSheet({ type: 'round', idx })}
+          nameOf={roster.nameOf}
         />
       )}
     </main>

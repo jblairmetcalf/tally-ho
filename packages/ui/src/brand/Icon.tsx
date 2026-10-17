@@ -1,4 +1,4 @@
-/** The prototype's 18 icons on a 24×24 stroke grid, plus four for settings and themes. */
+/** The prototype's 18 icons on a 24×24 stroke grid, plus extras for settings, themes and family sync. */
 export const ICONS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
@@ -30,6 +30,12 @@ export const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   down: '<path d="M12 4v15M6 13l6 6 6-6"/>',
+  // family sync
+  cloud: '<path d="M7 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.8 9.1 4.95 4.95 0 0 1 17 19z"/>',
+  cloudOff:
+    '<path d="M9.5 6.2A6 6 0 0 1 17.8 9.1 4.95 4.95 0 0 1 20.6 17M17 19H7a4.5 4.5 0 0 1-.6-8.96M3 3l18 18"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"/>',
+  download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
 } as const
 export type IconName = keyof typeof ICONS
 

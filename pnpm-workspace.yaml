@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+  # Firebase: postinstall scripts are optional (telemetry / native extras), as in chief-of-staff.
+  '@firebase/util': false
+  protobufjs: false
+  re2: false

@@ -39,4 +39,25 @@ export {
   type UiState,
   uniqueId,
 } from './store'
+export {
+  type CloudProvider,
+  createCloudProvider,
+  type Rejection,
+} from './sync/cloudProvider'
+export { type FirebaseConfig, firebaseConfig } from './sync/config'
+export {
+  createSessionCore,
+  demoSession,
+  type Member,
+  type Session,
+  type SessionApi,
+  SessionContext,
+  type SessionCore,
+  SignInError,
+  type SignInErrorCode,
+  type SyncState,
+  type SyncStatus,
+  useSession,
+  useSessionController,
+} from './sync/session'
 export { TallyApp, type TallyAppProps } from './TallyApp'

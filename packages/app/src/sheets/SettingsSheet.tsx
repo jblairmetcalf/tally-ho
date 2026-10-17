@@ -3,6 +3,7 @@ import {
   Button,
   Chip,
   ConfirmButton,
+  cx,
   Eyebrow,
   Icon,
   IconButton,
@@ -11,20 +12,61 @@ import {
   SectionTitle,
   Segmented,
   Setting,
-  SFX,
+  Sheet,
   SheetTitle,
   Swatches,
   Switch,
+  SyncBadge,
   TextInput,
 } from '@tally/ui'
-import { useState } from 'react'
-import { useActions, useTally } from '../context'
+import { useRef, useState } from 'react'
+import { useActions, useRoster, useTally, useTallyStore } from '../context'
 import { COPY } from '../copy'
 import { uniqueId } from '../store'
+import { useSession } from '../sync/session'
 
 const C = COPY.settings
 
-function PlayerEditor({ player, others }: { player: Player; others: Player[] }) {
+/**
+ * Which item's editor sheet is up. The last item stays rendered while the sheet slides away,
+ * even if it was just archived or deleted.
+ */
+function useEditor<T extends { id: string }>(items: T[]) {
+  const a = useActions()
+  const [id, setId] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
+  const last = useRef<T | null>(null)
+  const live = items.find((x) => x.id === id) ?? null
+  if (live) last.current = live
+  return {
+    item: live ?? last.current,
+    open: open && !!live,
+    show: (next: string, cue: 'open' | 'add' = 'open') => {
+      a.play(cue)
+      setId(next)
+      setOpen(true)
+    },
+    /** Escape, backdrop, drag or the close button. */
+    close: () => {
+      a.play('close')
+      setOpen(false)
+    },
+    /** Gone without the close sound (archived, deleted: they play their own). */
+    dismiss: () => setOpen(false),
+  }
+}
+
+function PlayerEditor({
+  player,
+  others,
+  onClose,
+  onArchived,
+}: {
+  player: Player
+  others: Player[]
+  onClose: () => void
+  onArchived: () => void
+}) {
   const a = useActions()
   const [name, setName] = useState(player.name)
   const [err, setErr] = useState('')
@@ -40,48 +82,54 @@ function PlayerEditor({ player, others }: { player: Player; others: Player[] }) 
     }
   }
   return (
-    <div className="group" style={{ padding: '4px 0 12px' }}>
-      <TextInput
-        aria-label={C.nameOf(player.name)}
-        value={name}
-        maxLength={16}
-        onChange={(e) => setName(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            e.currentTarget.blur()
-          }
-        }}
-        enterKeyHint="done"
-      />
-      {err && (
-        <div className="hint shake" role="alert" style={{ color: 'var(--coral-text)' }}>
-          {err}
-        </div>
-      )}
-      <Swatches
-        label={C.colourOf(player.name)}
-        value={player.color}
-        taken={others.map((p) => p.color)}
-        onChange={(i) => {
-          a.play('pick')
-          a.setPlayerColor(player.id, i)
-        }}
-      />
-      <span className="hint">{C.archiveHint}</span>
-      <ConfirmButton
-        label={C.archive}
-        armedLabel={C.archiveArmed}
-        icon="trash"
-        onArm={() => a.play('error')}
-        onConfirm={() => {
-          a.play('del')
-          a.archivePlayer(player.id)
-          a.showToast(COPY.toast.playerArchived(player.name))
-        }}
-      />
-    </div>
+    <>
+      <SheetTitle title={C.editPlayer(player.name)} onClose={onClose} />
+      <div className="group">
+        <TextInput
+          aria-label={C.nameOf(player.name)}
+          value={name}
+          maxLength={16}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.currentTarget.blur()
+            }
+          }}
+          enterKeyHint="done"
+        />
+        {err && (
+          <div className="hint shake" key={err} role="alert" style={{ color: 'var(--coral-text)' }}>
+            {err}
+          </div>
+        )}
+        <Swatches
+          label={C.colourOf(player.name)}
+          value={player.color}
+          taken={others.map((p) => p.color)}
+          onChange={(i) => {
+            a.play('pick')
+            a.setPlayerColor(player.id, i)
+          }}
+        />
+      </div>
+      <div className="group">
+        <span className="hint">{C.archiveHint}</span>
+        <ConfirmButton
+          label={C.archive}
+          armedLabel={C.archiveArmed}
+          icon="trash"
+          onArm={() => a.play('error')}
+          onConfirm={() => {
+            a.play('del')
+            a.archivePlayer(player.id)
+            a.showToast(COPY.toast.playerArchived(player.name))
+            onArchived()
+          }}
+        />
+      </div>
+    </>
   )
 }
 
@@ -90,7 +138,7 @@ function PlayersSection() {
   const players = useTally((s) => s.data.players)
   const live = players.filter((p) => !p.archived)
   const archived = players.filter((p) => p.archived)
-  const [open, setOpen] = useState<string | null>(null)
+  const editor = useEditor(live)
   const [np, setNp] = useState('')
   const [err, setErr] = useState('')
 
@@ -113,29 +161,33 @@ function PlayersSection() {
       <SectionTitle>
         <span id="set-players">{C.players}</span>
       </SectionTitle>
-      {live.map((p) => {
-        const isOpen = open === p.id
-        return (
-          <div key={p.id}>
-            <div className="player-line">
-              <Chip name={p.name} color={p.color} size={34} />
-              <span className="n">{p.name}</span>
-              <IconButton
-                icon={isOpen ? 'x' : 'pencil'}
-                label={C.editPlayer(p.name)}
-                aria-expanded={isOpen}
-                onClick={() => {
-                  a.play('tap')
-                  setOpen(isOpen ? null : p.id)
-                }}
-              />
-            </div>
-            {isOpen && (
-              <PlayerEditor key={p.id} player={p} others={live.filter((q) => q.id !== p.id)} />
-            )}
-          </div>
-        )
-      })}
+      {live.map((p) => (
+        <div className="player-line" key={p.id}>
+          <Chip name={p.name} color={p.color} size={34} />
+          <span className="n">{p.name}</span>
+          <IconButton
+            icon="pencil"
+            label={C.editPlayer(p.name)}
+            aria-haspopup="dialog"
+            onClick={() => editor.show(p.id)}
+          />
+        </div>
+      ))}
+      <Sheet
+        open={editor.open}
+        onClose={editor.close}
+        label={editor.item ? C.editPlayer(editor.item.name) : C.players}
+      >
+        {editor.item && (
+          <PlayerEditor
+            key={editor.item.id}
+            player={editor.item}
+            others={live.filter((q) => q.id !== editor.item?.id)}
+            onClose={editor.close}
+            onArchived={editor.dismiss}
+          />
+        )}
+      </Sheet>
       <div className="row2">
         <TextInput
           placeholder={C.addPlayer}
@@ -184,7 +236,15 @@ function PlayersSection() {
   )
 }
 
-function PresetEditor({ preset }: { preset: Preset }) {
+function PresetEditor({
+  preset,
+  onClose,
+  onDeleted,
+}: {
+  preset: Preset
+  onClose: () => void
+  onDeleted: () => void
+}) {
   const a = useActions()
   const [name, setName] = useState(preset.name)
   const [target, setTarget] = useState(preset.target ? String(preset.target) : '')
@@ -194,78 +254,88 @@ function PresetEditor({ preset }: { preset: Preset }) {
     if (n > 0) save({ target: n })
   }
   return (
-    <div className="group" style={{ padding: '4px 0 12px' }}>
-      <TextInput
-        aria-label={C.gameName}
-        value={name}
-        maxLength={32}
-        onChange={(e) => setName(e.target.value)}
-        onBlur={() => {
-          if (name.trim()) save({ name: name.trim() })
-          else setName(preset.name)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            e.currentTarget.blur()
-          }
-        }}
-      />
-      <Segmented<Goal>
-        label={COPY.newGame.goalLabel}
-        options={[
-          { value: 'score', label: COPY.newGame.goals.score },
-          { value: 'rounds', label: COPY.newGame.goals.rounds },
-          { value: 'open', label: COPY.newGame.goals.open },
-        ]}
-        value={preset.goal}
-        onChange={(goal) => {
-          a.play('tap')
-          const fallback = goal === 'score' ? 200 : goal === 'rounds' ? 3 : null
-          const tg =
-            goal === 'open'
-              ? null
-              : Number.parseInt(target, 10) > 0
-                ? Number.parseInt(target, 10)
-                : fallback
-          if (tg) setTarget(String(tg))
-          save({ goal, target: tg })
-        }}
-      />
-      {preset.goal !== 'open' && (
-        <div className="row2" style={{ alignItems: 'center' }}>
-          <TextInput
-            className="num"
-            inputMode="numeric"
-            value={target}
-            aria-label={
-              preset.goal === 'score'
-                ? preset.lowWins
-                  ? COPY.newGame.bustAt
-                  : COPY.newGame.pointsToWin
-                : COPY.newGame.numberOfRounds
+    <>
+      <SheetTitle title={C.editGame(preset.name)} onClose={onClose} />
+      <div className="group">
+        <TextInput
+          aria-label={C.gameName}
+          value={name}
+          maxLength={32}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => {
+            if (name.trim()) save({ name: name.trim() })
+            else setName(preset.name)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.currentTarget.blur()
             }
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, '').slice(0, 5)
-              setTarget(v)
-              commitTarget(v)
-            }}
-          />
-          <span className="hint" style={{ flex: '1.3' }}>
-            {goalLabel(preset)}
-          </span>
-        </div>
-      )}
-      <Setting title={COPY.newGame.lowWins} hint={COPY.newGame.lowWinsHint}>
-        <Switch
-          checked={preset.lowWins}
-          label={COPY.newGame.lowWins}
-          onChange={(v) => {
-            a.play('tap')
-            save({ lowWins: v })
           }}
         />
-      </Setting>
+        <Segmented<Goal>
+          label={COPY.newGame.goalLabel}
+          options={[
+            { value: 'score', label: COPY.newGame.goals.score },
+            { value: 'rounds', label: COPY.newGame.goals.rounds },
+            { value: 'open', label: COPY.newGame.goals.open },
+          ]}
+          value={preset.goal}
+          onChange={(goal) => {
+            a.play('tap')
+            const fallback = goal === 'score' ? 200 : goal === 'rounds' ? 3 : null
+            const tg =
+              goal === 'open'
+                ? null
+                : Number.parseInt(target, 10) > 0
+                  ? Number.parseInt(target, 10)
+                  : fallback
+            if (tg) setTarget(String(tg))
+            save({ goal, target: tg })
+          }}
+        />
+        {/* The target row and the open-ended line share one cell, so the sheet keeps its height. */}
+        <div className="stack">
+          <div
+            className={cx('row2', preset.goal === 'open' && 'off')}
+            style={{ alignItems: 'center' }}
+          >
+            <TextInput
+              className="num"
+              inputMode="numeric"
+              value={target}
+              aria-label={
+                preset.goal === 'score'
+                  ? preset.lowWins
+                    ? COPY.newGame.bustAt
+                    : COPY.newGame.pointsToWin
+                  : COPY.newGame.numberOfRounds
+              }
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '').slice(0, 5)
+                setTarget(v)
+                commitTarget(v)
+              }}
+            />
+            <span className="hint" style={{ flex: '1.3' }}>
+              {goalLabel(preset)}
+            </span>
+          </div>
+          <span className={cx('hint slot', preset.goal !== 'open' && 'off')}>
+            {COPY.newGame.openHint}
+          </span>
+        </div>
+        <Setting title={COPY.newGame.lowWins} hint={COPY.newGame.lowWinsHint}>
+          <Switch
+            checked={preset.lowWins}
+            label={COPY.newGame.lowWins}
+            onChange={(v) => {
+              a.play('tap')
+              save({ lowWins: v })
+            }}
+          />
+        </Setting>
+      </div>
       <ConfirmButton
         label={C.deleteGame}
         armedLabel={C.deleteGameArmed}
@@ -275,58 +345,175 @@ function PresetEditor({ preset }: { preset: Preset }) {
           a.play('del')
           a.deletePreset(preset.id)
           a.showToast(COPY.toast.gameRemoved(preset.name))
+          onDeleted()
         }}
       />
-    </div>
+    </>
   )
 }
 
 function GamesSection() {
   const a = useActions()
   const presets = useTally((s) => s.data.presets)
-  const [open, setOpen] = useState<string | null>(null)
+  const editor = useEditor(presets)
   const addGame = () => {
     const id = uniqueId(
       C.newGameName,
       presets.map((p) => p.id),
     )
-    a.play('add')
     a.upsertPreset({ id, name: C.newGameName, goal: 'score', target: 100, lowWins: false })
-    setOpen(id)
+    editor.show(id, 'add')
   }
   return (
     <section className="group" aria-labelledby="set-games">
       <SectionTitle>
         <span id="set-games">{C.games}</span>
       </SectionTitle>
-      {presets.map((p) => {
-        const isOpen = open === p.id
-        return (
-          <div key={p.id}>
-            <div className="player-line">
-              <span className="n" style={{ display: 'flex', flexDirection: 'column' }}>
-                {p.name}
-                <span className="hint" style={{ fontWeight: 700, color: 'var(--muted)' }}>
-                  {goalLabel(p)}
-                </span>
-              </span>
-              <IconButton
-                icon={isOpen ? 'x' : 'pencil'}
-                label={C.editGame(p.name)}
-                aria-expanded={isOpen}
-                onClick={() => {
-                  a.play('tap')
-                  setOpen(isOpen ? null : p.id)
-                }}
-              />
-            </div>
-            {isOpen && <PresetEditor key={p.id} preset={p} />}
-          </div>
-        )
-      })}
+      {presets.map((p) => (
+        <div className="player-line" key={p.id}>
+          <span className="n" style={{ display: 'flex', flexDirection: 'column' }}>
+            {p.name}
+            <span className="hint" style={{ fontWeight: 700, color: 'var(--muted)' }}>
+              {goalLabel(p)}
+            </span>
+          </span>
+          <IconButton
+            icon="pencil"
+            label={C.editGame(p.name)}
+            aria-haspopup="dialog"
+            onClick={() => editor.show(p.id)}
+          />
+        </div>
+      ))}
       <Button variant="ghost" block icon="plus" iconSize={18} onClick={addGame}>
         {C.addGame}
       </Button>
+      <Sheet
+        open={editor.open}
+        onClose={editor.close}
+        label={editor.item ? C.editGame(editor.item.name) : C.games}
+      >
+        {editor.item && (
+          <PresetEditor
+            key={editor.item.id}
+            preset={editor.item}
+            onClose={editor.close}
+            onDeleted={editor.dismiss}
+          />
+        )}
+      </Sheet>
+    </section>
+  )
+}
+
+/** `tally-ho-2026-10-15.json`, in the phone's own calendar. */
+const exportName = (d: Date) => {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `tally-ho-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`
+}
+
+/** Every game, player and preset as a JSON file download. */
+function downloadRecord(data: { players: unknown; presets: unknown; games: unknown }) {
+  const now = new Date()
+  const record = {
+    exportedAt: now.toISOString(),
+    players: data.players,
+    presets: data.presets,
+    games: data.games,
+  }
+  const blob = new Blob([`${JSON.stringify(record, null, 2)}\n`], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = exportName(now)
+  link.rel = 'noopener'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+const F = COPY.family
+
+function FamilySection() {
+  const a = useActions()
+  const api = useSession()
+  const store = useTallyStore()
+  const roster = useRoster()
+  if (!api.enabled) return null
+  const { session } = api
+  return (
+    <section className="group" aria-labelledby="set-family">
+      <SectionTitle>
+        <span id="set-family">{F.heading}</span>
+      </SectionTitle>
+      {session.mode === 'demo' ? (
+        <>
+          <span className="hint">{F.demoHint}</span>
+          <Button block icon="lock" iconSize={20} onClick={() => a.openSheet({ type: 'signin' })}>
+            {F.signIn}
+          </Button>
+          <Button
+            variant="ghost"
+            block
+            icon="repeat"
+            iconSize={18}
+            onClick={() => {
+              a.play('tap')
+              api.resetDemo()
+            }}
+          >
+            {F.resetDemo}
+          </Button>
+          <span className="hint">{F.resetDemoHint}</span>
+        </>
+      ) : (
+        <>
+          <div className="family-who">
+            <Chip
+              name={session.member.name}
+              color={roster.colorOf(session.member.playerId)}
+              size={34}
+            />
+            <span className="n">
+              {F.signedInAs(session.member.name)}
+              <span className="hint">{session.member.email}</span>
+            </span>
+            <SyncBadge
+              state={api.sync?.state ?? 'synced'}
+              onClick={(label) => {
+                a.play('tap')
+                a.showToast(label)
+              }}
+            />
+          </div>
+          <span className="hint">{F.syncedHint}</span>
+          <Button
+            variant="ghost"
+            block
+            icon="download"
+            iconSize={18}
+            onClick={() => {
+              a.play('tap')
+              downloadRecord(store.getState().data)
+              a.showToast(F.exported)
+            }}
+          >
+            {F.exportRecord}
+          </Button>
+          <span className="hint">{F.exportHint}</span>
+          <ConfirmButton
+            label={F.signOut}
+            armedLabel={F.signOutArmed}
+            icon="lock"
+            onArm={() => a.play('error')}
+            onConfirm={() => {
+              a.play('close')
+              api.signOut().catch(() => a.showToast(F.signOutFailed))
+            }}
+          />
+        </>
+      )}
     </section>
   )
 }
@@ -338,6 +525,7 @@ export function SettingsSheet() {
   return (
     <>
       <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
+      <FamilySection />
       <PlayersSection />
       <GamesSection />
 
@@ -391,10 +579,6 @@ export function SettingsSheet() {
           )}
         </div>
       </section>
-
-      <Button variant="ghost" block onClick={() => a.closeSheet()}>
-        {C.done}
-      </Button>
     </>
   )
 }

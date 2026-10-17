@@ -1220,7 +1220,9 @@
     background: var(--line);
   }
   .sheet-body {
+    --sheet-pad: max(18px, env(safe-area-inset-left, 0px));
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-left: max(18px, env(safe-area-inset-left, 0px));
     padding-right: max(18px, env(safe-area-inset-right, 0px));
     padding-block: 4px calc(22px + env(safe-area-inset-bottom, 0px));
@@ -1228,10 +1230,42 @@
     flex-direction: column;
     gap: 18px;
   }
+  .sheet {
+    --sheet-bg: var(--sunk);
+  }
+  [data-theme="light"] .sheet {
+    --sheet-bg: var(--page);
+  }
+  /* The title and its close button stay put while the sheet scrolls. */
   .sheet-title {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: sticky;
+    top: -4px;
+    z-index: 3;
+    margin: -4px calc(-1 * var(--sheet-pad, 18px)) 0;
+    padding: 4px var(--sheet-pad, 18px) 8px;
+    background: var(--sheet-bg, var(--sunk));
+  }
+  .sheet-title::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 14px;
+    pointer-events: none;
+    background: linear-gradient(var(--sheet-bg, var(--sunk)), transparent);
+  }
+  /* The sheet's main action, pinned to the bottom so it's always one tap away. */
+  .sheet-cta {
+    position: sticky;
+    bottom: calc(-22px - env(safe-area-inset-bottom, 0px));
+    z-index: 3;
+    margin: 0 calc(-1 * var(--sheet-pad, 18px)) calc(-22px - env(safe-area-inset-bottom, 0px));
+    padding: 18px var(--sheet-pad, 18px) calc(18px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(transparent, var(--sheet-bg, var(--sunk)) 18px);
   }
   .sheet-title h3 {
     margin: 0;
@@ -1574,5 +1608,301 @@
     stroke: var(--ink);
     stroke-width: 3px;
     stroke-linejoin: round;
+  }
+}
+
+/* Sync UI — family sync (Builder B, append-only) */
+@layer components {
+  /* SyncBadge: the header's 44px icon button, tinted by state */
+  .sync-badge {
+    position: relative;
+  }
+  .sync-badge[data-state="synced"] {
+    color: var(--jade-text);
+  }
+  .sync-badge[data-state="pending"] {
+    color: var(--amber-text);
+  }
+  .sync-badge[data-state="offline"] {
+    color: var(--muted);
+  }
+  .sync-badge[data-state="error"] {
+    color: var(--coral-text);
+  }
+  .sync-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  .sync-badge[data-state="pending"] .sync-dot {
+    animation: pop 1.2s var(--spring) infinite alternate;
+  }
+
+  /* the home header's fox badge carries the sync status: a "Demo" tag or a SyncBadge disc */
+  .badge-slot {
+    position: relative;
+    flex: none;
+    display: grid;
+  }
+  .demo-chip {
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    translate: -50% 0;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    border: 1.5px dashed var(--lav);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 9.5px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 2px 0 var(--drop-soft);
+    animation: pop 0.45s var(--spring) 0.5s both;
+    transition: scale 0.15s var(--spring);
+  }
+  .demo-chip::after {
+    content: "";
+    position: absolute;
+    inset: -12px -6px;
+  }
+  .demo-chip:active {
+    scale: 0.9;
+  }
+  .sync-badge.compact {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border-width: 2px;
+    box-shadow: 0 2px 0 var(--drop-soft);
+    animation: pop 0.45s var(--spring) 0.5s both;
+  }
+  .sync-badge.compact::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+  }
+  .sync-badge.compact .sync-dot {
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+  }
+
+  /* RoundLog `nameOf`: who scored the round, a tiny initial chip after its number */
+  .log-row .rn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .log-row .by {
+    --c: var(--muted);
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--c);
+    color: var(--on-accent);
+    font-family: var(--f-body);
+    font-size: 9.5px;
+    font-weight: 900;
+    line-height: 1;
+    flex: none;
+    box-shadow: inset 0 -1.5px 0 rgb(0 0 0 / 0.22);
+  }
+  .log-row .by.by-guest {
+    background: var(--surface-hi);
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+
+  /* Settings › Family */
+  .family-who {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 7px 7px 7px 12px;
+    min-height: 58px;
+  }
+  .family-who .n {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    font-weight: 900;
+    font-size: 15px;
+  }
+
+  /* SignInSheet */
+  .field-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .signin-lede {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .form-error {
+    color: var(--coral-text);
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+  }
+  .spinning {
+    animation: spin 0.8s linear infinite;
+  }
+  .btn:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+}
+
+/* Calm sheets: skeletons, stacked slots, nested sheets and the stat list (append-only) */
+@layer components {
+  /* A placeholder for controls that aren't ready yet: a token-coloured slab with a soft sweep. */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+  }
+  .skeleton.line {
+    height: 10px;
+    border: 0;
+    border-radius: 5px;
+    background: var(--line);
+    opacity: 0.7;
+  }
+  .skeleton-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+  }
+  .skeleton-lines {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* Layers sharing one cell: the slot is as tall as its tallest layer, so swapping never resizes. */
+  .stack {
+    position: relative;
+    display: grid;
+  }
+  /* A layer drawn over the cell that never sizes it (skeletons over the real controls). */
+  .stack > .overlay {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .stack > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+  .stack > .off {
+    visibility: hidden;
+  }
+  .stack.center > * {
+    align-self: center;
+  }
+  /* A one-line slot the height of a text input (52px), content centred. */
+  .slot {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+  }
+  .reveal {
+    animation: fadeIn 0.3s ease both;
+  }
+
+  /* The pinned CTA's label stays on one line, so typing a long name never grows the bar. */
+  .sheet-cta .btn > .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sheet-cta .form-error,
+  .sheet-cta [role="alert"] {
+    margin-bottom: 8px;
+  }
+
+  /* A sheet opened from inside another: a touch shorter, so the one beneath peeks out on top. */
+  .sheet-wrap.nested .sheet {
+    max-height: calc(84% + 48px);
+  }
+
+  /* StatList: one card of label/value rows split by hairlines ("pin lines"). */
+  .stat-list dl {
+    margin: 6px 0 0;
+  }
+  .stat-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 0;
+  }
+  .stat-row + .stat-row {
+    border-top: 1px solid var(--line);
+  }
+  .stat-row:last-child {
+    padding-bottom: 2px;
+  }
+  .stat-row dt {
+    flex: none;
+    color: var(--muted);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .stat-row dd {
+    margin: 0;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    column-gap: 7px;
+    text-align: right;
+  }
+  .stat-row .v {
+    font-family: var(--f-display);
+    font-size: 22px;
+    line-height: 1.1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .stat-row .d {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 800;
   }
 }

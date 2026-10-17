@@ -13,6 +13,7 @@
   "dependencies": {
     "@tally/core": "workspace:*",
     "@tally/ui": "workspace:*",
+    "firebase": "^13.0.0",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

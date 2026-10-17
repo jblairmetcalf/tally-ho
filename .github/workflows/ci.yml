@@ -47,3 +47,37 @@ jobs:
           name: playwright-traces
           path: test-results/
           retention-days: 7
+
+  cloud:
+    name: Family sync (rules + emulator e2e)
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4 # the Firebase emulators run on the JVM
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Firestore rules (emulator)
+        run: pnpm test:rules
+      - name: Cloud e2e (Auth + Firestore emulators)
+        run: pnpm e2e:cloud
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces-cloud
+          path: test-results/
+          retention-days: 7

@@ -29,8 +29,12 @@ export type Preset = z.infer<typeof PresetSchema>
 
 /** A blank score is stored as null and counts as 0. */
 export const RoundSchema = z.object({
+  /** Stable id: rounds sync as a map keyed by it, so two phones scoring at once both land. */
+  id: z.string().optional(),
   scores: z.record(z.string(), z.number().int().nullable()),
   at: z.string().optional(),
+  /** Who scored it (a player id), filled in by the synced provider. */
+  by: z.string().optional(),
 })
 export type Round = z.infer<typeof RoundSchema>
 
@@ -46,6 +50,8 @@ export const GameSchema = z.object({
   completedAt: z.string().nullable(),
   winnerId: z.string().nullable(),
   sample: z.boolean().optional(),
+  /** Who dealt it in (a player id), filled in by the synced provider. */
+  startedBy: z.string().optional(),
 })
 export type Game = z.infer<typeof GameSchema>
 /** A game that has been finished and crowned. */

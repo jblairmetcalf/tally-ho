@@ -6,6 +6,7 @@
       "**",
       "!docs/imports",
       "!**/out",
+      "!**/out-cloud",
       "!**/public/sw.js",
       "!**/.next",
       "!**/storybook-static",

@@ -5,19 +5,21 @@ import {
   Card,
   ChampionCard,
   EmptyState,
-  Icon,
   IconButton,
   Notice,
   ResumeCard,
   SectionTitle,
   Standings,
-  StatTile,
+  StatList,
+  SyncBadge,
   WinsChart,
   Wordmark,
 } from '@tally/ui'
-import { type CSSProperties, useMemo } from 'react'
+import { type CSSProperties, useEffect, useMemo } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
+import { takeWelcome } from '../sheets/SignInSheet'
+import { useSession } from '../sync/session'
 import { GameRowFor } from './GameRowFor'
 
 const rise = (i: number) => ({ '--i': i }) as CSSProperties
@@ -28,8 +30,18 @@ export function HomeScreen() {
   const hasSamples = useTally((s) => s.data.hasSamples)
   const muted = useTally((s) => s.data.prefs.muted)
   const a = useActions()
+  const { enabled, session, sync } = useSession()
   const roster = useRoster()
   const { nameOf, colorOf } = roster
+
+  // Just signed in: the app re-keyed onto the family's store, so the welcome is said here.
+  useEffect(() => {
+    const name = takeWelcome(session)
+    if (name) {
+      a.play('start')
+      a.showToast(COPY.signIn.welcome(name))
+    }
+  }, [session, a])
 
   const done = useMemo(() => games.filter(isCompleted), [games])
   const stats = useMemo(() => computeStats(done, nameOf), [done, nameOf])
@@ -44,7 +56,29 @@ export function HomeScreen() {
   return (
     <main className="app">
       <header className="topbar">
-        <Badge />
+        {/* The bar is full at phone width, so sync status pins to the fox badge. */}
+        <div className="badge-slot">
+          <Badge />
+          {enabled &&
+            (session.mode === 'family' ? (
+              <SyncBadge
+                compact
+                state={sync?.state ?? 'synced'}
+                onClick={(label) => {
+                  a.play('tap')
+                  a.showToast(label)
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="demo-chip"
+                onClick={() => a.openSheet({ type: 'settings' })}
+              >
+                {COPY.family.demoChip}
+              </button>
+            ))}
+        </div>
         <Wordmark />
         <span style={{ flex: 1 }} />
         <IconButton
@@ -131,41 +165,37 @@ export function HomeScreen() {
             </Card>
           )}
 
-          <section className="stats rise" style={rise(4)}>
-            <StatTile icon="cards" tone="jade" value={stats.total} label={COPY.home.gamesPlayed} />
-            <StatTile
-              icon="flame"
-              tone="coral"
-              value={stats.best.n}
-              label={COPY.home.longestStreak(stats.best.id ? nameOf(stats.best.id) : null)}
-            />
-            <StatTile
-              icon="bolt"
-              tone="amber"
-              value={stats.big ? stats.big.v : COPY.home.dash}
-              label={COPY.home.biggestRound(
-                stats.big ? { name: nameOf(stats.big.id), game: stats.big.game } : null,
-              )}
-            />
-            <StatTile
-              icon="trophy"
-              tone="lav"
-              compact
-              value={stats.fav ? stats.fav.name : COPY.home.dash}
-              label={COPY.home.mostPlayed(stats.fav ? stats.fav.count : null)}
-            />
-          </section>
+          <StatList
+            className="rise"
+            style={rise(4)}
+            title={COPY.home.statsTitle}
+            rows={[
+              { label: COPY.home.gamesPlayed, value: stats.total },
+              {
+                label: COPY.home.longestStreak,
+                value: stats.best.n,
+                detail: stats.best.id ? nameOf(stats.best.id) : undefined,
+              },
+              {
+                label: COPY.home.biggestRound,
+                value: stats.big ? stats.big.v : COPY.home.dash,
+                detail: stats.big
+                  ? COPY.home.bigDetail(nameOf(stats.big.id), stats.big.game)
+                  : undefined,
+              },
+              {
+                label: COPY.home.mostPlayed,
+                value: stats.fav ? stats.fav.count : COPY.home.dash,
+                detail: stats.fav?.name,
+              },
+            ]}
+          />
 
           <section
             className="rise"
             style={{ ...rise(5), display: 'flex', flexDirection: 'column', gap: 10 }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <SectionTitle>{COPY.home.recent}</SectionTitle>
-              <button type="button" className="link" onClick={() => a.go('history', 'tap')}>
-                {COPY.home.seeAll} <Icon name="right" size={16} />
-              </button>
-            </div>
+            <SectionTitle>{COPY.home.recent}</SectionTitle>
             {done.slice(0, 3).map((g) => (
               <GameRowFor key={g.id} game={g} roster={roster} />
             ))}

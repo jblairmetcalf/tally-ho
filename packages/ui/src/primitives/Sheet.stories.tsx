@@ -122,3 +122,49 @@ export const Short: Story = {
     )
   },
 }
+
+function NestedDemo() {
+  const [open, setOpen] = useState(true)
+  const [edit, setEdit] = useState(true)
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Open sheet</Button>
+      <Sheet open={open} onClose={() => setOpen(false)} label="Settings">
+        <SheetTitle title="Settings" onClose={() => setOpen(false)} />
+        <div className="group">
+          {['Ana', 'Ben', 'Cleo'].map((p, i) => (
+            <div key={p} className="player-line">
+              <Chip name={p} color={i} size={34} />
+              <span className="n">{p}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-haspopup="dialog"
+                onClick={() => setEdit(true)}
+              >
+                Edit
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Sheet open={edit} onClose={() => setEdit(false)} label="Edit Ana">
+          <SheetTitle title="Edit Ana" onClose={() => setEdit(false)} />
+          <TextInput aria-label="Ana's name" defaultValue="Ana" />
+          <ConfirmButton
+            label="Archive player"
+            armedLabel="Tap again to archive"
+            onArm={() => SFX.error()}
+            onConfirm={() => setEdit(false)}
+          />
+        </Sheet>
+      </Sheet>
+    </>
+  )
+}
+
+/**
+ * A sheet opened from inside another stacks above it with its own backdrop, a little shorter so
+ * the one beneath peeks out. Escape, a backdrop tap or a drag closes only the top sheet, and
+ * focus goes back to the button that opened it.
+ */
+export const Nested: Story = { render: () => <NestedDemo /> }

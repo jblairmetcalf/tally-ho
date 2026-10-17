@@ -1,0 +1,150 @@
+rules_version = '2';
+
+// Tally Ho! family sync. The contract is docs/SYNC.md ("Firestore documents").
+//
+//   members/{lowercase email}  { name, playerId }   written in the Firebase console only
+//   players/{id}               never hard-deleted (archive instead)
+//   presets/{id}               may be deleted
+//   games/{id}                 never hard-deleted (soft delete: deletedAt); a finished game is
+//                              frozen apart from deletedAt/updatedAt, so a late round from an
+//                              offline phone can't change a crowned result
+//
+// Only people with a members doc can read or write anything. Everything else is denied.
+// Tested against the emulator by packages/app/src/sync/rules.test.ts (`pnpm test:rules`).
+// Deploy with `pnpm firebase:rules`.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- who ---------------------------------------------------------------------------------
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.get('email', null) is string;
+    }
+
+    function emailKey() {
+      return request.auth.token.email.lower();
+    }
+
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/members/$(emailKey()));
+    }
+
+    // ---- shapes ------------------------------------------------------------------------------
+
+    function str(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    // An optional field: absent, or present with the right type.
+    function optBool(d, k) {
+      return !(k in d) || d[k] is bool;
+    }
+
+    function optStr(d, k) {
+      return !(k in d) || str(d[k], 1, 64);
+    }
+
+    function stamp(v) {
+      return str(v, 1, 40);
+    }
+
+    function goal(v) {
+      return v in ['score', 'rounds', 'open'];
+    }
+
+    function target(v) {
+      return v == null || (v is int && v > 0 && v <= 1000000);
+    }
+
+    function nullableStr(v) {
+      return v == null || str(v, 1, 64);
+    }
+
+    function validPlayer(d, id) {
+      return d.keys().hasAll(['id', 'name', 'color', 'updatedAt'])
+        && d.keys().hasOnly(['id', 'name', 'color', 'archived', 'updatedAt'])
+        && d.id == id
+        && str(d.name, 1, 16)
+        && d.color is int && d.color >= 0 && d.color <= 7
+        && optBool(d, 'archived')
+        && stamp(d.updatedAt);
+    }
+
+    function validPreset(d, id) {
+      return d.keys().hasAll(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
+        && d.keys().hasOnly(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
+        && d.id == id
+        && str(d.name, 1, 32)
+        && goal(d.goal)
+        && target(d.target)
+        && d.lowWins is bool
+        && stamp(d.updatedAt);
+    }
+
+    // Rounds are a map keyed by round id ({ scores, at, by? }). Rules can't loop over a map's
+    // values, so each round's inner shape is the client's job; the rules cap the count.
+    function validGame(d, id) {
+      return d.keys().hasAll([
+          'id', 'name', 'goal', 'target', 'lowWins', 'playerIds', 'startedAt',
+          'completedAt', 'winnerId', 'updatedAt', 'rounds'
+        ])
+        && d.keys().hasOnly([
+          'id', 'name', 'goal', 'target', 'lowWins', 'playerIds', 'startedAt',
+          'completedAt', 'winnerId', 'updatedAt', 'rounds', 'startedBy', 'deletedAt', 'sample'
+        ])
+        && d.id == id
+        && str(d.name, 1, 40)
+        && goal(d.goal)
+        && target(d.target)
+        && d.lowWins is bool
+        && d.playerIds is list && d.playerIds.size() >= 2 && d.playerIds.size() <= 12
+        && stamp(d.startedAt)
+        && (d.completedAt == null || stamp(d.completedAt))
+        && nullableStr(d.winnerId)
+        && stamp(d.updatedAt)
+        && d.rounds is map && d.rounds.size() <= 1000
+        && optStr(d, 'startedBy')
+        && (!('deletedAt' in d) || stamp(d.deletedAt))
+        && optBool(d, 'sample');
+    }
+
+    // A crowned game only takes a soft delete (or an undo of one).
+    function frozenOk() {
+      return resource.data.completedAt == null
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['deletedAt', 'updatedAt']);
+    }
+
+    // ---- paths -------------------------------------------------------------------------------
+
+    match /members/{email} {
+      // A signed-in person may look up their own (possibly missing) doc: that's how the app
+      // tells a family member from a stranger. Nobody can list or write members.
+      allow get: if signedIn() && emailKey() == email;
+      allow list, create, update, delete: if false;
+    }
+
+    match /players/{id} {
+      allow read: if isMember();
+      allow create, update: if isMember() && validPlayer(request.resource.data, id);
+      allow delete: if false;
+    }
+
+    match /presets/{id} {
+      allow read: if isMember();
+      allow create, update: if isMember() && validPreset(request.resource.data, id);
+      allow delete: if isMember();
+    }
+
+    match /games/{id} {
+      allow read: if isMember();
+      allow create: if isMember() && validGame(request.resource.data, id);
+      allow update: if isMember() && validGame(request.resource.data, id) && frozenOk();
+      allow delete: if false;
+    }
+
+    // Anything not matched above is denied.
+  }
+}

@@ -180,7 +180,7 @@ export const Sound: Story = {
           {[
             [
               'Unlock on first touch',
-              'Sounds mix with music already playing (an ambient audio session, like native games), so the Ring/Silent switch mutes them. iOS only starts audio inside a gesture, so the app calls SFX.unlock() on every tap; leaving the app releases the audio (SFX.sleep()) and the first tap back starts it fresh. The sound button is the only toggle.',
+              "Sounds play through the iPhone's silent switch (a playback audio session), created by the tap that plays them. Audio is handed back to iOS after 6 seconds of quiet, when the app is hidden (SFX.sleep()), and whenever sound is muted, so music elsewhere is interrupted only while Tally Ho! is actually making noise. The sound button is the only toggle.",
             ],
             [
               'One cue per moment',

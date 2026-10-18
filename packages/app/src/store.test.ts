@@ -1,4 +1,4 @@
-import { emptyStore, freshStore, type Store, totalsOf } from '@tally/core'
+import { DEFAULT_PRESETS, emptyStore, freshStore, type Store, totalsOf } from '@tally/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COPY } from './copy'
 import { createEffects } from './effects'
@@ -220,6 +220,25 @@ describe('players and presets', () => {
     expect(s().data.presets.find((p) => p.id === 'spicy')?.target).toBe(1)
     a.upsertPreset({ id: 'jaipur', name: 'Jaipur', goal: 'wins', target: 2, lowWins: false })
     expect(s().data.presets.find((p) => p.id === 'jaipur')?.target).toBe(2)
+  })
+
+  it("restores the built-in games to today's defaults and keeps the family's own", () => {
+    const { a, s } = setup()
+    a.upsertPreset({
+      id: 'monopoly-deal',
+      name: 'Deal',
+      goal: 'open',
+      target: null,
+      lowWins: false,
+    })
+    a.deletePreset('spicy')
+    a.upsertPreset({ id: 'yahtzee', name: 'Yahtzee', goal: 'rounds', target: 13, lowWins: false })
+    a.restoreDefaultGames()
+    const presets = s().data.presets
+    expect(presets.slice(0, DEFAULT_PRESETS.length)).toEqual(DEFAULT_PRESETS)
+    expect(presets.find((p) => p.id === 'monopoly-deal')).toMatchObject({ goal: 'wins', target: 1 })
+    expect(presets.some((p) => p.id === 'spicy')).toBe(true)
+    expect(presets.at(-1)?.name).toBe('Yahtzee')
   })
 
   it('persists prefs', () => {

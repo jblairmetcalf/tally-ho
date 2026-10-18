@@ -270,3 +270,30 @@ test('archiving a player or deleting a game goes back to the list', async ({ pag
   await expect(games).toBeVisible()
   await expect(games.getByRole('button', { name: 'Edit Hearts' })).toHaveCount(0)
 })
+
+test("Restore default games: built-in games back to how they ship, the family's own stay", async ({
+  page,
+}) => {
+  // A record seeded before Monopoly Deal became "Who won?", with Spicy deleted.
+  const s = household()
+  s.presets = s.presets
+    .filter((p) => p.id !== 'spicy')
+    .map((p) => (p.id === 'monopoly-deal' ? { ...p, goal: 'open' as const, target: null } : p))
+  await seed(page, s)
+  await page.goto('/')
+  const { sheet: games } = await openSettingsArea(page, 'Games')
+  await expect(games.locator('.player-line', { hasText: 'Monopoly Deal' })).toContainText(
+    'Open-ended',
+  )
+  await expect(games.locator('.player-line', { hasText: 'Spicy' })).toHaveCount(0)
+
+  const restore = games.getByRole('button', { name: 'Restore default games' })
+  await restore.click()
+  await games.getByRole('button', { name: 'Tap again to restore' }).click()
+  await expect(page.getByText('Default games restored')).toBeVisible()
+  await expect(games.locator('.player-line', { hasText: 'Monopoly Deal' })).toContainText(
+    'Who won?',
+  )
+  await expect(games.locator('.player-line', { hasText: 'Spicy' })).toContainText('Who won?')
+  await expect(games.locator('.player-line', { hasText: 'Round Robin' })).toHaveCount(1)
+})

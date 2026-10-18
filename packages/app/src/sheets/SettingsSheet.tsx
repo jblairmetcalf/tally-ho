@@ -379,6 +379,7 @@ const presetLabel = (p: Preset) =>
 
 /** Settings › Games: every game and how it ends; Add a game and each editor are pages pushed over it. */
 function GamesContent({ onEdit, onAdd }: { onEdit: (id: string) => void; onAdd: () => void }) {
+  const a = useActions()
   const presets = useTally((s) => s.data.presets)
   return (
     <>
@@ -395,6 +396,18 @@ function GamesContent({ onEdit, onAdd }: { onEdit: (id: string) => void; onAdd: 
           </div>
         ))}
       </div>
+      <ConfirmButton
+        label={C.restoreGames}
+        armedLabel={C.restoreGamesArmed}
+        icon="repeat"
+        onArm={() => a.play('error')}
+        onConfirm={() => {
+          a.play('add')
+          a.restoreDefaultGames()
+          a.showToast(COPY.toast.gamesRestored)
+        }}
+      />
+      <p className="hint">{C.restoreGamesHint}</p>
       {/* Adding a game is this page's main action: pinned, however long the list. */}
       <div className="sheet-cta">
         <Button block icon="plus" iconSize={20} onClick={onAdd}>

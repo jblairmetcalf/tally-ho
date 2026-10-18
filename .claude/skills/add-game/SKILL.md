@@ -55,7 +55,7 @@ pnpm exec playwright test --project=web
 ## 4. Tell the user what reaches whom
 
 - **New installs / Reset demo** get the new list (`emptyStore`, `freshStore`).
-- **Existing demo phones keep their saved presets**: Settings › Family › **Reset demo** (this replaces demo games with fresh samples).
+- **Existing phones and the family record keep their saved presets**: Settings › Games › **Restore default games** puts the built-in games back to the current defaults (syncs in family mode; the family's own games stay). Reset demo also works for the demo.
 - **The family record only seeds presets when the collection is empty** (first family sign-in). Existing family phones won't see the new game: add it once on any signed-in phone via Settings › Games › Add a game, and it syncs.
 
 ## Report template
@@ -64,5 +64,5 @@ pnpm exec playwright test --project=web
 Added preset: <Name> (id <slug>)
 - goal: <score|rounds|wins|open>, target <n|null>, lowWins <bool>, roundsPerPlayer <bool?>, because <how the rulebook ends it>
 - core tests: <p passed>; typecheck: <pass>
-- reaches: new installs + Reset demo; family: add via Settings › Games (record already seeded)
+- reaches: new installs + Reset demo; family: Settings › Games › Restore default games (record already seeded)
 ```

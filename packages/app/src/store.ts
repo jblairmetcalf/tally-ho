@@ -1,5 +1,6 @@
 import {
   type Clock,
+  DEFAULT_PRESETS,
   evaluate,
   freshStore,
   type Game,
@@ -118,6 +119,12 @@ export interface TallyActions {
   archivePlayer(id: string): void
   upsertPreset(preset: Preset): void
   deletePreset(id: string): void
+  /**
+   * Put the built-in games back as they ship today (restoring any deleted ones) and leave the
+   * family's own games alone. Defaults only seed new stores, so this is how an existing record
+   * picks up a changed default.
+   */
+  restoreDefaultGames(): void
   setPref<K extends keyof Prefs>(key: K, value: Prefs[K]): void
 
   /** Replace the data wholesale (a remote change). */
@@ -515,6 +522,17 @@ export function createTallyStore(
 
       deletePreset(id) {
         setData((x) => ({ ...x, presets: x.presets.filter((p) => p.id !== id) }))
+      },
+
+      restoreDefaultGames() {
+        const ids = new Set(DEFAULT_PRESETS.map((p) => p.id))
+        setData((x) => ({
+          ...x,
+          presets: [
+            ...DEFAULT_PRESETS.map((p) => ({ ...p })),
+            ...x.presets.filter((p) => !ids.has(p.id)),
+          ],
+        }))
       },
 
       setPref(k, value) {

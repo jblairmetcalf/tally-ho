@@ -98,6 +98,7 @@ export const COPY = {
     playerArchived: (name: string) => `${name} archived`,
     gameRemoved: (name: string) => `${name} removed`,
     gameAdded: (name: string) => `${name} added`,
+    gamesRestored: 'Default games restored',
     /** Sync: things that happened on another phone, or a write the family record refused. */
     wonElsewhere: (winner: string, game: string) => `${winner} won ${game}!`,
     endedElsewhere: (game: string) => `${game} was ended on another phone`,
@@ -222,6 +223,10 @@ export const COPY = {
     nameTaken: (name: string) => `You already have ${name}.`,
     deleteGame: 'Delete game',
     deleteGameArmed: 'Tap again to delete',
+    /** New: built-in games back to how they ship; the family's own games stay. */
+    restoreGames: 'Restore default games',
+    restoreGamesArmed: 'Tap again to restore',
+    restoreGamesHint: 'Built-in games go back to how they ship. Games you added stay.',
     appearance: 'Appearance',
     theme: 'Theme',
     themes: { system: 'System', dark: 'Dark', light: 'Light' },

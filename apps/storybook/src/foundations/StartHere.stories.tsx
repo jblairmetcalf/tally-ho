@@ -3,7 +3,7 @@ import { Badge, Chip, Fox, Icon, type IconName, Ribbon, Toast, Wordmark } from '
 import { type CSSProperties, useState } from 'react'
 import { BARE, Mono, Page, pageTheme, Section, ThemePair } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Start here', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Start here', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 
@@ -71,6 +71,35 @@ function FoxStates() {
   )
 }
 
+/** Storybook's own shortcuts: the quickest way through the library. */
+const KEYS: [string, string][] = [
+  ['⌘ K  or  /', 'Search for a component or state'],
+  ['⌥ ↓   ⌥ ↑', 'Next / previous component'],
+  ['⌥ →   ⌥ ←', 'Next / previous state of this component'],
+  ['⌃ ⇧ ↑   ⌃ ⇧ ↓', 'Fold / unfold every section'],
+  ['⌥ S', 'Hide the sidebar for a bigger canvas'],
+  ['⌥ A', 'Show or hide the panel (controls, accessibility)'],
+  ['⌥ F', 'Full screen'],
+  ['Toolbar · Theme', 'Dark + Daylight side by side, or just one'],
+]
+
+function ReviewKeys() {
+  return (
+    <dl className="m-0 grid max-w-[720px] grid-cols-[minmax(150px,auto)_1fr] gap-x-6 gap-y-3">
+      {KEYS.map(([keys, what]) => (
+        <div key={keys} className="contents">
+          <dt>
+            <Mono className="whitespace-pre rounded-[8px] border border-line bg-surface px-2 py-1 text-[13px]">
+              {keys}
+            </Mono>
+          </dt>
+          <dd className="m-0 self-center text-muted">{what}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export const StartHere: Story = {
   name: 'Start here',
   render: (_, { globals }) => (
@@ -105,6 +134,13 @@ export const StartHere: Story = {
           <Toast placement="inline" message="Ana takes the lead" />
         </div>
       </div>
+
+      <Section
+        title="Reviewing fast"
+        note="Every section starts folded. Open one, then use a component's Docs page: all of its states on one scroll, in both themes, with its description and controls. Sheets, overlays and whole screens fill the viewport, so they keep one entry per state."
+      >
+        <ReviewKeys />
+      </Section>
 
       <Section
         title="Meet the fox"

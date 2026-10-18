@@ -14,7 +14,7 @@ import {
 
 export const clock: Clock = { now: () => Date.parse('2026-10-15T12:00:00Z') }
 
-export const PLAYERS: Player[] = [
+const PLAYERS: Player[] = [
   ...DEFAULT_PLAYERS,
   { id: 'rowan', name: 'Rowan', color: 3 },
   { id: 'mags', name: 'Mags', color: 4 },

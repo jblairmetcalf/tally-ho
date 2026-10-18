@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react'
 import { THEMES, type ThemeId, ThemeRoot } from '@tally/ui'
+import { create } from 'storybook/internal/theming'
 import './preview.css'
 
 /**
@@ -32,9 +33,30 @@ const preview: Preview = {
     },
   },
   initialGlobals: { theme: 'both' },
+  // Every component gets a Docs page: all its states on one scroll, with its description and
+  // controls — the fastest way to review. Full-screen stories (sheets, overlays, screens and
+  // the foundations pages) opt out with `tags: ['!autodocs']` and keep their own entries.
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      theme: create({
+        base: 'dark',
+        appBg: '#13112E',
+        appContentBg: '#1B1840',
+        appPreviewBg: '#13112E',
+        appBorderColor: '#3E3878',
+        textColor: '#F5F2FF',
+        textMutedColor: '#A29BD0',
+        colorPrimary: '#FFB800',
+        colorSecondary: '#00D4AA',
+        fontBase: '"Nunito", ui-rounded, system-ui, sans-serif',
+      }),
+      toc: false,
+    },
     layout: 'fullscreen',
-    controls: { expanded: true, matchers: { color: /(background|color)$/i } },
+    // Colour pickers only for CSS colour props (`background`, `…Color`); a bare `color` here
+    // is a palette slot (0–7) and gets its own control.
+    controls: { expanded: true, matchers: { color: /^(background|.+Color)$/ } },
     backgrounds: { disable: true },
     options: {
       storySort: {
@@ -68,7 +90,10 @@ const preview: Preview = {
       const list = chosen === 'both' ? THEMES : THEMES.filter((t) => t.id === chosen)
       const width = p.width ?? 390
       return (
-        <div className="sb-bench flex flex-wrap items-stretch">
+        // On a Docs page each state sits in a row of others: size it to its content.
+        <div
+          className={`sb-bench flex flex-wrap items-stretch${ctx.viewMode === 'docs' ? ' sb-bench--docs' : ''}`}
+        >
           {list.map((t) => (
             <ThemeRoot key={t.id} theme={t.id} className="min-w-0 flex-1 basis-[360px] p-6">
               <div style={{ maxWidth: width, margin: '0 auto' }}>

@@ -30,6 +30,16 @@ export function EndGameSheet({ game: g }: { game: Game }) {
           {COPY.endGame.crown(roster.nameOf(first))}
         </Button>
       )}
+      {/* Level at the top: crown one of them by the game's own tiebreak rule. */}
+      {tie && g.rounds.length > 0 && l.length > 1 && (
+        <div className="crowns">
+          {l.map((id) => (
+            <Button key={id} variant="amber" icon="trophy" onClick={() => a.crownWinner(id)}>
+              {COPY.game.crown(roster.nameOf(id))}
+            </Button>
+          ))}
+        </div>
+      )}
       <Button variant="ghost" block onClick={() => a.closeSheet()}>
         {COPY.endGame.keepPlaying}
       </Button>

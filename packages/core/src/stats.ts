@@ -47,7 +47,8 @@ export function computeStats(games: Game[], nameOf: (id: string) => string = (id
 
   let big: Stats['big'] = null
   for (const g of asc) {
-    if (g.lowWins) continue
+    // Low-wins games don't brag, and "Who won?" rounds are 1s and 0s, not scores.
+    if (g.lowWins || g.goal === 'wins') continue
     for (const r of g.rounds)
       for (const p of g.playerIds) {
         const v = r.scores[p]

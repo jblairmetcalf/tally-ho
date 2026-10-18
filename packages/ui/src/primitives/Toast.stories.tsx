@@ -5,6 +5,7 @@ import { Toast } from './Toast'
 
 const meta: Meta<typeof Toast> = {
   title: 'Primitives/Toast',
+  tags: ['!autodocs'],
   component: Toast,
   args: { message: 'Ana takes the lead', placement: 'inline' },
   argTypes: {

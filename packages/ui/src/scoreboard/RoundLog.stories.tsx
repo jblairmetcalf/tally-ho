@@ -21,6 +21,7 @@ const meta: Meta<typeof RoundLog> = {
     lowWins: false,
     editable: true,
   },
+  argTypes: { mode: { control: 'inline-radio', options: ['scores', 'wins'] } },
 }
 export default meta
 type Story = StoryObj<typeof RoundLog>
@@ -122,5 +123,33 @@ export const FreshRow: Story = {
         </p>
       </div>
     )
+  },
+}
+
+/** "Who won?" (`mode="wins"`): a crown in each round's winner's column instead of 1s and 0s. */
+export const Wins: Story = {
+  args: {
+    mode: 'wins',
+    rounds: rounds(ids, [
+      [1, 0, 0],
+      [0, 0, 1],
+      [0, 1, 0],
+    ]),
+  },
+}
+/** Wins mode, read-only, two players (a finished Jaipur): screen readers hear "Kate won round 1". */
+export const WinsReadOnly: Story = {
+  args: {
+    mode: 'wins',
+    editable: false,
+    players: players(2),
+    rounds: rounds(
+      players(2).map((p) => p.id),
+      [
+        [1, 0],
+        [0, 1],
+        [1, 0],
+      ],
+    ),
   },
 }

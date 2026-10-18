@@ -40,13 +40,13 @@ export default defineConfig({
         {
           name: 'web',
           outputDir: 'test-results/web',
-          testIgnore: [/storybook\.spec\.ts$/, /cloud\.spec\.ts$/],
+          testIgnore: [/storybook(-manager)?\.spec\.ts$/, /cloud\.spec\.ts$/],
           use: { ...iphone, baseURL: `http://localhost:${WEB}` },
         },
         {
           name: 'storybook',
           outputDir: 'test-results/storybook',
-          testMatch: /storybook\.spec\.ts$/,
+          testMatch: /storybook(-manager)?\.spec\.ts$/,
           use: {
             ...devices['Desktop Chrome'],
             viewport: { width: 1000, height: 900 },

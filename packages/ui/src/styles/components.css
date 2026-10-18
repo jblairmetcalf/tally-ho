@@ -686,40 +686,6 @@
     color: var(--muted);
     font-weight: 800;
   }
-  .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .stat {
-    background: var(--surface);
-    border: 1.5px solid var(--line);
-    border-radius: var(--r);
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
-  .stat .ic {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    background: var(--c);
-    color: var(--on-accent);
-  }
-  .stat .v {
-    font-family: var(--f-display);
-    font-size: 26px;
-    line-height: 1;
-  }
-  .stat .l {
-    font-size: 12.5px;
-    color: var(--muted);
-    font-weight: 800;
-  }
   .game-row {
     display: flex;
     align-items: center;
@@ -1297,19 +1263,6 @@
     font-weight: 900;
     font-size: 16px;
   }
-  .x-btn {
-    width: 44px;
-    height: 40px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    color: var(--coral-text);
-    background: rgb(var(--coral-rgb) / 0.1);
-    transition: transform 0.15s var(--spring);
-  }
-  .x-btn:active {
-    transform: scale(0.85) rotate(90deg);
-  }
   .row2 {
     display: flex;
     gap: 10px;
@@ -1592,13 +1545,6 @@
 
 /* Builder B — scoreboard additions (append-only) */
 @layer components {
-  /* StatTile `compact`: a word-sized value on one line (prototype "Most played" inline style) */
-  .stat .v.compact {
-    font-size: 21px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   /* player-coloured small text needs an ink edge on Daylight (Cream/Amber on white) */
   [data-theme="light"] .log-head .pc {
     text-shadow: 0 1px 0 var(--ink);
@@ -1770,7 +1716,14 @@
   .spinning {
     animation: spin 0.8s linear infinite;
   }
+  /* Not available yet (e.g. Add with an empty name): dimmed, and it doesn't press. */
   .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+  /* Busy (signing in): a lighter dim and a progress cursor. */
+  [aria-busy="true"] .btn:disabled {
     opacity: 0.7;
     cursor: progress;
   }
@@ -1904,5 +1857,362 @@
     font-size: 12.5px;
     color: var(--muted);
     font-weight: 800;
+  }
+}
+
+/* WinnerPicker ("Who won?") and RoundLog's wins mode (append-only) */
+@layer components {
+  .winner-pick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 10px;
+  }
+  .winner-btn {
+    --c: var(--jade);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 60px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: var(--surface-hi);
+    border: 2px solid var(--line);
+    box-shadow: 0 4px 0 var(--line);
+    color: var(--text);
+    font-weight: 900;
+    font-size: 16px;
+    text-align: left;
+    transition: transform 0.12s var(--spring), box-shadow 0.12s, border-color 0.15s;
+  }
+  .winner-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: var(--c);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  .winner-btn:active {
+    transform: translateY(3px) scale(0.98);
+    box-shadow: 0 1px 0 var(--line);
+  }
+  .winner-btn:active::before {
+    opacity: 0.12;
+  }
+  .winner-btn.on {
+    border-color: var(--c);
+    box-shadow: 0 4px 0 var(--c);
+    animation: pop 0.35s var(--spring);
+  }
+  .winner-btn.on::before {
+    opacity: 0.14;
+  }
+  .winner-btn .chip,
+  .winner-btn .n,
+  .winner-btn .tick {
+    position: relative;
+  }
+  .winner-btn .n {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .winner-btn .tick {
+    flex: none;
+    color: var(--text);
+  }
+
+  /* RoundLog mode="wins": a crown in the winner's column */
+  .log-row .sc.win {
+    display: grid;
+    place-items: center;
+    color: var(--c);
+  }
+  .log-row .sc.win svg {
+    filter: drop-shadow(0 1.5px 0 var(--drop));
+  }
+  [data-theme="light"] .log-row .sc.win svg {
+    stroke: var(--ink);
+    stroke-width: 1.4px;
+  }
+  .log-row .sc.nil {
+    color: var(--faint);
+  }
+
+  /* Tied at the top: crown one of the leaders, or play on */
+  .tie-pick {
+    border: 2px solid var(--coral);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tie-pick p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  /* A row of "Crown <name>" buttons (the tie card, the End game sheet): one line each. */
+  .crowns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .crowns > .btn {
+    flex: 1 1 130px;
+    min-width: 0;
+    white-space: nowrap;
+    padding-inline: 12px;
+  }
+}
+
+/* Segmented with four goals at 320: a column is never narrower than its label, so "Who won?"
+   stays on one line; with room to spare the columns are still equal. */
+@layer components {
+  .seg {
+    grid-template-columns: repeat(var(--cols, 3), minmax(max-content, 1fr));
+  }
+}
+
+/* ---------- install, share, the maker ---------- */
+@layer components {
+  /* ButtonLink: an <a> that is a .btn */
+  a.btn {
+    text-decoration: none;
+  }
+
+  /* LinkRow: a menu row that opens something */
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 60px;
+    text-align: left;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 9px 12px 9px 9px;
+    box-shadow: 0 3px 0 var(--drop-soft);
+    transition: transform 0.15s var(--spring), border-color 0.15s, box-shadow 0.15s;
+  }
+  .link-row:active {
+    transform: translateY(2px) scale(0.98);
+    box-shadow: 0 1px 0 var(--drop-soft);
+    border-color: var(--jade);
+  }
+  .link-tile {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    color: var(--on-accent);
+    background: var(--jade);
+    box-shadow: inset 0 -3px 0 var(--jade-deep);
+  }
+  .link-tile.tone-amber {
+    background: var(--amber);
+    box-shadow: inset 0 -3px 0 var(--amber-deep);
+  }
+  .link-tile.tone-fox {
+    background: var(--fox);
+    box-shadow: inset 0 -3px 0 var(--fox-deep);
+  }
+  .link-tile.tone-coral {
+    background: var(--coral);
+    box-shadow: inset 0 -3px 0 var(--coral-deep);
+  }
+  .link-tile.tone-lav {
+    background: var(--lav);
+    box-shadow: inset 0 -3px 0 var(--lav-deep);
+  }
+  .link-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .link-text b {
+    font-weight: 900;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .link-text .hint {
+    color: var(--muted);
+  }
+  .link-chev {
+    flex: none;
+    color: var(--faint);
+  }
+
+  /* StepList: numbered how-to steps with the icon to look for */
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 10px 10px 12px;
+    min-height: 58px;
+  }
+  .step-n {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex: none;
+    display: grid;
+    place-items: center;
+    background: var(--jade);
+    color: var(--on-accent);
+    font-family: var(--f-display);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .step-text {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  .step-text b {
+    font-weight: 900;
+    color: var(--jade-text);
+  }
+  .step-icon {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: var(--jade-text);
+    background: var(--surface-hi);
+    border: 1.5px solid var(--line);
+  }
+
+  /* FoxNote: the fox narrating */
+  .fox-note {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .fox-note.center {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    padding-top: 4px;
+  }
+  .fox-note-words {
+    flex: 1;
+    min-width: 0;
+  }
+  .fox-note-title {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 21px;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  .fox-note-body {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+    text-wrap: pretty;
+  }
+  .fox-note.center .fox-note-body {
+    max-width: 32ch;
+    margin-inline: auto;
+  }
+
+  /* QrCode: ink modules on a white plate, a rounded quiet zone, the fox in the middle */
+  .qr {
+    position: relative;
+    width: min(var(--qr-size, 208px), 100%);
+    aspect-ratio: 1;
+    margin-inline: auto;
+    padding: 6px;
+    border-radius: 22px;
+    background: var(--qr-plate);
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    box-shadow: 0 4px 0 var(--drop-soft);
+  }
+  .qr svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .qr-wait {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    background: var(--cream);
+    opacity: 0.6;
+  }
+  .qr-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 12px;
+    text-align: center;
+    font-weight: 900;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .qr-badge {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 20%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--ink);
+    box-shadow: 0 0 0 4px var(--qr-plate);
+    display: grid;
+    place-items: center;
+  }
+  .qr-badge .fox {
+    width: 84%;
+    height: 84%;
+    margin-top: 6%;
+  }
+
+  /* the share sheet's words around the code */
+  .share-lede {
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+  .share-url {
+    margin: 0;
+    text-align: center;
+    font-weight: 900;
+    font-size: 15px;
+    color: var(--jade-text);
+    overflow-wrap: anywhere;
   }
 }

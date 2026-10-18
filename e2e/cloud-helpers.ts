@@ -4,6 +4,7 @@
  * project demo-tally. The default export is the cloud project's Playwright globalSetup.
  */
 import { type Browser, devices, expect, type Page } from '@playwright/test'
+import { freshStore, systemClock } from '../packages/core/src'
 
 export const PROJECT = 'demo-tally'
 const AUTH = 'http://127.0.0.1:9099'
@@ -70,6 +71,17 @@ export default async function globalSetup() {
 export async function newPhone(browser: Browser, baseURL: string) {
   const { defaultBrowserType: _, ...iphone } = devices['iPhone 14']
   const context = await browser.newContext({ ...iphone, baseURL })
+  // A first visit in a browser tab pops up the install guide after ~1.2s and would cover the
+  // screen mid-test. Start each phone with the demo it would make anyway, guide already seen
+  // (only when empty, so reloads keep what the test did). Signing in carries these prefs over.
+  const demo = freshStore(systemClock)
+  demo.prefs = { ...demo.prefs, installHintSeen: true }
+  await context.addInitScript(
+    ([key, json]) => {
+      if (!localStorage.getItem(key)) localStorage.setItem(key, json)
+    },
+    ['tallyho.v3', JSON.stringify(demo)] as const,
+  )
   const page = await context.newPage()
   return { context, page }
 }

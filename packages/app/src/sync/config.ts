@@ -6,7 +6,7 @@ export interface FirebaseConfig {
 }
 
 /** The project the emulators run as (`demo-*` projects never touch production). */
-export const EMULATOR_PROJECT = 'demo-tally'
+const EMULATOR_PROJECT = 'demo-tally'
 export const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099'
 export const FIRESTORE_EMULATOR = { host: '127.0.0.1', port: 8080 } as const
 

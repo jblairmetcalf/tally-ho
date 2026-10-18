@@ -3,7 +3,12 @@ import { z } from 'zod'
 /** How many chip colours the palette has. Player colours are indices into it. */
 export const PALETTE_SIZE = 8
 
-export const GoalSchema = z.enum(['score', 'rounds', 'open'])
+/**
+ * How a game ends. `score`: first to `target` points. `rounds`: after `target` rounds (1 round =
+ * one final tally). `wins`: "Who won?" — each round has one winner, first to `target` wins (1 =
+ * a single game). `open`: when you say so.
+ */
+export const GoalSchema = z.enum(['score', 'rounds', 'wins', 'open'])
 export type Goal = z.infer<typeof GoalSchema>
 
 export const PlayerSchema = z.object({
@@ -24,6 +29,8 @@ export const PresetSchema = z.object({
   goal: GoalSchema,
   target: z.number().int().positive().nullable(),
   lowWins: z.boolean(),
+  /** `rounds` games with one round per player (Scout): the target follows the line-up. */
+  roundsPerPlayer: z.boolean().optional(),
 })
 export type Preset = z.infer<typeof PresetSchema>
 
@@ -65,6 +72,11 @@ export const PrefsSchema = z.object({
   muted: z.boolean(),
   haptics: z.boolean(),
   wakeLock: z.boolean(),
+  /**
+   * The install guide has been seen (or dismissed), so it never pops up by itself again.
+   * Device-local like every pref; saved prefs from before it existed get `false`.
+   */
+  installHintSeen: z.boolean().default(false),
 })
 export type Prefs = z.infer<typeof PrefsSchema>
 

@@ -1,4 +1,4 @@
-import { type Game, rng, type Store } from '@tally/core'
+import { type Game, leadersOf, rng, type Store } from '@tally/core'
 import { describe, expect, it } from 'vitest'
 import { gameFrom, playerFrom, presetFrom, splitGames } from './docs'
 import { FakeBackend, finishedGamesAreFinal } from './fake'
@@ -36,7 +36,7 @@ function serverView(backend: FakeBackend) {
     active,
     games,
     lastPlayerIds: [],
-    prefs: { theme: 'system', muted: false, haptics: true, wakeLock: true },
+    prefs: { theme: 'system', muted: false, haptics: true, wakeLock: true, installHintSeen: false },
     hasSamples: false,
   })
 }
@@ -77,11 +77,11 @@ async function act(p: Phone, r: () => number, pick: <T>(xs: T[]) => T | undefine
         .sort(() => r() - 0.5)
         .slice(0, n)
         .map((x) => x.id)
-      const goal = pick(['score', 'rounds', 'open'] as const)!
+      const goal = pick(['score', 'rounds', 'wins', 'open'] as const)!
       a.startGame({
         name: pick(PRESET_NAMES)!,
         goal,
-        target: goal === 'open' ? null : goal === 'rounds' ? 3 : 50,
+        target: goal === 'open' ? null : goal === 'rounds' ? 3 : goal === 'wins' ? 2 : 50,
         lowWins: r() < 0.2,
         playerIds: ids,
       })
@@ -90,7 +90,9 @@ async function act(p: Phone, r: () => number, pick: <T>(xs: T[]) => T | undefine
     case 1:
     case 2:
     case 3:
-      if (d.active) a.submitRound(d.active.playerIds.map(score))
+      // "Who won?" games are scored by tapping the winner (1 for them, 0 for the rest).
+      if (d.active?.goal === 'wins') a.submitWinner(pick(d.active.playerIds)!)
+      else if (d.active) a.submitRound(d.active.playerIds.map(score))
       return
     case 4:
       if (d.active?.rounds.length) {
@@ -101,9 +103,13 @@ async function act(p: Phone, r: () => number, pick: <T>(xs: T[]) => T | undefine
     case 5:
       if (d.active?.rounds.length) a.deleteRound(Math.floor(r() * d.active.rounds.length))
       return
-    case 6:
-      a.endGame()
+    case 6: {
+      // Sometimes settle a tie by the game's tiebreak: crown one of the tied leaders.
+      const tied = d.active?.rounds.length ? leadersOf(d.active) : []
+      if (tied.length > 1 && r() < 0.5) a.crownWinner(pick(tied)!)
+      else a.endGame()
       return
+    }
     case 7:
       if (d.active) a.discardGame()
       return
@@ -131,14 +137,17 @@ async function act(p: Phone, r: () => number, pick: <T>(xs: T[]) => T | undefine
       return
     }
     case 13: {
-      const goal = pick(['score', 'rounds', 'open'] as const)!
+      const goal = pick(['score', 'rounds', 'wins', 'open'] as const)!
       const existing = r() < 0.5 ? pick(d.presets) : undefined
+      // Absent, on or off: turning it off on an edited preset clears the field (DELETE).
+      const perPlayer = r()
       a.upsertPreset({
         id: existing?.id ?? `p${Math.floor(r() * 5)}`,
         name: pick(PRESET_NAMES)!,
         goal,
-        target: goal === 'open' ? null : 10 + Math.floor(r() * 90),
+        target: goal === 'open' ? null : 1 + Math.floor(r() * 90),
         lowWins: r() < 0.5,
+        ...(goal === 'rounds' && perPlayer < 0.6 ? { roundsPerPlayer: perPlayer < 0.4 } : {}),
       })
       return
     }

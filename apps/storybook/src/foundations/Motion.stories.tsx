@@ -4,7 +4,7 @@ import { type CSSProperties, type ReactNode, useState } from 'react'
 import motionCss from '../../../../packages/ui/src/styles/motion.css?raw'
 import { BARE, Mono, Page, pageTheme, Section, Tag } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Motion', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Motion', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

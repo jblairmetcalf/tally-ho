@@ -1,27 +1,16 @@
-import { type Goal, isCompleted } from '@tally/core'
-import {
-  Button,
-  cx,
-  Eyebrow,
-  Icon,
-  Notice,
-  Pill,
-  PillRow,
-  Segmented,
-  Setting,
-  SheetTitle,
-  Switch,
-  TextInput,
-} from '@tally/ui'
+import { type Goal, isCompleted, targetFor } from '@tally/core'
+import { Button, cx, Eyebrow, Icon, Notice, Pill, PillRow, SheetTitle, TextInput } from '@tally/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
+import { GoalFields, refill, type Targets, targetsFor } from './GoalFields'
 
 interface Option {
   name: string
   goal: Goal
   target: number | null
   lowWins: boolean
+  roundsPerPlayer?: boolean
 }
 
 export function NewGameSheet() {
@@ -53,14 +42,24 @@ export function NewGameSheet() {
         return { name: n, goal: g.goal, target: g.target, lowWins: g.lowWins }
       }),
     ]
-    return all.sort((x, y) => (played.get(y.name) ?? 0) - (played.get(x.name) ?? 0))
+    // A game is picked by its name, so two with the same name (e.g. two presets left as
+    // "New game") would be indistinguishable: keep the first of each.
+    const seen = new Set<string>()
+    const unique = all.filter((o) => {
+      const k = o.name.trim().toLowerCase()
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+    return unique.sort((x, y) => (played.get(y.name) ?? 0) - (played.get(x.name) ?? 0))
   }, [presets, games, played])
 
   const [sel, setSel] = useState<string | null>(null)
   const [other, setOther] = useState('')
   const [goal, setGoal] = useState<Goal>('score')
-  const [target, setTarget] = useState('200')
+  const [targets, setTargets] = useState<Targets>(() => targetsFor('score', null))
   const [lowWins, setLowWins] = useState(false)
+  const [perPlayer, setPerPlayer] = useState(false)
   const [players, setPlayers] = useState<string[]>(() => {
     const live = new Set(saved.map((p) => p.id))
     const last = lastPlayerIds.filter((id) => live.has(id))
@@ -80,14 +79,16 @@ export function NewGameSheet() {
     if (o === 'other') {
       setSel('other')
       setGoal('open')
-      setTarget('')
+      setTargets(targetsFor('open', null))
       setLowWins(false)
+      setPerPlayer(false)
       return
     }
     setSel(o.name)
     setGoal(o.goal)
-    setTarget(o.target ? String(o.target) : '')
+    setTargets(targetsFor(o.goal, o.target))
     setLowWins(o.lowWins)
+    setPerPlayer(!!o.roundsPerPlayer)
   }
 
   const toggle = (id: string) => {
@@ -129,34 +130,31 @@ export function NewGameSheet() {
       setErr(COPY.newGame.twoPlayers)
       return
     }
-    const tg = Number.parseInt(target, 10)
-    if (goal !== 'open' && !(tg > 0)) {
+    const tg = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
+    const counted = goal === 'rounds' && perPlayer
+    if (goal !== 'open' && !counted && !(tg && tg > 0)) {
       a.play('error')
-      setErr(goal === 'score' ? COPY.newGame.setTarget : COPY.newGame.setRounds)
+      setErr(
+        goal === 'score'
+          ? COPY.newGame.setTarget
+          : goal === 'wins'
+            ? COPY.newGame.setWins
+            : COPY.newGame.setRounds,
+      )
       return
     }
-    a.startGame({ name, goal, target: goal === 'open' ? null : tg, lowWins, playerIds: players })
+    a.startGame({
+      name,
+      goal,
+      target: targetFor({ goal, target: tg, roundsPerPlayer: perPlayer }, players.length),
+      lowWins: goal === 'wins' ? false : lowWins,
+      playerIds: players,
+    })
   }
 
   // Every saved player in a stable order, plus anyone else in the line-up (e.g. archived).
   const savedIds = new Set(saved.map((p) => p.id))
   const choices = [...saved, ...roster.people(players.filter((id) => !savedIds.has(id)))]
-
-  // Every hint the target row can show, stacked so the row is as tall as the longest.
-  const hints = [
-    COPY.newGame.scoreHint,
-    COPY.newGame.scoreHintLow,
-    COPY.newGame.roundsHint,
-    COPY.newGame.roundsHintLow,
-  ]
-  const hint =
-    goal === 'score'
-      ? lowWins
-        ? COPY.newGame.scoreHintLow
-        : COPY.newGame.scoreHint
-      : lowWins
-        ? COPY.newGame.roundsHintLow
-        : COPY.newGame.roundsHint
 
   return (
     <>
@@ -182,6 +180,49 @@ export function NewGameSheet() {
           )}
         </Notice>
       )}
+      {/* Who's at the table first, then what we're playing, then how it ends. */}
+      <div className="group">
+        <Eyebrow>{COPY.newGame.players}</Eyebrow>
+        <PillRow label={COPY.newGame.whoIsPlaying}>
+          {choices.map((p) => (
+            <Pill
+              key={p.id}
+              on={players.includes(p.id)}
+              onClick={() => toggle(p.id)}
+              chip={{ name: p.name, color: p.color }}
+            >
+              {p.name}
+            </Pill>
+          ))}
+        </PillRow>
+        <div className="row2">
+          <TextInput
+            id="new-player"
+            placeholder={COPY.newGame.addPlaceholder}
+            aria-label={COPY.newGame.addPlaceholder}
+            value={np}
+            onChange={(e) => setNp(e.target.value.slice(0, 16))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                add()
+              }
+            }}
+            enterKeyHint="done"
+          />
+          <Button
+            variant="ghost"
+            icon="plus"
+            iconSize={18}
+            style={{ flex: 'none' }}
+            onClick={add}
+            disabled={!np.trim()}
+          >
+            {COPY.newGame.add}
+          </Button>
+        </div>
+      </div>
+
       <div className="group">
         <Eyebrow>{COPY.newGame.what}</Eyebrow>
         <PillRow label={COPY.newGame.what}>
@@ -224,99 +265,33 @@ export function NewGameSheet() {
         <div className="stack">
           {!sel && <GoalSkeleton />}
           <div className={cx('group', sel ? 'reveal' : 'off')} inert={!sel}>
-            <Segmented<Goal>
-              label={COPY.newGame.goalLabel}
-              options={[
-                { value: 'score', label: COPY.newGame.goals.score },
-                { value: 'rounds', label: COPY.newGame.goals.rounds },
-                { value: 'open', label: COPY.newGame.goals.open },
-              ]}
-              value={goal}
-              onChange={(k) => {
+            <GoalFields
+              goal={goal}
+              target={goal === 'open' ? '' : targets[goal]}
+              lowWins={lowWins}
+              perPlayer={perPlayer}
+              lineup={players.length}
+              targetId="goal-target"
+              onGoal={(k) => {
                 a.play('tap')
                 setGoal(k)
-                if (k === 'score' && !target) setTarget('200')
-                if (k === 'rounds' && !target) setTarget('3')
+                setTargets((t) => refill(t, k))
+              }}
+              onTarget={(v) => {
+                if (goal !== 'open') setTargets((t) => ({ ...t, [goal]: v }))
+              }}
+              onLowWins={(v) => {
+                a.play('tap')
+                setLowWins(v)
+              }}
+              onPerPlayer={(v) => {
+                a.play('tap')
+                setPerPlayer(v)
+                // Off again: start from the line-up's count rather than a stale number.
+                if (!v) setTargets((t) => ({ ...t, rounds: String(Math.max(1, players.length)) }))
               }}
             />
-            {/* The target row and the open-ended line share one cell, sized to the taller. */}
-            <div className="stack">
-              <div
-                className={cx('row2', goal === 'open' && 'off')}
-                style={{ alignItems: 'center' }}
-              >
-                <TextInput
-                  className="num"
-                  id="goal-target"
-                  inputMode="numeric"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                  aria-label={
-                    goal === 'score'
-                      ? lowWins
-                        ? COPY.newGame.bustAt
-                        : COPY.newGame.pointsToWin
-                      : COPY.newGame.numberOfRounds
-                  }
-                />
-                <span className="stack center" style={{ flex: '1.3' }}>
-                  {hints.map((h) => (
-                    <span key={h} className={cx('hint', h !== hint && 'off')}>
-                      {h}
-                    </span>
-                  ))}
-                </span>
-              </div>
-              <span className={cx('hint slot', goal !== 'open' && 'off')}>
-                {COPY.newGame.openHint}
-              </span>
-            </div>
-            <Setting title={COPY.newGame.lowWins} hint={COPY.newGame.lowWinsHint}>
-              <Switch
-                checked={lowWins}
-                label={COPY.newGame.lowWins}
-                onChange={(v) => {
-                  a.play('tap')
-                  setLowWins(v)
-                }}
-              />
-            </Setting>
           </div>
-        </div>
-      </div>
-
-      <div className="group">
-        <Eyebrow>{COPY.newGame.players}</Eyebrow>
-        <PillRow label={COPY.newGame.whoIsPlaying}>
-          {choices.map((p) => (
-            <Pill
-              key={p.id}
-              on={players.includes(p.id)}
-              onClick={() => toggle(p.id)}
-              chip={{ name: p.name, color: p.color }}
-            >
-              {p.name}
-            </Pill>
-          ))}
-        </PillRow>
-        <div className="row2">
-          <TextInput
-            id="new-player"
-            placeholder={COPY.newGame.addPlaceholder}
-            aria-label={COPY.newGame.addPlaceholder}
-            value={np}
-            onChange={(e) => setNp(e.target.value.slice(0, 16))}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                add()
-              }
-            }}
-            enterKeyHint="done"
-          />
-          <Button variant="ghost" icon="plus" iconSize={18} style={{ flex: 'none' }} onClick={add}>
-            {COPY.newGame.add}
-          </Button>
         </div>
       </div>
 
@@ -340,7 +315,7 @@ export function NewGameSheet() {
 }
 
 /** Stand-ins for "How does it end?" before a game is picked: the segmented control, the target
- *  row and the low-wins switch, as quiet shimmering slabs. */
+ *  row and the two switch rows, as quiet shimmering slabs. */
 function GoalSkeleton() {
   return (
     <div className="skeleton-stack overlay" aria-hidden="true">
@@ -356,6 +331,13 @@ function GoalSkeleton() {
         <span className="skeleton-lines">
           <span className="skeleton line" style={{ width: '58%' }} />
           <span className="skeleton line" style={{ width: '40%' }} />
+        </span>
+        <span className="skeleton" style={{ width: 56, height: 34, borderRadius: 17 }} />
+      </div>
+      <div className="skeleton-row">
+        <span className="skeleton-lines">
+          <span className="skeleton line" style={{ width: '52%' }} />
+          <span className="skeleton line" style={{ width: '70%' }} />
         </span>
         <span className="skeleton" style={{ width: 56, height: 34, borderRadius: 17 }} />
       </div>

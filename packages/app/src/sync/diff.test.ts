@@ -1,7 +1,15 @@
 import { emptyStore, type Game, type Store, withRoundIds } from '@tally/core'
 import { describe, expect, it } from 'vitest'
 import { DELETE, diff, NOW } from './diff'
-import { deepEqual, gameDoc, gameFrom, naturalCompare, splitGames } from './docs'
+import {
+  deepEqual,
+  gameDoc,
+  gameFrom,
+  naturalCompare,
+  presetDoc,
+  presetFrom,
+  splitGames,
+} from './docs'
 
 const at = (m: number) => new Date(Date.UTC(2026, 9, 12, 19, m)).toISOString()
 
@@ -129,6 +137,61 @@ describe('diff', () => {
     })
   })
 
+  it('presets carry roundsPerPlayer; turning it off clears the field', () => {
+    const a = base()
+    const scout = a.presets.find((p) => p.id === 'scout')!
+    expect(scout.roundsPerPlayer).toBe(true)
+    const custom = { id: 'p1', name: 'Hearts', goal: 'rounds' as const, target: 4, lowWins: true }
+    const withNew = { ...a, presets: [...a.presets, { ...custom, roundsPerPlayer: true }] }
+    expect(diff(a, withNew, 'kate')).toEqual([
+      {
+        type: 'set',
+        col: 'presets',
+        id: 'p1',
+        data: { ...custom, roundsPerPlayer: true },
+      },
+    ])
+    const off = {
+      ...a,
+      presets: a.presets.map((p) => (p.id === 'scout' ? { ...p, roundsPerPlayer: undefined } : p)),
+    }
+    expect(diff(a, off, 'kate')).toEqual([
+      { type: 'update', col: 'presets', id: 'scout', data: { roundsPerPlayer: DELETE } },
+    ])
+    expect(diff(off, a, 'kate')).toEqual([
+      { type: 'update', col: 'presets', id: 'scout', data: { roundsPerPlayer: true } },
+    ])
+    // A preset without the flag writes no key (old clients' docs look the same).
+    expect('roundsPerPlayer' in presetDoc(custom)).toBe(false)
+  })
+
+  it('a "Who won?" game syncs its goal, and a winner round is one map field', () => {
+    const g = game({ name: 'Uno', goal: 'wins', target: 1 })
+    const [set] = diff(base(), base({ active: g }), 'kate')
+    expect(set).toMatchObject({ type: 'set', data: { goal: 'wins', target: 1 } })
+    const r = { id: 'r1', scores: { kate: 1, blair: 0 }, at: at(1) }
+    const done = game({
+      name: 'Uno',
+      goal: 'wins',
+      target: 1,
+      rounds: [r],
+      completedAt: at(1),
+      winnerId: 'kate',
+    })
+    expect(diff(base({ active: g }), base({ games: [done] }), 'kate')).toEqual([
+      {
+        type: 'update',
+        col: 'games',
+        id: 'g1',
+        data: {
+          completedAt: at(1),
+          winnerId: 'kate',
+          'rounds.r1': { scores: { kate: 1, blair: 0 }, at: at(1), by: 'kate' },
+        },
+      },
+    ])
+  })
+
   it('samples never sync', () => {
     expect(
       diff(base(), base({ games: [game({ sample: true, completedAt: at(4) })] }), 'k'),
@@ -149,6 +212,22 @@ describe('documents → Store', () => {
     const back = gameFrom('g1', { ...gameDoc(g), updatedAt: at(9) })
     expect(back?.rounds.map((r) => r.id)).toEqual(['r1', 'r2', 'r10'])
     expect(deepEqual(back, { ...g, rounds: back?.rounds })).toBe(true)
+  })
+
+  it('round-trips a "Who won?" game and a one-round-per-player preset', () => {
+    const g = game({
+      goal: 'wins',
+      target: 2,
+      rounds: [{ id: 'r1', scores: { kate: 0, blair: 1 } }],
+    })
+    const back = gameFrom('g1', { ...gameDoc(g), updatedAt: at(9) })
+    expect(back?.goal).toBe('wins')
+    expect(deepEqual(back, { ...g, rounds: back?.rounds })).toBe(true)
+    const scout = emptyStore().presets.find((p) => p.id === 'scout')!
+    expect(presetFrom('scout', { ...presetDoc(scout), updatedAt: at(9) })).toEqual(scout)
+    // An old doc without the key still reads, as a preset without the flag.
+    const { roundsPerPlayer: _, ...old } = presetDoc(scout)
+    expect(presetFrom('scout', old)?.roundsPerPlayer).toBeUndefined()
   })
 
   it('drops soft-deleted and unreadable games', () => {

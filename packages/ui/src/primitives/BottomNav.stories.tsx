@@ -4,6 +4,7 @@ import { BottomNav } from './BottomNav'
 
 const meta: Meta<typeof BottomNav> = {
   title: 'Primitives/BottomNav',
+  tags: ['!autodocs'],
   component: BottomNav,
   args: {
     screen: 'home',

@@ -12,6 +12,9 @@ body {
 .sb-bench {
   min-height: 100dvh;
 }
+.sb-bench--docs {
+  min-height: 0;
+}
 .sb-label {
   margin: 0 0 14px;
   font: 900 10px/1 ui-monospace, "SF Mono", Menlo, monospace;

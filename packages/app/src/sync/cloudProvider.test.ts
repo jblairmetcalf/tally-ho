@@ -314,4 +314,63 @@ describe('cloudProvider', () => {
     expect(b.data().games[0]?.rounds).toHaveLength(2)
     expect(b.data().games).toEqual(k.data().games)
   })
+
+  it('"Who won?": winner rounds sync, and the deciding win lands with the result in one write', async () => {
+    const { backend, k, b } = family()
+    backend.rules = finishedGamesAreFinal
+    await settle()
+    k.a.startGame({ ...flip7, name: 'Jaipur', goal: 'wins', target: 2 })
+    await settle()
+    expect(b.data().active).toMatchObject({ goal: 'wins', target: 2 })
+    k.a.submitWinner('blair')
+    await settle()
+    expect(b.data().active?.rounds).toHaveLength(1)
+    const n = backend.log.length
+    b.a.submitWinner('blair') // Blair's second Seal, scored on her own phone
+    await settle()
+    const w = writesSince(backend, n)
+    expect(w).toHaveLength(1)
+    expect(w[0]?.kind === 'update' && Object.keys(w[0].data)).toEqual(
+      expect.arrayContaining(['completedAt', 'winnerId']),
+    )
+    expect(k.data().games[0]).toMatchObject({ name: 'Jaipur', winnerId: 'blair' })
+    const g = k.data().games[0]!
+    expect(g.rounds.map((r) => r.scores)).toEqual([
+      { kate: 0, blair: 1, alder: 0 },
+      { kate: 0, blair: 1, alder: 0 },
+    ])
+    expect(backend.get('games', g.id)).toMatchObject({ goal: 'wins', winnerId: 'blair' })
+    expect(b.data().games).toEqual(k.data().games)
+  })
+
+  it('a tie settled by the game’s tiebreak crowns one leader on both phones', async () => {
+    const { backend, k, b } = family()
+    backend.rules = finishedGamesAreFinal
+    await settle()
+    k.a.startGame({ ...flip7, name: 'Uno', goal: 'wins', target: 1 })
+    k.a.submitRound(['1', '1', '0']) // a tie at the target: no finish yet
+    await settle()
+    expect(b.data().active?.rounds).toHaveLength(1)
+    b.a.crownWinner('kate')
+    await settle()
+    expect(k.data().active).toBeNull()
+    expect(k.data().games[0]?.winnerId).toBe('kate')
+    expect(k.data().games).toEqual(b.data().games)
+  })
+
+  it('a one-round-per-player preset syncs its flag, and clearing it reaches the other phone', async () => {
+    const { backend, k, b } = family()
+    await settle()
+    expect(b.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBe(true)
+    const scout = k.data().presets.find((p) => p.id === 'scout')!
+    k.a.upsertPreset({ ...scout, roundsPerPlayer: undefined, target: 4 })
+    await settle()
+    expect(backend.get('presets', 'scout')).not.toHaveProperty('roundsPerPlayer')
+    expect(b.data().presets.find((p) => p.id === 'scout')).toMatchObject({ target: 4 })
+    expect(b.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBeUndefined()
+    b.a.upsertPreset({ ...scout, roundsPerPlayer: true })
+    await settle()
+    expect(backend.get('presets', 'scout')?.roundsPerPlayer).toBe(true)
+    expect(k.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBe(true)
+  })
 })

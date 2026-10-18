@@ -62,10 +62,7 @@ test('open-ended game ends with the flag and crowns the leader', async ({ page }
   const sheet = page.getByRole('dialog', { name: 'New game' })
   await sheet.getByRole('button', { name: 'Other' }).click()
   await sheet.getByLabel('Game name').fill('Pictionary')
-  await expect(sheet.getByRole('radio', { name: 'Open-ended' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  )
+  await expect(sheet.getByRole('radio', { name: 'Open' })).toHaveAttribute('aria-checked', 'true')
   await sheet.getByRole('button', { name: 'Deal in · Pictionary' }).click()
   await expect(sheet).toBeHidden()
   await expect(page.getByText('Round 1 · Open-ended')).toBeVisible()
@@ -89,7 +86,7 @@ test('a tie at the end calls a tiebreak round', async ({ page }) => {
   await scoreRound(page, { Kate: 10, Blair: 10, Alder: 5 })
   await expect(page.locator('.ribbon')).toHaveText('Final round!')
   await scoreRound(page, { Kate: 10, Blair: 10, Alder: 5 })
-  await expect(toast(page)).toHaveText('Tied at the top. One more round decides it.')
+  await expect(toast(page)).toHaveText('Tied at the top. Crown the winner, or play one more round.')
   await expect(page.locator('.ribbon')).toHaveText('Tiebreak!')
   await expect(victory(page)).toBeHidden()
 

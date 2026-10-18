@@ -3,7 +3,7 @@ import { HAPTICS, type HapticCue, Haptics, Icon } from '@tally/ui'
 import { useState } from 'react'
 import { BARE, Mono, Page, pageTheme, Section } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Haptics', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Haptics', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

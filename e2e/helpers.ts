@@ -21,17 +21,20 @@ const TEST_PRESETS: Preset[] = [
   { id: 'hearts', name: 'Hearts', goal: 'score', target: 100, lowWins: true },
 ]
 
-/** A household with no history: Kate, Blair and Alder, sound off. */
+/**
+ * A household with no history: Kate, Blair and Alder, sound off, and the install guide already
+ * seen (so its one-time pop-up never lands on top of a spec; `e2e/install-share.spec.ts` tests it).
+ */
 export function household(patch: Partial<Store['prefs']> = {}): Store {
   const s = emptyStore()
-  s.prefs = { ...s.prefs, muted: true, ...patch }
+  s.prefs = { ...s.prefs, muted: true, installHintSeen: true, ...patch }
   s.presets = [...s.presets, ...TEST_PRESETS]
   return s
 }
 
 export function withSamples(patch: Partial<Store['prefs']> = {}): Store {
   const s = freshStore(systemClock)
-  s.prefs = { ...s.prefs, muted: true, ...patch }
+  s.prefs = { ...s.prefs, muted: true, installHintSeen: true, ...patch }
   s.presets = [...s.presets, ...TEST_PRESETS]
   return s
 }

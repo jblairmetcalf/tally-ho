@@ -3,7 +3,7 @@ import { Chip, PLAYER_COLOR_NAMES, PLAYER_COLORS, type ThemeId } from '@tally/ui
 import { BARE, Mono, Page, pageTheme, Section, Tag, ThemePair } from './chrome'
 import { contrast, grade, gradeTone, TOKENS } from './colour'
 
-const meta: Meta = { title: 'Foundations/Colour', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Colour', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

@@ -13,12 +13,17 @@ export interface VictoryOverlayProps {
   total: number
   /** Best first. */
   rows: PodiumRow[]
+  /**
+   * The line under the name, in place of "wins {gameName} with {total}" (a "Who won?" game has
+   * no points to quote: "wins Uno", "wins Jaipur, 2–1").
+   */
+  sub?: string
   onDone: () => void
   onRematch: () => void
 }
 
 /** When the losers' sting plays, after the fanfare (prototype timing). */
-export const VICTORY_LOSE_MS = 2300
+const VICTORY_LOSE_MS = 2300
 
 /**
  * The full-screen win: sunburst, crowned winking fox, the stamped name and the podium.
@@ -29,6 +34,7 @@ export function VictoryOverlay({
   gameName,
   total,
   rows,
+  sub,
   onDone,
   onRematch,
 }: VictoryOverlayProps) {
@@ -57,9 +63,7 @@ export function VictoryOverlay({
         <Fox crown wink />
       </div>
       <div className="v-name">{winner}</div>
-      <div className="v-sub">
-        wins {gameName} with {total}
-      </div>
+      <div className="v-sub">{sub ?? `wins ${gameName} with ${total}`}</div>
       <Podium rows={rows} showLast />
       <div className="v-actions">
         <Button variant="ghost" onClick={onDone}>

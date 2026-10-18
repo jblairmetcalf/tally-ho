@@ -1,4 +1,7 @@
-/** The prototype's 18 icons on a 24×24 stroke grid, plus extras for settings, themes and family sync. */
+/**
+ * The prototype's 18 icons on a 24×24 stroke grid, plus extras for settings, themes, family sync
+ * and the install / share / maker sheets.
+ */
 export const ICONS = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
@@ -36,6 +39,19 @@ export const ICONS = {
     '<path d="M9.5 6.2A6 6 0 0 1 17.8 9.1 4.95 4.95 0 0 1 20.6 17M17 19H7a4.5 4.5 0 0 1-.6-8.96M3 3l18 18"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"/>',
   download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  // install, share, the maker
+  share:
+    '<path d="M8.5 9.5H7A1.5 1.5 0 0 0 5.5 11v8A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 17 9.5h-1.5M12 3.5v10.5M8.5 7L12 3.5 15.5 7"/>',
+  addSquare: '<rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M12 8.5v7M8.5 12h7"/>',
+  phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M10.5 18.5h3"/>',
+  heart:
+    '<path d="M12 20s-7.5-4.4-7.5-10.1A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.6C19.5 15.6 12 20 12 20z"/>',
+  link: '<path d="M10.5 13.5a3.8 3.8 0 0 0 5.4 0l3-3a3.8 3.8 0 0 0-5.4-5.4l-1.2 1.2M13.5 10.5a3.8 3.8 0 0 0-5.4 0l-3 3a3.8 3.8 0 0 0 5.4 5.4l1.2-1.2"/>',
+  external:
+    '<path d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
+  more: '<circle cx="12" cy="5.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="18.5" r="1.3" fill="currentColor"/>',
+  install:
+    '<rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 7.5v5.5M9.5 10.5L12 13l2.5-2.5"/>',
 } as const
 export type IconName = keyof typeof ICONS
 

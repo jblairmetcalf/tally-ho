@@ -32,6 +32,8 @@ export type SheetSpec =
   | { type: 'detail'; id: string }
   | { type: 'settings' }
   | { type: 'signin' }
+  /** How to add Tally Ho! to the Home Screen (shown once by itself, and from Settings). */
+  | { type: 'install' }
 
 /** The last scored (or edited) round, for the bump / delta / fresh-row animations. */
 export interface Flash {
@@ -73,7 +75,8 @@ export interface TallyActions {
   play(cue: SfxCue): void
   /** Change screen (and scroll to the top), optionally with a sound. */
   go(screen: Screen, cue?: SfxCue): void
-  openSheet(spec: SheetSpec): void
+  /** Slide a sheet up. `silent`: no sound (it wasn't a tap, e.g. the install guide's one-time pop-up). */
+  openSheet(spec: SheetSpec, silent?: boolean): void
   closeSheet(silent?: boolean): void
   showToast(msg: string): void
   showBanner(text: string, tone?: BannerTone): void
@@ -87,6 +90,13 @@ export interface TallyActions {
 
   startGame(cfg: NewGameConfig): void
   submitRound(vals: string[], btn?: Element | null): void
+  /** "Who won?" games: the tapped player wins this round (1), everyone else 0. */
+  submitWinner(playerId: string, btn?: Element | null): void
+  /**
+   * End a tied game by the game's own tiebreak rule: crown one of the tied leaders (the
+   * alternative to playing a tiebreak round). Ignored for anyone not tied for the lead.
+   */
+  crownWinner(playerId: string): void
   saveRound(idx: number, vals: string[]): void
   deleteRound(idx: number): void
   endGame(): void
@@ -178,8 +188,8 @@ export function createTallyStore(
       set({ screen })
       fx.scrollTop()
     }
-    const openSheet = (spec: SheetSpec) => {
-      fx.play('open')
+    const openSheet = (spec: SheetSpec, silent = false) => {
+      if (!silent) fx.play('open')
       set((s) => ({ sheet: spec, sheetKey: s.sheetKey + 1 }))
     }
     const closeSheet = (silent = false) => {
@@ -322,6 +332,22 @@ export function createTallyStore(
         }
       },
 
+      submitWinner(playerId, btn) {
+        const active = data().active
+        if (!active?.playerIds.includes(playerId)) return
+        actions.submitRound(
+          active.playerIds.map((p) => (p === playerId ? '1' : '0')),
+          btn,
+        )
+      },
+
+      crownWinner(playerId) {
+        const active = data().active
+        if (!active?.rounds.length || !leadersOf(active).includes(playerId)) return
+        closeSheet(true)
+        finish(clone(active), playerId)
+      },
+
       saveRound(idx, vals) {
         const active = data().active
         const round = active?.rounds[idx]
@@ -457,7 +483,14 @@ export function createTallyStore(
         const p: Preset = {
           ...preset,
           name: preset.name.trim().slice(0, 32) || COPY.settings.newGameName,
-          target: preset.goal === 'open' ? null : preset.target,
+          // Open games have no target; "Who won?" always needs one (≥ 1 win), or the family's
+          // rules refuse the write and the preset never leaves this phone.
+          target:
+            preset.goal === 'open'
+              ? null
+              : preset.goal === 'wins'
+                ? Math.max(1, preset.target ?? 1)
+                : preset.target,
         }
         setData((x) => ({
           ...x,

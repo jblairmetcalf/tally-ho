@@ -103,6 +103,7 @@ function Frame({ theme, store, session, ui }: FamilyFramesProps & { theme: Theme
 
 const meta: Meta<typeof FamilyFrames> = {
   title: 'Screens/Family sync',
+  tags: ['!autodocs'],
   component: FamilyFrames,
   parameters: { tally: { bare: true }, layout: 'fullscreen' },
 }

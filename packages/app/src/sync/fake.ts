@@ -1,13 +1,5 @@
 import type { DocData } from './docs'
-import type {
-  AuthApi,
-  AuthUser,
-  FirebaseHandle,
-  FirestoreApi,
-  FsDoc,
-  FsError,
-  FsSnapshot,
-} from './firebase'
+import type { AuthApi, AuthUser, FirestoreApi, FsDoc, FsError, FsSnapshot } from './firebase'
 
 type Docs = Map<string, Map<string, DocData>>
 
@@ -353,12 +345,4 @@ export class FakeAuth implements AuthApi {
     if (this.offline) throw fsError('auth/network-request-failed')
     this.resets.push(email)
   }
-}
-
-/** A Firebase handle over the fakes. */
-export function fakeHandle(
-  backend = new FakeBackend(),
-  auth = new FakeAuth(),
-): FirebaseHandle & { db: FakeFirestore; auth: FakeAuth } {
-  return { db: backend.client(), auth }
 }

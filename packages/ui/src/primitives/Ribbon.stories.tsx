@@ -5,6 +5,7 @@ import { Ribbon } from './Ribbon'
 
 const meta: Meta<typeof Ribbon> = {
   title: 'Primitives/Ribbon',
+  tags: ['!autodocs'],
   component: Ribbon,
   args: { text: 'Round 3', tone: 'jade', inline: true },
   argTypes: { tone: { control: 'inline-radio', options: ['jade', 'amber', 'coral'] } },

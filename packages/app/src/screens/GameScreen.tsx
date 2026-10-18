@@ -1,4 +1,12 @@
-import { type Game, goalLabel, leaderOf, nearTarget, totalsOf } from '@tally/core'
+import {
+  evaluate,
+  type Game,
+  goalLabel,
+  leaderOf,
+  leadersOf,
+  nearTarget,
+  totalsOf,
+} from '@tally/core'
 import {
   Button,
   Card,
@@ -9,6 +17,7 @@ import {
   RoundPips,
   ScoreFields,
   SectionTitle,
+  WinnerPicker,
 } from '@tally/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
@@ -24,6 +33,12 @@ export function GameScreen({ game: g }: { game: Game }) {
   const lead = leaderOf(g)
   const finished = !!g.winnerId
   const people = roster.people(g.playerIds)
+  const wins = g.goal === 'wins'
+  const winTarget = Math.max(1, g.target ?? 1)
+  // Reached the end but level at the top: crown by the game's own rule, or play on.
+  const res = finished ? null : evaluate(g)
+  const tied = !!res && !res.done && !!res.tie
+  const tiedIds = tied ? leadersOf(g) : []
   const [vals, setVals] = useState<string[]>(() => g.playerIds.map(() => ''))
   const btnRef = useRef<HTMLButtonElement>(null)
 
@@ -33,6 +48,7 @@ export function GameScreen({ game: g }: { game: Game }) {
   }, [g.id])
 
   const nextRound = g.rounds.length + 1
+  const whoWon = winTarget > 1 ? COPY.game.whoWonRound(nextRound) : COPY.game.whoWon
   const last = g.rounds[g.rounds.length - 1]
   const mine = flash && flash.gid === g.id ? flash : null
   const submit = () => {
@@ -42,6 +58,10 @@ export function GameScreen({ game: g }: { game: Game }) {
 
   const sub = (id: string): string => {
     const total = t[id] ?? 0
+    if (wins) {
+      if (finished) return COPY.game.winsCount(total)
+      return winTarget > 1 ? COPY.game.toWin(winTarget - total) : COPY.game.noLast
+    }
     if (g.goal === 'score' && !finished && g.target != null) {
       if (total >= g.target) return COPY.game.overTheLine
       return g.lowWins ? COPY.game.untilBust(g.target - total) : COPY.game.toGo(g.target - total)
@@ -87,6 +107,13 @@ export function GameScreen({ game: g }: { game: Game }) {
           lowWins={g.lowWins}
         />
       )}
+      {wins && winTarget > 1 && (
+        <RaceTrack
+          players={people.map((p) => ({ ...p, total: t[p.id] ?? 0 }))}
+          target={winTarget}
+          lowWins={false}
+        />
+      )}
       {g.goal === 'rounds' && g.target != null && (
         <RoundPips target={g.target} done={g.rounds.length} />
       )}
@@ -113,7 +140,34 @@ export function GameScreen({ game: g }: { game: Game }) {
         })}
       </div>
 
-      {!finished && (
+      {tied && (
+        <Card as="section" className="tie-pick">
+          <SectionTitle>{COPY.game.tieTitle}</SectionTitle>
+          <p>{COPY.game.tieBody}</p>
+          <div className="crowns">
+            {tiedIds.map((id) => (
+              <Button key={id} variant="amber" icon="trophy" onClick={() => a.crownWinner(id)}>
+                {COPY.game.crown(roster.nameOf(id))}
+              </Button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {!finished && wins && (
+        <Card as="section" className="entry">
+          <div className="entry-head">
+            <SectionTitle>{whoWon}</SectionTitle>
+          </div>
+          <WinnerPicker
+            players={people}
+            label={whoWon}
+            onPick={(id, el) => a.submitWinner(id, el)}
+          />
+        </Card>
+      )}
+
+      {!finished && !wins && (
         <Card as="section" className="entry">
           <div className="entry-head">
             <SectionTitle>{COPY.game.scoreRound(nextRound)}</SectionTitle>
@@ -138,6 +192,8 @@ export function GameScreen({ game: g }: { game: Game }) {
           players={people}
           rounds={g.rounds}
           lowWins={g.lowWins}
+          mode={wins ? 'wins' : 'scores'}
+          wonLabel={COPY.game.wonRound}
           editable={!finished}
           freshKey={mine && !mine.edit ? mine.k : null}
           onEdit={(idx) => a.openSheet({ type: 'round', idx })}

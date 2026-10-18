@@ -50,12 +50,19 @@ service cloud.firestore {
       return str(v, 1, 40);
     }
 
+    // How a game ends: first to a score, after N rounds, "Who won?" (first to N wins), or open.
     function goal(v) {
-      return v in ['score', 'rounds', 'open'];
+      return v in ['score', 'rounds', 'wins', 'open'];
     }
 
     function target(v) {
       return v == null || (v is int && v > 0 && v <= 1000000);
+    }
+
+    // "Who won?" always counts to a number of wins (1 = a single game). Only 'wins' is held to
+    // this: older score/rounds docs predate the check and must keep validating.
+    function goalTarget(d) {
+      return d.goal != 'wins' || d.target is int;
     }
 
     function nullableStr(v) {
@@ -74,12 +81,16 @@ service cloud.firestore {
 
     function validPreset(d, id) {
       return d.keys().hasAll(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
-        && d.keys().hasOnly(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
+        && d.keys().hasOnly([
+          'id', 'name', 'goal', 'target', 'lowWins', 'updatedAt', 'roundsPerPlayer'
+        ])
         && d.id == id
         && str(d.name, 1, 32)
         && goal(d.goal)
         && target(d.target)
+        && goalTarget(d)
         && d.lowWins is bool
+        && optBool(d, 'roundsPerPlayer')
         && stamp(d.updatedAt);
     }
 
@@ -98,6 +109,7 @@ service cloud.firestore {
         && str(d.name, 1, 40)
         && goal(d.goal)
         && target(d.target)
+        && goalTarget(d)
         && d.lowWins is bool
         && d.playerIds is list && d.playerIds.size() >= 2 && d.playerIds.size() <= 12
         && stamp(d.startedAt)

@@ -34,9 +34,11 @@ export function takeWelcome(session: Session): string | null {
 export interface SignInSheetProps {
   /** Stories only: start mid-flow (filled in, spinning, or showing an error). */
   preview?: { email?: string; password?: string; busy?: boolean; error?: SignInErrorCode }
+  /** Nested over Settings: close just this sheet (default: the app's top-level sheet). */
+  onClose?: () => void
 }
 
-export function SignInSheet({ preview }: SignInSheetProps = {}) {
+export function SignInSheet({ preview, onClose }: SignInSheetProps = {}) {
   const a = useActions()
   const api = useSession()
   const [email, setEmail] = useState(preview?.email ?? '')
@@ -74,7 +76,8 @@ export function SignInSheet({ preview }: SignInSheetProps = {}) {
       // Normally the app has re-keyed by now and Home says welcome. If not, do it here.
       if (alive.current && welcomeFor) {
         welcomeFor = null
-        a.closeSheet(true)
+        if (onClose) onClose()
+        else a.closeSheet(true)
         a.showToast(C.welcome(api.session.mode === 'family' ? api.session.member.name : em))
       }
     } catch (x) {
@@ -106,7 +109,7 @@ export function SignInSheet({ preview }: SignInSheetProps = {}) {
 
   return (
     <>
-      <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
+      <SheetTitle title={C.title} onClose={onClose ?? (() => a.closeSheet())} />
       <p className="signin-lede">{C.lede}</p>
       <form className="group" onSubmit={submit} noValidate aria-busy={busy}>
         <label className="field-label" htmlFor="signin-email">

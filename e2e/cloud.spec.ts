@@ -42,16 +42,16 @@ test('a game started on one phone shows up live on another', async ({ browser, b
   await signInAs(a.page, BLAIR)
   await signInAs(b.page, ALDER)
 
-  await startPreset(a.page, 'Uno')
+  await startPreset(a.page, 'Flip 7')
   await scoreRound(a.page, { Kate: 10, Blair: 20, Alder: 5 })
   await expect(card(a.page, 'Blair').locator('.total')).toHaveText('20')
 
   // Alder's phone: the live game appears on Home, one round in.
   const resume = b.page.locator('button.resume')
-  await expect(resume).toContainText('Uno', { timeout: 20_000 })
+  await expect(resume).toContainText('Flip 7', { timeout: 20_000 })
   await expect(resume).toContainText('Round 2')
   await resume.click()
-  await expect(b.page.getByRole('heading', { level: 1, name: 'Uno' })).toBeVisible()
+  await expect(b.page.getByRole('heading', { level: 1, name: 'Flip 7' })).toBeVisible()
   await expect(card(b.page, 'Blair').locator('.total')).toHaveText('20')
 
   // And keeps following it.
@@ -72,7 +72,7 @@ test('a round scored offline survives a reload and syncs when back online', asyn
   await signInAs(b.page, ALDER)
   await waitForOfflineShell(a.page)
 
-  await startPreset(a.page, 'Uno')
+  await startPreset(a.page, 'Flip 7')
   await scoreRound(a.page, { Kate: 10, Blair: 20, Alder: 5 })
   const resume = b.page.locator('button.resume')
   await expect(resume).toContainText('Round 2', { timeout: 20_000 })
@@ -87,7 +87,7 @@ test('a round scored offline survives a reload and syncs when back online', asyn
   // Reload while offline: the round is still there (two rounds in, so "Round 3"), and the
   // Home badge says it's waiting.
   await a.page.reload()
-  const gameHeading = a.page.getByRole('heading', { level: 1, name: 'Uno' })
+  const gameHeading = a.page.getByRole('heading', { level: 1, name: 'Flip 7' })
   const resumeA = a.page.locator('button.resume')
   await expect(gameHeading.or(resumeA)).toBeVisible({ timeout: 20_000 })
   if (await gameHeading.isVisible()) {

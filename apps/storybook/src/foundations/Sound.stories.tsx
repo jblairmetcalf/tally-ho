@@ -3,7 +3,7 @@ import { Icon, type IconName, SFX, SFX_CUES, type SfxCue, Switch } from '@tally/
 import { useEffect, useState } from 'react'
 import { BARE, Mono, Page, pageTheme, Section } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Sound', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Sound', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

@@ -51,7 +51,9 @@ export function evaluate(g: Goaled): Evaluation {
       ? g.playerIds.some((p) => (t[p] ?? 0) >= target)
       : g.goal === 'rounds'
         ? g.rounds.length >= target
-        : false
+        : g.goal === 'wins'
+          ? g.playerIds.some((p) => (t[p] ?? 0) >= (target || 1))
+          : false
   if (!reached) return { done: false }
   const l = leadersOf(g)
   return l.length === 1 && l[0] ? { done: true, winner: l[0] } : { done: false, tie: true }
@@ -82,8 +84,14 @@ export function goalLabel(g: Pick<Game, 'goal' | 'target' | 'lowWins'>): string 
         ? `Bust at ${g.target}`
         : `Race to ${g.target}`
       : g.goal === 'rounds'
-        ? `${g.target} rounds`
-        : 'Open-ended'
+        ? g.target === 1
+          ? 'Final scores'
+          : `${g.target} rounds`
+        : g.goal === 'wins'
+          ? (g.target ?? 1) <= 1
+            ? 'Who won?'
+            : `First to ${g.target} wins`
+          : 'Open-ended'
   return g.lowWins && g.goal !== 'score' ? `${base} · low wins` : base
 }
 
@@ -97,4 +105,20 @@ export function hash(s: string): number {
   let h = 0
   for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0
   return Math.abs(h)
+}
+
+/** A "Who won?" round: the winner scores 1, everyone else 0 (so totals are win counts). */
+export function winRound(playerIds: string[], winnerId: string): Record<string, number> {
+  return Object.fromEntries(playerIds.map((p) => [p, p === winnerId ? 1 : 0]))
+}
+
+/** The round count for a game dealt from a preset (one round per player for Scout-like games). */
+export function targetFor(
+  preset: Pick<Game, 'goal' | 'target'> & { roundsPerPlayer?: boolean },
+  players: number,
+): number | null {
+  if (preset.goal === 'open') return null
+  if (preset.goal === 'rounds' && preset.roundsPerPlayer) return Math.max(1, players)
+  if (preset.goal === 'wins') return Math.max(1, preset.target ?? 1)
+  return preset.target
 }

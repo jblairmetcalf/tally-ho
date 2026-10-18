@@ -28,7 +28,7 @@ function parse(css: string) {
 
 export const TOKENS = parse(tokensCss)
 
-export function hexToRgb(hex: string): [number, number, number] | null {
+function hexToRgb(hex: string): [number, number, number] | null {
   const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
   if (!m?.[1]) return null
   const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1]

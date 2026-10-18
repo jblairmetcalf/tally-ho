@@ -8,6 +8,7 @@ const rows = podiumRows(g)
 
 const meta: Meta<typeof VictoryOverlay> = {
   title: 'Scoreboard/VictoryOverlay',
+  tags: ['!autodocs'],
   component: VictoryOverlay,
   parameters: { tally: { overlay: true } },
   args: {
@@ -50,6 +51,19 @@ export const FourPlayers: Story = {
       { id: 'kate', name: 'Kate', color: 0, total: 176 },
       { id: 'alder', name: 'Alder', color: 2, total: 150 },
       { id: 'blair', name: 'Blair', color: 1, total: 98 },
+    ],
+  },
+}
+/** A "Who won?" match (`sub`): no points to quote, so the line gives the wins. */
+export const WhoWon: Story = {
+  args: {
+    winner: 'Kate',
+    gameName: 'Jaipur',
+    total: 2,
+    sub: 'wins Jaipur, 2–1',
+    rows: [
+      { id: 'kate', name: 'Kate', color: 0, total: 2 },
+      { id: 'blair', name: 'Blair', color: 1, total: 1 },
     ],
   },
 }

@@ -5,6 +5,7 @@ import { Frames } from './StoryFrames'
 
 const meta: Meta<typeof Frames> = {
   title: 'Screens/TallyApp',
+  tags: ['!autodocs'],
   component: Frames,
   parameters: { tally: { bare: true }, layout: 'fullscreen' },
 }
@@ -25,6 +26,9 @@ export const HomeWithLiveGame: Story = {
 /** Level at the top of the standings: "Dead heat", an "=" chip and both names. */
 export const HomeDeadHeat: Story = { args: { store: SCENARIOS.deadHeat } }
 
+/** History before the first game: the empty state offers to deal one. */
+export const HistoryEmpty: Story = { args: { store: SCENARIOS.empty, ui: { screen: 'history' } } }
+
 export const History: Story = { args: { store: SCENARIOS.firstRun, ui: { screen: 'history' } } }
 
 export const Flip7Race: Story = { args: { store: SCENARIOS.flip7Race, ui: { screen: 'game' } } }
@@ -43,6 +47,15 @@ export const SushiGoFinalRound: Story = {
   },
 }
 
+/** Uno, "Who won?": one big button per player; a tap scores the game and crowns them. */
+export const UnoWhoWon: Story = { args: { store: SCENARIOS.unoWhoWon, ui: { screen: 'game' } } }
+
+/** Jaipur, first to 2 wins, level at 1–1: lanes to the target, "1 to win", crowns in the log. */
+export const JaipurMatch: Story = {
+  args: { store: SCENARIOS.jaipurMatch, ui: { screen: 'game' } },
+}
+
+/** Tied at the end: crown a leader by the game's own tiebreak rule, or score a tiebreak round. */
 export const Tiebreak: Story = {
   args: {
     store: SCENARIOS.tiebreak,

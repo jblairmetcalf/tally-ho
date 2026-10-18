@@ -5,7 +5,7 @@ A score counter for family game night. Pick a game, deal in, and tap in scores e
 It's an installable, offline PWA. Anyone can try it in **demo** mode (scores live on that phone). The family signs in to share one scoreboard across their phones (see [Family sync](#family-sync-firebase)).
 
 ## What's in the box
-- **Scoreboard:** race-to-a-score games (with a race track to the finish line), fixed-round games (with round pips) and open-ended games. Ties at the end trigger a tiebreak round. Any game can be set so the **lowest score wins** (Hearts, Golf, Skyjo…), counting down to a bust line instead.
+- **Scoreboard:** every game ends the way its rulebook says: race-to-a-score games (with a race track to the finish line), fixed-round games (with round pips; one round per player, or a single final tally), **Who won?** games where you just tap the winner (one game, or first to N wins) and open-ended games. Ties at the end trigger a tiebreak round, or you pick the winner by the game's own tiebreak. Any score or rounds game can be set so the **lowest score wins** (Hearts, Golf, Skyjo…), counting down to a bust line instead.
 - **Feel:**
   - a synthesised sound cue for every action (no audio files), audible even with the iPhone on silent
   - suit-shaped confetti

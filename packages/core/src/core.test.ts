@@ -10,7 +10,9 @@ import {
   ordinal,
   parseScore,
   ranked,
+  targetFor,
   totalsOf,
+  winRound,
 } from './scoring'
 import { computeStats, winSeries } from './stats'
 
@@ -91,6 +93,28 @@ describe('scoring', () => {
     expect(nearTarget(g, 100)).toBe(false)
   })
 
+  it('"Who won?": one winner a round, first to the target wins, no ties', () => {
+    const g = game({ goal: 'wins', target: 2 })
+    const r1 = { scores: winRound(['a', 'b'], 'a') }
+    expect(r1.scores).toEqual({ a: 1, b: 0 })
+    expect(evaluate({ ...g, rounds: [r1] }).done).toBe(false)
+    expect(evaluate({ ...g, rounds: [r1, { scores: winRound(['a', 'b'], 'b') }] }).done).toBe(false)
+    expect(evaluate({ ...g, rounds: [r1, { scores: winRound(['a', 'b'], 'a') }] })).toEqual({
+      done: true,
+      winner: 'a',
+    })
+    // A single game: one tap ends it.
+    expect(evaluate({ ...g, target: 1, rounds: [r1] })).toEqual({ done: true, winner: 'a' })
+  })
+
+  it('deals the right target from a preset', () => {
+    expect(targetFor({ goal: 'rounds', target: 3, roundsPerPlayer: true }, 5)).toBe(5)
+    expect(targetFor({ goal: 'rounds', target: 3 }, 5)).toBe(3)
+    expect(targetFor({ goal: 'wins', target: null }, 2)).toBe(1)
+    expect(targetFor({ goal: 'open', target: 200 }, 2)).toBeNull()
+    expect(targetFor({ goal: 'score', target: 21 }, 2)).toBe(21)
+  })
+
   it('labels goals', () => {
     expect(goalLabel(game())).toBe('Race to 100')
     expect(goalLabel(game({ lowWins: true }))).toBe('Bust at 100')
@@ -98,6 +122,9 @@ describe('scoring', () => {
       '9 rounds · low wins',
     )
     expect(goalLabel(game({ goal: 'open', target: null }))).toBe('Open-ended')
+    expect(goalLabel(game({ goal: 'wins', target: 1 }))).toBe('Who won?')
+    expect(goalLabel(game({ goal: 'wins', target: 2 }))).toBe('First to 2 wins')
+    expect(goalLabel(game({ goal: 'rounds', target: 1 }))).toBe('Final scores')
   })
 
   it('writes ordinals', () => {
@@ -191,6 +218,21 @@ describe('migrate', () => {
     const saved = JSON.parse(JSON.stringify(freshStore(clock)))
     saved.prefs.soundInSilent = true
     expect(migrate(saved)?.prefs).not.toHaveProperty('soundInSilent')
+  })
+
+  it('gives prefs saved before the install guide existed installHintSeen: false', () => {
+    const saved = JSON.parse(JSON.stringify(freshStore(clock)))
+    delete saved.prefs.installHintSeen
+    const s = migrate(saved)!
+    expect(s.prefs.installHintSeen).toBe(false)
+    expect(s.prefs.theme).toBe(saved.prefs.theme)
+    // Once seen, it stays seen.
+    saved.prefs.installHintSeen = true
+    expect(migrate(saved)?.prefs.installHintSeen).toBe(true)
+  })
+
+  it('migrates the prototype (v2) with the install guide not yet seen', () => {
+    expect(migrate({ games: [] })?.prefs.installHintSeen).toBe(false)
   })
 
   it('rejects garbage', () => {

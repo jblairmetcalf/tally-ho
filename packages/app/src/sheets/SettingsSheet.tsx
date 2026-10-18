@@ -1,12 +1,13 @@
-import { type Goal, goalLabel, type Player, type Preset, type ThemePref } from '@tally/core'
+import { goalLabel, type Player, type Preset, type ThemePref } from '@tally/core'
 import {
   Button,
   Chip,
   ConfirmButton,
-  cx,
   Eyebrow,
+  FoxNote,
   Icon,
   IconButton,
+  LinkRow,
   Pill,
   PillRow,
   SectionTitle,
@@ -22,8 +23,14 @@ import {
 import { useRef, useState } from 'react'
 import { useActions, useRoster, useTally, useTallyStore } from '../context'
 import { COPY } from '../copy'
+import { useInstall } from '../install'
 import { uniqueId } from '../store'
 import { useSession } from '../sync/session'
+import { ContactContent } from './ContactSheet'
+import { GoalFields, refill, type Targets, targetsFor } from './GoalFields'
+import { InstallGuide } from './InstallSheet'
+import { ShareContent } from './ShareSheet'
+import { SignInSheet } from './SignInSheet'
 
 const C = COPY.settings
 
@@ -202,7 +209,14 @@ function PlayersSection() {
           }}
           enterKeyHint="done"
         />
-        <Button variant="ghost" icon="plus" iconSize={18} style={{ flex: 'none' }} onClick={add}>
+        <Button
+          variant="ghost"
+          icon="plus"
+          iconSize={18}
+          style={{ flex: 'none' }}
+          onClick={add}
+          disabled={!np.trim()}
+        >
           {C.add}
         </Button>
       </div>
@@ -247,12 +261,14 @@ function PresetEditor({
 }) {
   const a = useActions()
   const [name, setName] = useState(preset.name)
-  const [target, setTarget] = useState(preset.target ? String(preset.target) : '')
+  const [targets, setTargets] = useState<Targets>(() => targetsFor(preset.goal, preset.target))
+  // One round per player follows the line-up: show the family's usual table size.
+  const lineup = useTally((s) => {
+    const live = new Set(s.data.players.filter((p) => !p.archived).map((p) => p.id))
+    return s.data.lastPlayerIds.filter((id) => live.has(id)).length || live.size
+  })
   const save = (patch: Partial<Preset>) => a.upsertPreset({ ...preset, ...patch })
-  const commitTarget = (raw: string) => {
-    const n = Number.parseInt(raw, 10)
-    if (n > 0) save({ target: n })
-  }
+  const goal = preset.goal
   return (
     <>
       <SheetTitle title={C.editGame(preset.name)} onClose={onClose} />
@@ -273,68 +289,35 @@ function PresetEditor({
             }
           }}
         />
-        <Segmented<Goal>
-          label={COPY.newGame.goalLabel}
-          options={[
-            { value: 'score', label: COPY.newGame.goals.score },
-            { value: 'rounds', label: COPY.newGame.goals.rounds },
-            { value: 'open', label: COPY.newGame.goals.open },
-          ]}
-          value={preset.goal}
-          onChange={(goal) => {
+        <GoalFields
+          goal={goal}
+          target={goal === 'open' ? '' : targets[goal]}
+          lowWins={preset.lowWins}
+          perPlayer={!!preset.roundsPerPlayer}
+          lineup={lineup}
+          onGoal={(next) => {
             a.play('tap')
-            const fallback = goal === 'score' ? 200 : goal === 'rounds' ? 3 : null
-            const tg =
-              goal === 'open'
-                ? null
-                : Number.parseInt(target, 10) > 0
-                  ? Number.parseInt(target, 10)
-                  : fallback
-            if (tg) setTarget(String(tg))
-            save({ goal, target: tg })
+            const full = refill(targets, next)
+            setTargets(full)
+            const tg = next === 'open' ? null : Number.parseInt(full[next], 10)
+            // "Who won?" has no points, so it can't be low-wins.
+            save({ goal: next, target: tg, ...(next === 'wins' ? { lowWins: false } : {}) })
+          }}
+          onTarget={(v) => {
+            if (goal === 'open') return
+            setTargets((t) => ({ ...t, [goal]: v }))
+            const n = Number.parseInt(v, 10)
+            if (n > 0) save({ target: n })
+          }}
+          onLowWins={(v) => {
+            a.play('tap')
+            save({ lowWins: v })
+          }}
+          onPerPlayer={(v) => {
+            a.play('tap')
+            save({ roundsPerPlayer: v })
           }}
         />
-        {/* The target row and the open-ended line share one cell, so the sheet keeps its height. */}
-        <div className="stack">
-          <div
-            className={cx('row2', preset.goal === 'open' && 'off')}
-            style={{ alignItems: 'center' }}
-          >
-            <TextInput
-              className="num"
-              inputMode="numeric"
-              value={target}
-              aria-label={
-                preset.goal === 'score'
-                  ? preset.lowWins
-                    ? COPY.newGame.bustAt
-                    : COPY.newGame.pointsToWin
-                  : COPY.newGame.numberOfRounds
-              }
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, '').slice(0, 5)
-                setTarget(v)
-                commitTarget(v)
-              }}
-            />
-            <span className="hint" style={{ flex: '1.3' }}>
-              {goalLabel(preset)}
-            </span>
-          </div>
-          <span className={cx('hint slot', preset.goal !== 'open' && 'off')}>
-            {COPY.newGame.openHint}
-          </span>
-        </div>
-        <Setting title={COPY.newGame.lowWins} hint={COPY.newGame.lowWinsHint}>
-          <Switch
-            checked={preset.lowWins}
-            label={COPY.newGame.lowWins}
-            onChange={(v) => {
-              a.play('tap')
-              save({ lowWins: v })
-            }}
-          />
-        </Setting>
       </div>
       <ConfirmButton
         label={C.deleteGame}
@@ -352,17 +335,124 @@ function PresetEditor({
   )
 }
 
+/**
+ * Add a game: a draft held here until "Add game", so closing the sheet (or never naming it)
+ * leaves no empty row behind. The add button waits for a name the family doesn't have yet.
+ */
+function GameCreator({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
+  const a = useActions()
+  const presets = useTally((s) => s.data.presets)
+  const lineup = useTally((s) => {
+    const live = new Set(s.data.players.filter((p) => !p.archived).map((p) => p.id))
+    return s.data.lastPlayerIds.filter((id) => live.has(id)).length || live.size
+  })
+  const [name, setName] = useState('')
+  const [goal, setGoal] = useState<Preset['goal']>('score')
+  const [targets, setTargets] = useState<Targets>(() => targetsFor('score', 100))
+  const [lowWins, setLowWins] = useState(false)
+  const [perPlayer, setPerPlayer] = useState(false)
+  const trimmed = name.trim()
+  const taken = presets.some((p) => p.name.trim().toLowerCase() === trimmed.toLowerCase())
+  const target = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
+  const ready = !!trimmed && !taken && (goal === 'open' || (target ?? 0) > 0)
+  const add = () => {
+    if (!ready) return
+    const id = uniqueId(
+      trimmed,
+      presets.map((p) => p.id),
+    )
+    a.upsertPreset({
+      id,
+      name: trimmed,
+      goal,
+      target,
+      lowWins: goal === 'wins' ? false : lowWins,
+      ...(goal === 'rounds' && perPlayer ? { roundsPerPlayer: true } : {}),
+    })
+    a.play('add')
+    a.showToast(COPY.toast.gameAdded(trimmed))
+    onDone()
+  }
+  return (
+    <>
+      <SheetTitle title={C.addGameTitle} onClose={onClose} />
+      <p className="hint" style={{ margin: 0 }}>
+        {C.addGameHint}
+      </p>
+      <div className="group">
+        <TextInput
+          aria-label={C.gameName}
+          placeholder={C.gameName}
+          value={name}
+          maxLength={32}
+          autoFocus
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              add()
+            }
+          }}
+          enterKeyHint="done"
+        />
+        {taken && (
+          <span className="hint" role="status" style={{ color: 'var(--coral-text)' }}>
+            {C.nameTaken(trimmed)}
+          </span>
+        )}
+        <GoalFields
+          goal={goal}
+          target={goal === 'open' ? '' : targets[goal]}
+          lowWins={lowWins}
+          perPlayer={perPlayer}
+          lineup={lineup}
+          onGoal={(next) => {
+            a.play('tap')
+            setTargets((t) => refill(t, next))
+            setGoal(next)
+            if (next === 'wins') setLowWins(false)
+          }}
+          onTarget={(v) => {
+            if (goal !== 'open') setTargets((t) => ({ ...t, [goal]: v }))
+          }}
+          onLowWins={(v) => {
+            a.play('tap')
+            setLowWins(v)
+          }}
+          onPerPlayer={(v) => {
+            a.play('tap')
+            setPerPlayer(v)
+          }}
+        />
+      </div>
+      <div className="sheet-cta">
+        <Button block icon="plus" iconSize={20} disabled={!ready} onClick={add}>
+          {C.addGameSave}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+/** The line under a game in Settings: its goal, or "One round per player" (Scout). */
+const presetLabel = (p: Preset) =>
+  p.goal === 'rounds' && p.roundsPerPlayer ? COPY.newGame.perPlayer : goalLabel(p)
+
 function GamesSection() {
   const a = useActions()
   const presets = useTally((s) => s.data.presets)
   const editor = useEditor(presets)
+  // A new game is a draft in its own sheet until it's added: no empty rows.
+  const [adding, setAdding] = useState(false)
+  const [addKey, setAddKey] = useState(0)
   const addGame = () => {
-    const id = uniqueId(
-      C.newGameName,
-      presets.map((p) => p.id),
-    )
-    a.upsertPreset({ id, name: C.newGameName, goal: 'score', target: 100, lowWins: false })
-    editor.show(id, 'add')
+    a.play('open')
+    setAddKey((k) => k + 1)
+    setAdding(true)
+  }
+  const closeAdd = () => {
+    a.play('close')
+    setAdding(false)
   }
   return (
     <section className="group" aria-labelledby="set-games">
@@ -374,7 +464,7 @@ function GamesSection() {
           <span className="n" style={{ display: 'flex', flexDirection: 'column' }}>
             {p.name}
             <span className="hint" style={{ fontWeight: 700, color: 'var(--muted)' }}>
-              {goalLabel(p)}
+              {presetLabel(p)}
             </span>
           </span>
           <IconButton
@@ -385,9 +475,19 @@ function GamesSection() {
           />
         </div>
       ))}
-      <Button variant="ghost" block icon="plus" iconSize={18} onClick={addGame}>
+      <Button
+        variant="ghost"
+        block
+        icon="plus"
+        iconSize={18}
+        aria-haspopup="dialog"
+        onClick={addGame}
+      >
         {C.addGame}
       </Button>
+      <Sheet open={adding} onClose={closeAdd} label={C.addGameTitle}>
+        <GameCreator key={addKey} onClose={closeAdd} onDone={() => setAdding(false)} />
+      </Sheet>
       <Sheet
         open={editor.open}
         onClose={editor.close}
@@ -440,6 +540,16 @@ function FamilySection() {
   const api = useSession()
   const store = useTallyStore()
   const roster = useRoster()
+  // Sign-in layers over Settings like the editors, so closing it lands back here.
+  const [signingIn, setSigningIn] = useState(false)
+  const openSignIn = () => {
+    a.play('open')
+    setSigningIn(true)
+  }
+  const closeSignIn = () => {
+    a.play('close')
+    setSigningIn(false)
+  }
   if (!api.enabled) return null
   const { session } = api
   return (
@@ -450,9 +560,12 @@ function FamilySection() {
       {session.mode === 'demo' ? (
         <>
           <span className="hint">{F.demoHint}</span>
-          <Button block icon="lock" iconSize={20} onClick={() => a.openSheet({ type: 'signin' })}>
+          <Button block icon="lock" iconSize={20} aria-haspopup="dialog" onClick={openSignIn}>
             {F.signIn}
           </Button>
+          <Sheet open={signingIn} onClose={closeSignIn} label={COPY.sheetLabel.signin}>
+            <SignInSheet onClose={closeSignIn} />
+          </Sheet>
           <Button
             variant="ghost"
             block
@@ -518,6 +631,66 @@ function FamilySection() {
   )
 }
 
+type Corner = 'install' | 'share' | 'contact'
+
+/**
+ * The friendly top of Settings: the fox says hi, then three ways out (install, share, the
+ * maker), each a sheet nested over Settings.
+ */
+function Landing() {
+  const a = useActions()
+  const install = useInstall()
+  const [open, setOpen] = useState<Corner | null>(null)
+  const show = (which: Corner) => {
+    a.play('open')
+    setOpen(which)
+  }
+  const close = () => {
+    a.play('close')
+    // Seen from Settings counts too: it won't pop up by itself after this.
+    if (open === 'install') a.setPref('installHintSeen', true)
+    setOpen(null)
+  }
+  return (
+    <section className="group" aria-label={C.more}>
+      <FoxNote title={C.hello} body={C.helloBody} className="mb-1.5" />
+      <LinkRow
+        icon="phone"
+        tone="jade"
+        title={C.install}
+        hint={install.installed ? C.installedHint : C.installHint}
+        aria-haspopup="dialog"
+        onClick={() => show('install')}
+      />
+      <LinkRow
+        icon="share"
+        tone="amber"
+        title={C.share}
+        hint={C.shareHint}
+        aria-haspopup="dialog"
+        onClick={() => show('share')}
+      />
+      <LinkRow
+        icon="heart"
+        tone="coral"
+        title={C.contact}
+        hint={C.contactHint}
+        aria-haspopup="dialog"
+        onClick={() => show('contact')}
+      />
+      <Sheet open={open === 'install'} onClose={close} label={COPY.sheetLabel.install}>
+        <InstallGuide onClose={close} />
+      </Sheet>
+      <Sheet open={open === 'share'} onClose={close} label={COPY.sheetLabel.share}>
+        <ShareContent onClose={close} />
+      </Sheet>
+      <Sheet open={open === 'contact'} onClose={close} label={COPY.sheetLabel.contact}>
+        <ContactContent onClose={close} />
+      </Sheet>
+    </section>
+  )
+}
+
 export function SettingsSheet() {
   const a = useActions()
   const prefs = useTally((s) => s.data.prefs)
@@ -525,6 +698,7 @@ export function SettingsSheet() {
   return (
     <>
       <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
+      <Landing />
       <FamilySection />
       <PlayersSection />
       <GamesSection />

@@ -66,4 +66,8 @@ export const Crowned: Story = {
 }
 
 /** A dead heat on the champion card: an "=" chip in `var(--faint)`, no crown. */
-export const DeadHeat: Story = { args: { name: '=', color: 'var(--faint)', size: 64 } }
+export const DeadHeat: Story = {
+  args: { name: '=', color: 'var(--faint)', size: 64 },
+  // A CSS colour, not a palette slot: a text control (the 0–7 slider can't show a string).
+  argTypes: { color: { control: 'text' } },
+}

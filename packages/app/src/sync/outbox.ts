@@ -3,7 +3,7 @@ import type { Col, DocData } from './docs'
 import { OUTBOX_KEY, readJson, type StorageLike, writeJson } from './storage'
 
 /** "Clear this field", in a form that survives JSON. */
-export const DELETE_MARK = { __tally: 'delete' } as const
+const DELETE_MARK = { __tally: 'delete' } as const
 
 const isDeleteMark = (v: unknown): boolean =>
   !!v && typeof v === 'object' && (v as { __tally?: unknown }).__tally === 'delete'

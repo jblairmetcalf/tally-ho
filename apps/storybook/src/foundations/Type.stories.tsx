@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Eyebrow, SectionTitle } from '@tally/ui'
 import { BARE, Mono, Page, pageTheme, Section, ThemePair } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Type', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Type', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

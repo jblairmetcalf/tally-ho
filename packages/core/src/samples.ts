@@ -1,6 +1,6 @@
 import { emptyStore } from './presets'
 import type { Clock, Game, Store } from './schemas'
-import { evaluate, ranked } from './scoring'
+import { evaluate, ranked, winRound } from './scoring'
 
 /** Park–Miller, as in the prototype, so the sample history matches it exactly. */
 export function rng(seed: number): () => number {
@@ -15,12 +15,12 @@ const DAY = 864e5
 const PLAN: [string, Game['goal'], number][] = [
   ['The Fox in the Forest', 'score', 21],
   ['Scout', 'rounds', 3],
-  ['Mille Bornes', 'score', 5000],
+  ['Mille Bornes', 'score', 1000],
   ['The Fox in the Forest', 'score', 21],
   ['Scout', 'rounds', 3],
-  ['Uno', 'score', 500],
+  ['Uno', 'wins', 1],
   ['The Fox in the Forest', 'score', 21],
-  ['Mille Bornes', 'score', 5000],
+  ['Mille Bornes', 'score', 1000],
   ['Scout', 'rounds', 3],
   ['The Fox in the Forest', 'score', 21],
 ]
@@ -35,8 +35,19 @@ function roundScore(name: string, r: () => number, k: number): number {
     case 'Mille Bornes':
       return Math.round((2 + r() * 12) * k) * 100 // hundreds of kilometres
     default:
-      return r() < 0.3 ? Math.round((40 + r() * 120) * k) : 0 // Uno: the hand's winner scores
+      return Math.round((2 + r() * 12) * k)
   }
+}
+
+/** "Who won?": one winner, weighted by skill. */
+function pickWinner(playerIds: string[], r: () => number, skill: Record<string, number>): string {
+  const weights = playerIds.map((p) => skill[p] ?? 1)
+  let roll = r() * weights.reduce((a, b) => a + b, 0)
+  for (const [i, w] of weights.entries()) {
+    roll -= w
+    if (roll <= 0) return playerIds[i]!
+  }
+  return playerIds.at(-1)!
 }
 
 /** Ten finished games between Kate, Blair and Alder, newest first. */
@@ -63,10 +74,9 @@ export function makeSamples(clock: Clock, playerIds = ['kate', 'blair', 'alder']
     let res = evaluate(g)
     let guard = 0
     while (!res.done && guard++ < 40) {
-      const sc: Record<string, number> = {}
-      for (const p of playerIds) {
-        sc[p] = roundScore(name, r, skill[p] ?? 1) || 0
-      }
+      let sc: Record<string, number> = {}
+      if (goal === 'wins') sc = winRound(playerIds, pickWinner(playerIds, r, skill))
+      else for (const p of playerIds) sc[p] = roundScore(name, r, skill[p] ?? 1) || 0
       g.rounds.push({ id: `${g.id}-r${g.rounds.length + 1}`, scores: sc })
       res = evaluate(g)
     }

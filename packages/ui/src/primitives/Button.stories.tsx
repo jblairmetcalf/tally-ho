@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Button } from './Button'
+import { Button, ButtonLink } from './Button'
 
 const meta: Meta<typeof Button> = {
   title: 'Primitives/Button',
@@ -71,3 +71,17 @@ export const Armed: Story = {
 export const WithIcon: Story = { args: { icon: 'repeat', children: 'Rematch', variant: 'ghost' } }
 
 export const Disabled: Story = { args: { disabled: true, children: 'Start game' } }
+
+/** `ButtonLink`: an `<a>` with the same slab and press, for going somewhere (opens a new tab). */
+export const AsLink: Story = {
+  render: () => (
+    <div className="flex flex-col gap-3">
+      <ButtonLink href="https://jblairmetcalf.com" external block icon="external" iconSize={20}>
+        Visit jblairmetcalf.com
+      </ButtonLink>
+      <ButtonLink href="https://jblairmetcalf.com" external variant="ghost" size="sm">
+        A small ghost link
+      </ButtonLink>
+    </div>
+  ),
+}

@@ -214,6 +214,14 @@ describe('players and presets', () => {
     expect(s().data.presets.some((p) => p.id === 'yahtzee')).toBe(false)
   })
 
+  it('a "Who won?" preset always keeps a wins target (the rules require one)', () => {
+    const { a, s } = setup()
+    a.upsertPreset({ id: 'spicy', name: 'Spicy', goal: 'wins', target: null, lowWins: false })
+    expect(s().data.presets.find((p) => p.id === 'spicy')?.target).toBe(1)
+    a.upsertPreset({ id: 'jaipur', name: 'Jaipur', goal: 'wins', target: 2, lowWins: false })
+    expect(s().data.presets.find((p) => p.id === 'jaipur')?.target).toBe(2)
+  })
+
   it('persists prefs', () => {
     const { a, provider } = setup()
     a.setPref('theme', 'light')
@@ -297,5 +305,46 @@ describe('changes from another phone (replaceData)', () => {
     a.replaceData(remote)
     expect(s().screen).toBe('home')
     expect(s().toast?.msg).toBe(COPY.toast.endedElsewhere('Flip 7'))
+  })
+})
+
+describe('Who won? and picking a tiebreak winner', () => {
+  it('a single "Who won?" game ends on one tap, crowning the tapped player', () => {
+    const { a, s } = setup()
+    a.startGame({ ...flip7, name: 'Uno', goal: 'wins', target: 1 })
+    a.submitWinner('alder')
+    expect(s().data.active).toBeNull()
+    expect(s().data.games[0]).toMatchObject({ name: 'Uno', winnerId: 'alder' })
+    expect(s().data.games[0]?.rounds[0]?.scores).toEqual({ kate: 0, blair: 0, alder: 1 })
+  })
+
+  it('first to two wins (Jaipur) needs two taps for the same player', () => {
+    const { a, s } = setup()
+    a.startGame({ ...flip7, name: 'Jaipur', goal: 'wins', target: 2, playerIds: ['kate', 'blair'] })
+    a.submitWinner('kate')
+    a.submitWinner('blair')
+    expect(s().data.active?.rounds).toHaveLength(2)
+    a.submitWinner('kate')
+    expect(s().data.games[0]?.winnerId).toBe('kate')
+  })
+
+  it("ignores a winner who isn't playing", () => {
+    const { a, s } = setup()
+    a.startGame({ ...flip7, goal: 'wins', target: 1, playerIds: ['kate', 'blair'] })
+    a.submitWinner('alder')
+    expect(s().data.active?.rounds).toHaveLength(0)
+  })
+
+  it('a tie can be settled by picking one of the tied leaders', () => {
+    const { a, s } = setup()
+    a.startGame({ ...flip7, name: 'Sushi Go', goal: 'rounds', target: 1 })
+    a.submitRound(['10', '10', '3'])
+    expect(s().data.active).not.toBeNull() // tied: the game waits
+    a.crownWinner('alder') // not tied for the lead: ignored
+    expect(s().data.active).not.toBeNull()
+    a.crownWinner('blair')
+    expect(s().data.games[0]?.winnerId).toBe('blair')
+    vi.advanceTimersByTime(500)
+    expect(s().victory?.winnerId).toBe('blair')
   })
 })

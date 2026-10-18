@@ -3,7 +3,7 @@ import { Button, ICONS, Icon, IconButton, type IconName } from '@tally/ui'
 import { type CSSProperties, useState } from 'react'
 import { BARE, Mono, Page, pageTheme, Section, ThemePair } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Icons', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Icons', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

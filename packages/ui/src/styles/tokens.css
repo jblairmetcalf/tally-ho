@@ -42,6 +42,7 @@
   --coral-rgb: 255 77 109;
   --lav: #a78bfa;
   --lav-rgb: 167 139 250;
+  --lav-deep: #7c5fe0;
   --cream: #f7e9d2;
 
   /* the icon's ink: text on jewel fills, and the brand disc in every theme */
@@ -91,6 +92,7 @@
   --coral-deep: #c42848;
   --coral-text: #c42848;
   --lav: #a78bfa;
+  --lav-deep: #7c5fe0;
   --cream: #f7e9d2;
 
   --amber-display: #ffb800;
@@ -125,6 +127,9 @@
   /* motion */
   --spring: cubic-bezier(0.25, 1.45, 0.45, 1);
   --nav-h: 76px;
+
+  /* QR codes are always dark on light, in both themes: cameras read that best */
+  --qr-plate: #ffffff;
 
   /* player chips: the prototype's eight */
   --p0: #00d4aa;

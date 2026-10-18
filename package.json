@@ -19,7 +19,9 @@
     "icons": "tsx scripts/icons.ts",
     "deploy": "pnpm --filter @tally/web build && node scripts/vercel-output.mjs apps/web/out apps/web && npx --yes vercel deploy --prebuilt --prod --cwd apps/web",
     "deploy:storybook": "pnpm --filter @tally/storybook build && node scripts/vercel-output.mjs apps/storybook/storybook-static apps/storybook && npx --yes vercel deploy --prebuilt --prod --cwd apps/storybook",
-    "firebase:rules": "firebase deploy --only firestore:rules"
+    "firebase:rules": "firebase deploy --only firestore:rules",
+    "check:harness": "node scripts/check-harness.mjs && node --test .claude/hooks/hooks.test.mjs",
+    "drift": "node scripts/drift-probes.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",

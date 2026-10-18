@@ -3,7 +3,7 @@ import { Badge, Button, Chip, IconButton, Switch } from '@tally/ui'
 import { type CSSProperties, type ReactNode, useState } from 'react'
 import { BARE, Mono, Page, pageTheme, Section, ThemePair } from './chrome'
 
-const meta: Meta = { title: 'Foundations/Shape', parameters: BARE }
+const meta: Meta = { title: 'Foundations/Shape', tags: ['!autodocs'], parameters: BARE }
 export default meta
 type Story = StoryObj
 

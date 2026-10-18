@@ -1,7 +1,7 @@
 import { isCompleted } from '@tally/core'
-import { Card, EmptyState, Eyebrow, Pill, PillRow } from '@tally/ui'
+import { Button, EmptyState, Eyebrow, Pill, PillRow } from '@tally/ui'
 import { type CSSProperties, useMemo, useState } from 'react'
-import { useRoster, useTally } from '../context'
+import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
 import { GameRowFor } from './GameRowFor'
 
@@ -9,6 +9,7 @@ export function HistoryScreen() {
   const all = useTally((s) => s.data.games)
   const play = useTally((s) => s.actions.play)
   const roster = useRoster()
+  const a = useActions()
   const [fg, setFg] = useState<string>('all')
   const [fw, setFw] = useState<string>('all')
 
@@ -78,12 +79,19 @@ export function HistoryScreen() {
       </div>
 
       {list.length === 0 ? (
-        <Card>
-          <EmptyState
-            title={games.length ? COPY.history.noMatchTitle : COPY.history.emptyTitle}
-            body={games.length ? COPY.history.noMatchBody : COPY.history.emptyBody}
-          />
-        </Card>
+        <EmptyState
+          title={games.length ? COPY.history.noMatchTitle : COPY.history.emptyTitle}
+          body={games.length ? COPY.history.noMatchBody : COPY.history.emptyBody}
+          action={
+            // Nothing played yet: deal the first one from here. (With games but no match,
+            // the hint to change the filters is the answer, not a new game.)
+            games.length ? undefined : (
+              <Button icon="plus" onClick={() => a.openSheet({ type: 'new' })}>
+                {COPY.home.newGame}
+              </Button>
+            )
+          }
+        />
       ) : (
         list.map((g, i) => (
           <div className="rise" style={{ '--i': Math.min(i, 8) } as CSSProperties} key={g.id}>

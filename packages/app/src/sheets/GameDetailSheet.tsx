@@ -15,7 +15,7 @@ export function GameDetailSheet({ game: g }: { game: CompletedGame }) {
       </div>
       <div className="group">
         <Podium
-          rows={ranked(g).map((id) => ({
+          rows={[g.winnerId, ...ranked(g).filter((id) => id !== g.winnerId)].map((id) => ({
             id,
             name: roster.nameOf(id),
             color: roster.colorOf(id),
@@ -28,6 +28,8 @@ export function GameDetailSheet({ game: g }: { game: CompletedGame }) {
         players={roster.people(g.playerIds)}
         rounds={g.rounds}
         lowWins={g.lowWins}
+        mode={g.goal === 'wins' ? 'wins' : 'scores'}
+        wonLabel={COPY.game.wonRound}
         editable={false}
         style={{ padding: 6 }}
       />

@@ -119,18 +119,17 @@ export function HomeScreen() {
       )}
 
       {done.length === 0 || !top ? (
-        <Card className="rise">
-          <EmptyState
-            crown
-            title={COPY.home.emptyTitle}
-            body={COPY.home.emptyBody}
-            action={
-              <Button icon="plus" onClick={() => a.openSheet({ type: 'new' })}>
-                {COPY.home.newGame}
-              </Button>
-            }
-          />
-        </Card>
+        <EmptyState
+          className="rise"
+          crown
+          title={COPY.home.emptyTitle}
+          body={COPY.home.emptyBody}
+          action={
+            <Button icon="plus" onClick={() => a.openSheet({ type: 'new' })}>
+              {COPY.home.newGame}
+            </Button>
+          }
+        />
       ) : (
         <>
           <div className="rise" style={rise(1)}>

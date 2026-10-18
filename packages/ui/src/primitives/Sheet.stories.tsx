@@ -12,6 +12,7 @@ import { TextInput } from './TextInput'
 
 const meta: Meta<typeof Sheet> = {
   title: 'Primitives/Sheet',
+  tags: ['!autodocs'],
   component: Sheet,
   parameters: { tally: { overlay: true } },
 }

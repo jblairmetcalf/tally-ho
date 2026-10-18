@@ -19,6 +19,13 @@ export interface RoundLogProps {
    * initial chip after the round number ("scored by Kate" to screen readers).
    */
   nameOf?: (id: string) => string
+  /**
+   * `wins`: a "Who won?" game, where each round is one winner (1) and everyone else 0. The
+   * winner's column shows a crown in their colour instead of the numbers.
+   */
+  mode?: 'scores' | 'wins'
+  /** Wins mode: what screen readers hear for a round's winner. */
+  wonLabel?: (name: string, round: number) => string
   className?: string
   style?: CSSProperties
 }
@@ -32,9 +39,12 @@ export function RoundLog({
   freshKey = null,
   onEdit,
   nameOf,
+  mode = 'scores',
+  wonLabel = wonRound,
   className,
   style,
 }: RoundLogProps) {
+  const wins = mode === 'wins'
   const uid = useId()
   const order = rounds.map((r, i) => ({ r, i })).reverse()
   return (
@@ -60,6 +70,9 @@ export function RoundLog({
         const by =
           nameOf && r.by ? { name: nameOf(r.by), p: players.find((p) => p.id === r.by) } : null
         const byId = by ? `${uid}-by-${i}` : undefined
+        const winner = wins ? players.find((p) => (r.scores[p.id] ?? 0) > 0) : undefined
+        const winId = winner ? `${uid}-won-${i}` : undefined
+        const describedBy = [byId, winId].filter(Boolean).join(' ') || undefined
         const cells = (
           <>
             <span className="rn">
@@ -79,8 +92,26 @@ export function RoundLog({
                 </>
               )}
             </span>
+            {winner && (
+              <span id={winId} className="sr-only">
+                {wonLabel(winner.name, i + 1)}
+              </span>
+            )}
             {players.map((p) => {
               const v = r.scores[p.id]
+              if (wins) {
+                const won = winner?.id === p.id
+                return (
+                  <span
+                    key={p.id}
+                    className={cx('sc', won ? 'win' : 'nil')}
+                    style={{ '--c': paletteVar(p.color) } as CSSProperties}
+                    aria-hidden="true"
+                  >
+                    {won ? <Icon name="crown" size={20} /> : '·'}
+                  </span>
+                )
+              }
               return (
                 <span
                   key={p.id}
@@ -101,7 +132,7 @@ export function RoundLog({
             type="button"
             className={cx('log-row', fresh && 'fresh')}
             aria-label={`Edit round ${i + 1}`}
-            aria-describedby={byId}
+            aria-describedby={describedBy}
             onClick={() => onEdit?.(i)}
           >
             {cells}
@@ -118,3 +149,4 @@ export function RoundLog({
 
 const initial = (name: string) => (Array.from(name.trim())[0] ?? '?').toUpperCase()
 const scoredBy = (name: string) => `scored by ${name}`
+const wonRound = (name: string, round: number) => `${name} won round ${round}`

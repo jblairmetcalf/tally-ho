@@ -15,7 +15,7 @@ export interface ScoreFieldsProps {
 }
 
 /** Prototype sanitising: digits and one leading minus, at most 6 characters. */
-export const sanitizeScore = (v: string) =>
+const sanitizeScore = (v: string) =>
   v
     .replace(/[^0-9-]/g, '')
     .replace(/(?!^)-/g, '')

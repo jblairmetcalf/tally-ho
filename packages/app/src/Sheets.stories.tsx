@@ -5,6 +5,7 @@ import { clickButton, Frames } from './StoryFrames'
 
 const meta: Meta<typeof Frames> = {
   title: 'Sheets/App sheets',
+  tags: ['!autodocs'],
   component: Frames,
   parameters: { tally: { bare: true }, layout: 'fullscreen' },
 }
@@ -58,6 +59,20 @@ export const NewGameOther: Story = {
   },
 }
 
+/** Pick a game by name in the pills row (it may need a frame or two to appear). */
+const pickGame = (name: string) => (frame: HTMLElement) => {
+  const pill = gamePills(frame).find((b) => b.textContent?.trim() === name)
+  if (!pill) return false
+  if (pill.getAttribute('aria-pressed') !== 'true') pill.click()
+  return pill.getAttribute('aria-pressed') === 'true'
+}
+
+/** Uno: "Who won?" with one win needed; the low-wins switch gives way to how it scores. */
+export const NewGameWhoWon: Story = { args: { ...NewGame.args, act: pickGame('Uno') } }
+
+/** Scout: Rounds, one per player, so the count shows the line-up's size (3) and follows it. */
+export const NewGameRoundsPerPlayer: Story = { args: { ...NewGame.args, act: pickGame('Scout') } }
+
 export const EditRound: Story = {
   args: {
     store: SCENARIOS.flip7Race,
@@ -65,10 +80,19 @@ export const EditRound: Story = {
   },
 }
 
+/** Editing a "Who won?" round: pick the winner instead of typing scores. */
+export const EditRoundWhoWon: Story = {
+  args: {
+    store: SCENARIOS.jaipurMatch,
+    ui: { screen: 'game', sheet: { type: 'round', idx: 0 }, sheetKey: 1 },
+  },
+}
+
 export const EndGame: Story = {
   args: { store: SCENARIOS.flip7Race, ui: { screen: 'game', sheet: { type: 'end' }, sheetKey: 1 } },
 }
 
+/** Tied: crown one of the leaders by the game's tiebreak rule, keep playing, or discard. */
 export const EndGameTied: Story = {
   args: { store: SCENARIOS.tiebreak, ui: { screen: 'game', sheet: { type: 'end' }, sheetKey: 1 } },
 }
@@ -79,6 +103,11 @@ export const GameDetail: Story = {
 
 export const Settings: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'settings' }, sheetKey: 1 } },
+}
+
+/** Adding a game: a draft sheet over Settings; nothing is saved until it has a name. */
+export const SettingsAddGame: Story = {
+  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.addGame) },
 }
 
 /** Editing a player opens a second sheet over Settings, with its own backdrop. */
@@ -100,4 +129,9 @@ export const SettingsEditGame: Story = {
       return !!edit
     },
   },
+}
+
+/** Editing a "Who won?" game (Uno): the wins needed, and no low-wins switch. */
+export const SettingsEditWhoWon: Story = {
+  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.editGame('Uno')) },
 }

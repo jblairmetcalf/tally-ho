@@ -52,6 +52,8 @@ export const presetDoc = (p: Preset): DocData =>
     goal: p.goal,
     target: p.target,
     lowWins: p.lowWins,
+    // Optional: absent on older docs and on every preset that isn't one round per dealer.
+    roundsPerPlayer: p.roundsPerPlayer,
   })
 
 export const roundDoc = (r: Round, by?: string): DocData =>

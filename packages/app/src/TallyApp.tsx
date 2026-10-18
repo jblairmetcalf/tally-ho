@@ -11,10 +11,11 @@ import {
   VictoryOverlay,
 } from '@tally/ui'
 import { useEffect, useRef, useState } from 'react'
-import { TallyContext, useActions, useRoster, useTally } from './context'
+import { TallyContext, useActions, useRoster, useTally, useTallyStore } from './context'
 import { COPY } from './copy'
 import { createEffects } from './effects'
 import { useThemePref, useWakeLock } from './hooks'
+import { readInstall } from './install'
 import { type DataProvider, localProvider } from './provider'
 import { GameScreen } from './screens/GameScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
@@ -22,6 +23,7 @@ import { HomeScreen } from './screens/HomeScreen'
 import { EditRoundSheet } from './sheets/EditRoundSheet'
 import { EndGameSheet } from './sheets/EndGameSheet'
 import { GameDetailSheet } from './sheets/GameDetailSheet'
+import { InstallSheet } from './sheets/InstallSheet'
 import { NewGameSheet } from './sheets/NewGameSheet'
 import { SettingsSheet } from './sheets/SettingsSheet'
 import { SignInSheet } from './sheets/SignInSheet'
@@ -137,6 +139,7 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
   const inGame = screen === 'game' && !!shown
 
   useWakeLock(!embedded && inGame && prefs.wakeLock)
+  useInstallHint(!embedded)
 
   useEffect(() => {
     if (!silent) SFX.setMuted(prefs.muted)
@@ -195,6 +198,38 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
   )
 }
 
+/** How long after the app paints the install guide pops up, the first time. */
+const INSTALL_HINT_MS = 1200
+
+/**
+ * The install guide, once: on first launch in a browser tab (not from the Home Screen, not in
+ * Storybook), a moment after the app paints, if nothing else is up. Silent, because it isn't a
+ * tap (and a sound outside a tap would take iOS's audio from other apps). However it's
+ * dismissed, it never pops up by itself again (`prefs.installHintSeen`, this phone only).
+ */
+function useInstallHint(enabled: boolean) {
+  const store = useTallyStore()
+  useEffect(() => {
+    if (!enabled) return
+    const t = setTimeout(() => {
+      const s = store.getState()
+      // Busy (a sheet, a victory, a game on screen)? Not now: next launch.
+      if (s.data.prefs.installHintSeen || s.sheet || s.victory || s.screen !== 'home') return
+      if (readInstall().installed) return
+      s.actions.openSheet({ type: 'install' }, true)
+    }, INSTALL_HINT_MS)
+    return () => clearTimeout(t)
+  }, [enabled, store])
+
+  const showing = useTally((s) => s.sheet?.type === 'install')
+  const was = useRef(showing)
+  useEffect(() => {
+    if (was.current && !showing && !store.getState().data.prefs.installHintSeen)
+      store.getState().actions.setPref('installHintSeen', true)
+    was.current = showing
+  }, [showing, store])
+}
+
 function labelOf(spec: SheetSpec | null, gameName: (id: string) => string): string {
   if (!spec) return ''
   switch (spec.type) {
@@ -210,6 +245,8 @@ function labelOf(spec: SheetSpec | null, gameName: (id: string) => string): stri
       return COPY.sheetLabel.settings
     case 'signin':
       return COPY.sheetLabel.signin
+    case 'install':
+      return COPY.sheetLabel.install
   }
 }
 
@@ -235,6 +272,7 @@ function SheetHost() {
   else if (detail && isCompleted(detail)) content = <GameDetailSheet game={detail} />
   else if (spec?.type === 'settings') content = <SettingsSheet />
   else if (spec?.type === 'signin') content = <SignInSheet />
+  else if (spec?.type === 'install') content = <InstallSheet />
 
   return (
     <Sheet
@@ -255,12 +293,24 @@ function Victory() {
   const roster = useRoster()
   if (!victory?.winnerId) return null
   const t = totalsOf(victory)
+  // The winner tops the podium even when crowned from a tie (level with someone ranked first).
+  const order = [victory.winnerId, ...ranked(victory).filter((id) => id !== victory.winnerId)]
+  // "Who won?" games quote wins, not points: "wins Uno", "wins Jaipur, 2–1".
+  const won = t[victory.winnerId] ?? 0
+  const next = t[order.find((id) => id !== victory.winnerId) ?? ''] ?? 0
+  const sub =
+    victory.goal !== 'wins'
+      ? undefined
+      : (victory.target ?? 1) <= 1
+        ? COPY.victory.winsSingle(victory.name)
+        : COPY.victory.winsMatch(victory.name, won, next)
   return (
     <VictoryOverlay
       winner={roster.nameOf(victory.winnerId)}
       gameName={victory.name}
-      total={t[victory.winnerId] ?? 0}
-      rows={ranked(victory).map((id) => ({
+      total={won}
+      sub={sub}
+      rows={order.map((id) => ({
         id,
         name: roster.nameOf(id),
         color: roster.colorOf(id),

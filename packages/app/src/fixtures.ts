@@ -10,7 +10,7 @@ import {
 } from '@tally/core'
 
 /** Seeded households for stories and tests. Time is fixed so every render is identical. */
-export const FIXED_NOW = Date.UTC(2026, 9, 12, 19, 30)
+const FIXED_NOW = Date.UTC(2026, 9, 12, 19, 30)
 export const fixedClock: Clock = { now: () => FIXED_NOW }
 
 const P = ['kate', 'blair', 'alder']
@@ -99,6 +99,19 @@ export const SCENARIOS = {
         target: 100,
         lowWins: true,
         rounds: rounds([26, 0, 0], [13, 4, 9], [21, 8, 0], [26, 0, 0], [3, 10, 14]),
+      }),
+    ),
+  /** "Who won?" for a single game of Uno: tap the winner, no scores to add. */
+  unoWhoWon: () => withActive(liveGame({ name: 'Uno', goal: 'wins', target: 1 })),
+  /** Jaipur, first to two Seals of Excellence: one round each, the decider next. */
+  jaipurMatch: () =>
+    withActive(
+      liveGame({
+        name: 'Jaipur',
+        goal: 'wins',
+        target: 2,
+        playerIds: ['kate', 'blair'],
+        rounds: [{ scores: { kate: 1, blair: 0 } }, { scores: { kate: 0, blair: 1 } }],
       }),
     ),
 } satisfies Record<string, () => Store>

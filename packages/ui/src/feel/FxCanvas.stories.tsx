@@ -5,6 +5,7 @@ import { FxCanvas } from './FxCanvas'
 
 const meta: Meta<typeof FxCanvas> = {
   title: 'Scoreboard/FxCanvas',
+  tags: ['!autodocs'],
   component: FxCanvas,
   parameters: { tally: { overlay: true } },
 }

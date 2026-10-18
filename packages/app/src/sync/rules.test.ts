@@ -162,6 +162,38 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('firestore.rules', () => {
       await assertSucceeds(ref.delete())
     })
 
+    it('presets: "Who won?" and one round per player are valid; old docs without the flag too', async () => {
+      await assertSucceeds(
+        db(blair)
+          .doc('presets/uno')
+          .set(preset({ id: 'uno', name: 'Uno', goal: 'wins', target: 1 })),
+      )
+      const scout = db(blair).doc('presets/scout')
+      await assertSucceeds(
+        scout.set(
+          preset({ id: 'scout', name: 'Scout', goal: 'rounds', target: 3, roundsPerPlayer: true }),
+        ),
+      )
+      await assertSucceeds(scout.update({ roundsPerPlayer: false, updatedAt: NOW }))
+      // Clearing the flag (the app sends deleteField(); the rules see the doc without the key).
+      await assertSucceeds(
+        scout.set(preset({ id: 'scout', name: 'Scout', goal: 'rounds', target: 3 })),
+      )
+      // An old client's doc (no roundsPerPlayer key) and its edits keep validating.
+      await seed('presets/old', preset({ id: 'old' }))
+      await assertSucceeds(db(blair).doc('presets/old').update({ target: 250, updatedAt: NOW }))
+      await assertSucceeds(scout.update({ roundsPerPlayer: true, updatedAt: NOW }))
+    })
+
+    it('presets: a bad roundsPerPlayer or a "Who won?" without a target is rejected', async () => {
+      const ref = db(blair).doc('presets/flip-7')
+      await assertFails(ref.set(preset({ roundsPerPlayer: 'yes' })))
+      await assertFails(ref.set(preset({ roundsPerPlayer: 1 })))
+      await assertFails(ref.set(preset({ goal: 'wins', target: null })))
+      await assertFails(ref.set(preset({ goal: 'wins', target: 0 })))
+      await assertFails(ref.set(preset({ goal: 'wins', target: 1.5 })))
+    })
+
     it('presets: malformed docs are rejected', async () => {
       const ref = db(blair).doc('presets/flip-7')
       await assertFails(ref.set(preset({ goal: 'fastest' })))
@@ -192,6 +224,37 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('firestore.rules', () => {
       )
       await assertSucceeds(ref.update({ completedAt: NOW, winnerId: 'blair', updatedAt: NOW }))
       await assertSucceeds(ref.update({ deletedAt: NOW, updatedAt: NOW }))
+    })
+
+    it('games: a "Who won?" game plays a winner round and finishes', async () => {
+      const ref = db(blair).doc('games/g3')
+      await assertSucceeds(
+        ref.set(game({ id: 'g3', name: 'Uno', goal: 'wins', target: 1, rounds: {} })),
+      )
+      await assertSucceeds(
+        ref.update({
+          'rounds.g3-r1': { scores: { kate: 0, blair: 1, alder: 0 }, at: NOW, by: 'blair' },
+          completedAt: NOW,
+          winnerId: 'blair',
+          updatedAt: NOW,
+        }),
+      )
+      await assertFails(
+        ref.update({
+          'rounds.g3-r2': { scores: { kate: 1, blair: 0, alder: 0 }, at: NOW, by: 'kate' },
+          updatedAt: NOW,
+        }),
+      )
+    })
+
+    it('games: a "Who won?" game needs a whole-number target; old score games without one still pass', async () => {
+      const ref = db(blair).doc('games/g1')
+      await assertFails(ref.set(game({ goal: 'wins', target: null })))
+      await assertFails(ref.set(game({ goal: 'wins', target: 0 })))
+      await assertFails(ref.set(game({ goal: 'wins', target: '2' })))
+      await assertFails(ref.set(game({ goal: 'wins', target: 2, roundsPerPlayer: true })))
+      await seed('games/g9', game({ id: 'g9', target: null }))
+      await assertSucceeds(db(blair).doc('games/g9').update({ deletedAt: NOW, updatedAt: NOW }))
     })
 
     it('games: malformed docs are rejected', async () => {

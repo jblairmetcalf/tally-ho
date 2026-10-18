@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { rng } from '@tally/core'
 import { useState } from 'react'
 import { Button } from '../primitives/Button'
 import { PlayerCard } from './PlayerCard'
+
+/** Seeded, so every run (and every screenshot) scores the same rounds. */
+const roll = rng(7)
 
 const meta: Meta<typeof PlayerCard> = {
   title: 'Scoreboard/PlayerCard',
@@ -55,7 +59,7 @@ export const Board: Story = {
     const max = Math.max(...totals)
     const leaders = totals.filter((t) => t === max).length
     const score = () => {
-      const d = totals.map(() => Math.round(Math.random() * 40) - 5)
+      const d = totals.map(() => Math.round(roll() * 40) - 5)
       setDeltas(d)
       setTotals((t) => t.map((v, i) => v + (d[i] ?? 0)))
       setK((x) => x + 1)

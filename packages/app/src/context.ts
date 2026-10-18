@@ -27,7 +27,7 @@ export interface Roster {
 }
 
 /** Player lookups by id. Unknown ids fall back to the id and a palette slot by hash. */
-export function rosterOf(players: Player[]): Roster {
+function rosterOf(players: Player[]): Roster {
   const byId = new Map(players.map((p) => [p.id, p]))
   const nameOf = (id: string) => byId.get(id)?.name ?? id
   const colorOf = (id: string) => {

@@ -54,11 +54,13 @@ const uiSrc = prod.filter((f) => rel(f).startsWith('packages/ui/src/'))
 const uiComponents = uiSrc.filter(
   (f) => f.endsWith('.tsx') && /export (function|const) [A-Z]/.test(text[f]),
 )
+// ThemeRoot draws nothing: it is the theme provider every story already renders inside.
+const NO_STORY = /theme\/ThemeRoot\.tsx$/
 probe(
   'ui-stories',
   'Every ui component has <Name>.stories.tsx beside it (CONVENTIONS 5, rules/ui.md)',
   uiComponents
-    .filter((f) => !existsSync(f.replace(/\.tsx$/, '.stories.tsx')))
+    .filter((f) => !NO_STORY.test(f) && !existsSync(f.replace(/\.tsx$/, '.stories.tsx')))
     .map((f) => `${rel(f)} — no stories file`),
 )
 probe(
@@ -72,7 +74,9 @@ probe(
       : []
   }),
 )
-const BRAND = /brand\/(Fox|Chip|palette)|feel\/(confetti|suits)/
+// Brand art and canvas literals (rules/ui.md); THEME_COLOR feeds <meta name="theme-color">, which
+// can't read a CSS variable (it mirrors THEME_BOOT in apps/web).
+const BRAND = /brand\/(Fox|palette)|feel\/(confetti|suits)|theme\/ThemeRoot/
 probe(
   'raw-colours',
   'Tokens, not raw colours; brand art is the only exception (CONVENTIONS 1)',
@@ -165,7 +169,8 @@ const tsxAll = Object.entries(text)
   .filter(([f]) => /\.(tsx|ts)$/.test(f))
   .map(([, t]) => t)
   .join('\n')
-const DYNAMIC = /^btn-(jade|amber|ghost|coral)$/ // built as `btn-${variant}`
+// Built from a prop: `btn-${variant}` (Button), `tone-${tone}` (LinkRow).
+const DYNAMIC = /^(btn-(jade|amber|ghost|coral)|tone-(jade|amber|fox|coral|lav))$/
 probe(
   'dead-css',
   'Every class in components.css is used somewhere',
@@ -193,6 +198,8 @@ probe(
     .flatMap((f) =>
       [...text[f].matchAll(exportRe)]
         .map((m) => m[1])
+        // Zod schemas are the public contract (rules/core.md), exported even when only types use them.
+        .filter((name) => !name.endsWith('Schema'))
         .flatMap((name) => {
           // Stories and tests count: ICONS feeds the Icons page, SFX_CUES the soundboard.
           const users = all.filter(
@@ -232,6 +239,33 @@ for (const pkgFile of [
   }
 }
 probe('unused-deps', 'Dependencies are used (CONVENTIONS 8)', deps)
+
+// ── ratchets from drift audits ──
+probe(
+  'light-patches',
+  'Daylight differences are tokens in tokens.css, never [data-theme="light"] overrides in components.css (rules/ui.md)',
+  read(join(ROOT, 'packages/ui/src/styles/components.css'))
+    .split('\n')
+    .map((l, i) => [l, i + 1])
+    .filter(([l]) => /\[data-theme=/.test(l))
+    .map(([l, n]) => `components.css:${n} — ${l.trim()}`),
+)
+probe(
+  'story-determinism',
+  'Stories are deterministic: no Date.now() or Math.random(); use fixtures or rng(seed) (rules/storybook.md)',
+  linesMatching(all.filter(isStory), /\bDate\.now\(|Math\.random\(/),
+)
+{
+  const testing = read(join(ROOT, 'docs/TESTING.md'))
+  probe(
+    'spec-docs',
+    'Every e2e spec and unit test file is named in docs/TESTING.md (rules/testing.md)',
+    all
+      .filter((f) => /\.(spec|test)\.tsx?$/.test(f))
+      .filter((f) => !testing.includes(basename(f)))
+      .map((f) => `${rel(f)} — not in docs/TESTING.md`),
+  )
+}
 
 // ── harness coverage ──
 const ruleGlobs = globSync('.claude/rules/*.md', { cwd: ROOT }).flatMap((f) => {

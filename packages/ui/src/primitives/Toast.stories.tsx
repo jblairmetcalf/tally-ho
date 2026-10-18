@@ -24,13 +24,11 @@ export const MatchPoint: Story = {
 export const Deleted: Story = { args: { message: 'Round 2 deleted', icon: 'trash' } }
 
 function Live({ placement }: { placement: 'nav' | 'bottom' }) {
-  const [k, setK] = useState<number | null>(Date.now())
+  const [k, setK] = useState(0)
   return (
     <>
-      <Button onClick={() => setK(Date.now())}>Show toast</Button>
-      {k != null && (
-        <Toast key={k} message="Samples cleared. This one counts." placement={placement} />
-      )}
+      <Button onClick={() => setK((x) => x + 1)}>Show toast</Button>
+      <Toast key={k} message="Samples cleared. This one counts." placement={placement} />
     </>
   )
 }

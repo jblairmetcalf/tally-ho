@@ -171,9 +171,6 @@
   .wordmark .w2 span {
     color: var(--jade);
   }
-  [data-theme="light"] .wordmark .w2 span {
-    text-shadow: 0 3px 0 var(--ink);
-  }
   .wordmark span span:nth-child(odd) {
     transform: rotate(-4deg);
   }
@@ -255,12 +252,10 @@
     background: var(--surface-hi);
     color: var(--text);
     box-shadow: 0 4px 0 var(--line);
+    border: var(--ghost-border);
   }
   .btn-ghost:active {
     box-shadow: 0 1px 0 var(--line);
-  }
-  [data-theme="light"] .btn-ghost {
-    border: 1.5px solid var(--line);
   }
   .btn-coral {
     background: transparent;
@@ -380,6 +375,7 @@
     margin-left: calc(var(--s) * -0.33);
     color: var(--amber);
     filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.4));
+    stroke: var(--ink);
     animation: crownDrop 0.7s var(--spring) both;
   }
 
@@ -476,12 +472,9 @@
     transition: background 0.2s, color 0.2s, transform 0.15s var(--spring);
   }
   .seg button.on {
-    background: var(--surface-hi);
+    background: var(--seg-on);
     color: var(--text);
     box-shadow: 0 2px 0 var(--drop);
-  }
-  [data-theme="light"] .seg button.on {
-    background: var(--surface);
   }
   .seg button:active {
     transform: scale(0.94);
@@ -921,9 +914,7 @@
   }
   .pcard.lead .total {
     color: var(--amber-display);
-  }
-  [data-theme="light"] .pcard.lead .total {
-    text-shadow: 0 2px 0 var(--ink);
+    text-shadow: var(--edge-2);
   }
   .pcard .sub {
     font-size: 11.5px;
@@ -953,12 +944,9 @@
     font-family: var(--f-display);
     font-size: 22px;
     color: var(--c);
-    text-shadow: 0 2px 0 rgb(0 0 0 / 0.5);
+    text-shadow: var(--delta-shadow);
     pointer-events: none;
     animation: deltaUp 1.5s var(--spring) forwards;
-  }
-  [data-theme="light"] .delta {
-    text-shadow: 0 2px 0 var(--ink);
   }
   .entry {
     border: 2px solid var(--jade);
@@ -1027,9 +1015,7 @@
   }
   .log-row .sc.top {
     color: var(--c);
-  }
-  [data-theme="light"] .log-row .sc.top {
-    text-shadow: 0 1.5px 0 var(--ink);
+    text-shadow: var(--edge-1-5);
   }
   .log-row .sc.blank {
     color: var(--faint);
@@ -1153,18 +1139,14 @@
     max-height: calc(90% + 48px);
     display: flex;
     flex-direction: column;
-    background: var(--sunk);
+    background: var(--sheet-surface);
     border: 1.5px solid var(--line);
     border-bottom: 0;
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-    box-shadow: 0 -20px 60px rgb(0 0 0 / 0.5);
+    box-shadow: var(--sheet-shadow);
     animation: sheetIn 0.5s var(--spring) both;
     padding-bottom: 48px;
     outline: none;
-  }
-  [data-theme="light"] .sheet {
-    background: var(--page);
-    box-shadow: 0 -20px 60px rgb(19 17 46 / 0.25);
   }
   .closing .backdrop {
     animation: fadeOut 0.26s ease forwards;
@@ -1197,10 +1179,7 @@
     gap: 18px;
   }
   .sheet {
-    --sheet-bg: var(--sunk);
-  }
-  [data-theme="light"] .sheet {
-    --sheet-bg: var(--page);
+    --sheet-bg: var(--sheet-surface);
   }
   /* The title and its close button stay put while the sheet scrolls. */
   .sheet-title {
@@ -1279,23 +1258,18 @@
     bottom: calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px));
     z-index: 70;
     transform: translateX(-50%);
-    background: var(--cream);
-    color: var(--ink);
+    background: var(--toast-bg);
+    color: var(--toast-fg);
     font-weight: 900;
     font-size: 14.5px;
     padding: 11px 18px;
     border-radius: 14px;
-    box-shadow: 0 4px 0 rgb(0 0 0 / 0.35), 0 14px 40px rgb(0 0 0 / 0.45);
+    box-shadow: var(--toast-shadow);
     display: flex;
     align-items: center;
     gap: 8px;
     max-width: calc(100% - 32px);
     animation: toastIn 0.45s var(--spring) both;
-  }
-  [data-theme="light"] .toast {
-    background: var(--ink);
-    color: var(--cream);
-    box-shadow: 0 4px 0 rgb(0 0 0 / 0.25), 0 14px 40px rgb(19 17 46 / 0.3);
   }
   .toast.no-nav {
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
@@ -1372,14 +1346,14 @@
     height: 900px;
     margin: -450px 0 0 -450px;
     border-radius: 50%;
-    background: repeating-conic-gradient(rgb(var(--amber-rgb) / 0.13) 0 10deg, transparent 10deg 20deg);
+    background: repeating-conic-gradient(
+      rgb(var(--amber-rgb) / var(--sunburst-alpha)) 0 10deg,
+      transparent 10deg 20deg
+    );
     animation: spin 26s linear infinite;
     mask-image: radial-gradient(circle, #000 18%, transparent 62%);
     -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%);
     pointer-events: none;
-  }
-  [data-theme="light"] .sunburst {
-    background: repeating-conic-gradient(rgb(var(--amber-rgb) / 0.28) 0 10deg, transparent 10deg 20deg);
   }
   .v-badge {
     position: relative;
@@ -1403,13 +1377,10 @@
     font-size: clamp(48px, 15vw, 72px);
     color: var(--amber-display);
     line-height: 1;
-    text-shadow: 0 5px 0 var(--fox-deep), 0 0 40px rgb(var(--amber-rgb) / 0.5);
+    text-shadow: var(--victory-name-shadow);
     animation: stamp 0.6s var(--spring) 0.35s both;
     text-align: center;
     text-wrap: balance;
-  }
-  [data-theme="light"] .v-name {
-    text-shadow: 0 5px 0 var(--ink), 0 0 40px rgb(var(--amber-rgb) / 0.4);
   }
   .v-sub {
     position: relative;
@@ -1546,12 +1517,12 @@
 /* Builder B — scoreboard additions (append-only) */
 @layer components {
   /* player-coloured small text needs an ink edge on Daylight (Cream/Amber on white) */
-  [data-theme="light"] .log-head .pc {
-    text-shadow: 0 1px 0 var(--ink);
+  .log-head .pc {
+    text-shadow: var(--edge-1);
   }
-  [data-theme="light"] .chart .lbl {
+  .chart .lbl {
     paint-order: stroke;
-    stroke: var(--ink);
+    stroke: var(--label-stroke);
     stroke-width: 3px;
     stroke-linejoin: round;
   }
@@ -1935,10 +1906,8 @@
   }
   .log-row .sc.win svg {
     filter: drop-shadow(0 1.5px 0 var(--drop));
-  }
-  [data-theme="light"] .log-row .sc.win svg {
-    stroke: var(--ink);
-    stroke-width: 1.4px;
+    stroke: var(--win-edge);
+    stroke-width: var(--win-edge-w);
   }
   .log-row .sc.nil {
     color: var(--faint);

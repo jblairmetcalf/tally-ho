@@ -64,6 +64,26 @@
   --pattern-alpha: 0.07;
   --glow-jade: 0.16;
   --glow-lav: 0.1;
+
+  /* Daylight legibility: bright player colours get an ink edge on cream; none on Dark */
+  --edge-1: none;
+  --edge-1-5: none;
+  --edge-2: none;
+  --label-stroke: none;
+  --win-edge: currentColor; /* the crown Icon's own stroke and width (Icon default 2.4) */
+  --win-edge-w: 2.4px;
+
+  /* component surfaces that flip between themes */
+  --ghost-border: 0;
+  --seg-on: var(--surface-hi);
+  --sheet-surface: var(--sunk);
+  --sheet-shadow: 0 -20px 60px rgb(0 0 0 / 0.5);
+  --toast-bg: var(--cream);
+  --toast-fg: var(--ink);
+  --toast-shadow: 0 4px 0 rgb(0 0 0 / 0.35), 0 14px 40px rgb(0 0 0 / 0.45);
+  --delta-shadow: 0 2px 0 rgb(0 0 0 / 0.5);
+  --victory-name-shadow: 0 5px 0 var(--fox-deep), 0 0 40px rgb(var(--amber-rgb) / 0.5);
+  --sunburst-alpha: 0.13;
 }
 
 [data-theme="light"] {
@@ -108,6 +128,24 @@
   --pattern-alpha: 0.12;
   --glow-jade: 0.14;
   --glow-lav: 0.12;
+
+  --edge-1: 0 1px 0 var(--ink);
+  --edge-1-5: 0 1.5px 0 var(--ink);
+  --edge-2: 0 2px 0 var(--ink);
+  --label-stroke: var(--ink);
+  --win-edge: var(--ink);
+  --win-edge-w: 1.4px;
+
+  --ghost-border: 1.5px solid var(--line);
+  --seg-on: var(--surface);
+  --sheet-surface: var(--page);
+  --sheet-shadow: 0 -20px 60px rgb(19 17 46 / 0.25);
+  --toast-bg: var(--ink);
+  --toast-fg: var(--cream);
+  --toast-shadow: 0 4px 0 rgb(0 0 0 / 0.25), 0 14px 40px rgb(19 17 46 / 0.3);
+  --delta-shadow: 0 2px 0 var(--ink);
+  --victory-name-shadow: 0 5px 0 var(--ink), 0 0 40px rgb(var(--amber-rgb) / 0.4);
+  --sunburst-alpha: 0.28;
 }
 
 :root {

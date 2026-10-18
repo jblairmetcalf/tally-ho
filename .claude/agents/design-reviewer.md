@@ -16,10 +16,10 @@ You review UI changes to Tally Ho!, a family score-counter PWA. You **never edit
 ## Steps
 
 1. `git status --short` and `git diff` (plus `git diff --cached`) to see what changed. If the caller named a commit range, use it.
-2. Map changed files to stories: each `packages/ui/src/<area>/<Name>.tsx` → its `<Name>.stories.tsx`; app screens/sheets → `Screens/TallyApp`, `Sheets/App sheets`, `Screens/Family sync`. Get ids from `apps/storybook/storybook-static/index.json` (rebuild first if sources are newer: `pnpm --filter @tally/storybook build`).
+2. Map changed files to stories: each `packages/ui/src/<area>/<Name>.tsx` → its `<Name>.stories.tsx`; app screens/sheets → `Screens/TallyApp`, `Sheets/App sheets`, `Sheets/Install and share` (Settings landing, install, share, contact), `Screens/Family sync`. Get ids from `apps/storybook/storybook-static/index.json` (rebuild first if sources are newer: `pnpm --filter @tally/storybook build`).
 3. `node scripts/shoot.mjs <ids…>` (both themes, 390 and 320). Read **every** PNG.
 4. Review the code and the pictures against:
-   - **Tokens**: no raw hex/rgb in components or CSS (brand art and `PLAYER_COLORS` excepted); player colours via `paletteVar`; small coloured text via `-text` tokens; placeholders `--faint-deco`.
+   - **Tokens**: no raw hex/rgb in components; in CSS, colours are tokens (a neutral `rgb(0 0 0 / a)` shadow may live inside a token; `motion.css` keyframes keep the prototype's literals); no `[data-theme="light"]` rules in `components.css` (Daylight differences are tokens); brand art, `PLAYER_COLORS` and `THEME_COLOR` excepted; player colours via `paletteVar`; small coloured text via `-text` tokens; placeholders `--faint-deco`.
    - **Contrast**: AA (4.5:1 text, 3:1 large/UI) in Dark and Daylight; Daylight jewel text is where it usually fails.
    - **Targets**: ≥ 44px, accessible names on icon-only controls, keyboard reachable, visible focus.
    - **Both themes**: nothing designed for Dark only; new per-theme values are tokens in both blocks.

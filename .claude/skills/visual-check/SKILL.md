@@ -30,6 +30,7 @@ Tests prove a story renders and passes axe; only looking proves it looks right. 
    - targets look ≥ 44px; spacing matches neighbouring components;
    - player colours right (palette slot, not a fixed colour); crowns, pips, race track aligned;
    - sheets: title row, close button, CTA at the bottom; overlay stories show one theme each;
+   - nav sheets (`SheetNav`): back chevron top left only past the root, close always top right, a long title clamps to two lines (`primitives-sheetnav--one-deep`, `--two-deep`, `--long-title`);
    - matches the prototype (`docs/imports/`) where a counterpart exists.
    Screens are shot at the final frame (reduced motion): animation itself needs a look in `pnpm storybook`.
 5. **Run the story checks** (render, axe in both themes, manager/controls):

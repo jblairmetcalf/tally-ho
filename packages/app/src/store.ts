@@ -167,7 +167,7 @@ export function uniqueId(base: string, taken: Iterable<string>): string {
 }
 
 /** The first palette slot no current player wears, else a stable hash slot (prototype). */
-export function nextColor(players: Player[], name: string): number {
+function nextColor(players: Player[], name: string): number {
   const used = new Set(players.filter((p) => !p.archived).map((p) => p.color))
   for (let i = 0; i < PALETTE_SIZE; i++) if (!used.has(i)) return i
   return hash(name) % PALETTE_SIZE

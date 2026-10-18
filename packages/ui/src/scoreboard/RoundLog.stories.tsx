@@ -1,8 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import { rng } from '@tally/core'
 import { useState } from 'react'
 import { Button } from '../primitives/Button'
 import { nameOf, players, rounds, SAMPLES } from './fixtures'
 import { RoundLog } from './RoundLog'
+
+/** Seeded, so every run (and every screenshot) scores the same rounds. */
+const roll = rng(11)
 
 const three = players(3)
 const ids = three.map((p) => p.id)
@@ -111,7 +115,7 @@ export const FreshRow: Story = {
         <Button
           icon="check"
           onClick={() => {
-            setList((l) => [...l, ...rounds(ids, [ids.map(() => Math.round(Math.random() * 45))])])
+            setList((l) => [...l, ...rounds(ids, [ids.map(() => Math.round(roll() * 45))])])
             setK((x) => (x ?? 0) + 1)
           }}
         >

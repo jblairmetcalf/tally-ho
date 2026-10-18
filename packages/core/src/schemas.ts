@@ -29,7 +29,7 @@ export const PresetSchema = z.object({
   goal: GoalSchema,
   target: z.number().int().positive().nullable(),
   lowWins: z.boolean(),
-  /** `rounds` games with one round per player (Scout): the target follows the line-up. */
+  /** `rounds` games with one round per dealer (no default uses it now): the target follows the line-up. */
   roundsPerPlayer: z.boolean().optional(),
 })
 export type Preset = z.infer<typeof PresetSchema>

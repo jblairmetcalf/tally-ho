@@ -107,7 +107,7 @@ function Frame({ theme, store, ui, act, session }: FramesProps & { theme: ThemeP
         overflow: 'auto',
         transform: 'translateZ(0)',
         borderRadius: 28,
-        boxShadow: '0 0 0 1px rgb(127 127 127 / 0.3)',
+        boxShadow: '0 0 0 1px var(--line)',
       }}
     >
       <TallyApp provider={provider} session={api} initialUi={ui} embedded />

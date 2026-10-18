@@ -37,7 +37,7 @@ Append to `packages/ui/src/styles/components.css`, inside `@layer components`, u
 `packages/ui/src/<area>/<Name>.stories.tsx`:
 ```tsx
 const meta: Meta<typeof Name> = {
-  title: '<Area>/<Name>',          // Brand | Primitives | Scoreboard
+  title: '<Area>/<Name>',          // Brand | Primitives | Scoreboard (feel/ components that draw go under Scoreboard)
   component: Name,
   args: { /* a realistic default */ },
   argTypes: { /* one per prop whose inferred control would be wrong */ },

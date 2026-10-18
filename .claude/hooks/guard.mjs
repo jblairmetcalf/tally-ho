@@ -53,17 +53,27 @@ if (FILE_TOOLS.has(tool)) {
 }
 
 if (tool === 'Bash') {
-  // Judge commands, not text: drop heredoc bodies (they're content being written), then look at
-  // each command where one can start (line start, or after ; && || | $( ). A doc or regex that
-  // merely mentions `git push` or `.vercel` must not be blocked.
-  const cmd = String(args.command ?? '').replace(
-    /<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\2(?=\n|$)/g,
-    '',
-  )
-  const commands = cmd
-    .split(/\n|;|&&|\|\||\||\$\(|`/)
-    .map((c) => c.trim().replace(/^(\w+=\S*\s+)*(sudo\s+|exec\s+|env\s+)?/, ''))
-    .filter(Boolean)
+  // Judge commands, not text: drop heredoc bodies (they're content being written) and quoted
+  // strings (a pattern like "push\|vercel" isn't a pipe), then look at each command where one can
+  // start (line start, or after ; && || | $( ). A doc or regex that merely mentions `git push` or
+  // `.vercel` must not be blocked. A string handed to `sh -c` / `eval` is a command: judge it too.
+  const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/g
+  const split = (text, depth = 0) => {
+    const bare = text.replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\2(?=\n|$)/g, '')
+    const inner =
+      depth > 2
+        ? []
+        : [
+            ...bare.matchAll(/(?:\b(?:ba|z)?sh\s+-c|\beval)\s+('[^']*'|"(?:[^"\\]|\\.)*")/g),
+          ].flatMap((m) => split(m[1].slice(1, -1), depth + 1))
+    return bare
+      .replace(QUOTED, '""')
+      .split(/\n|;|&&|\|\||\||\$\(|`/)
+      .map((c) => c.trim().replace(/^(\w+=\S*\s+)*(sudo\s+|exec\s+|env\s+)?/, ''))
+      .filter(Boolean)
+      .concat(inner)
+  }
+  const commands = split(String(args.command ?? ''))
 
   /** Commands that publish or destroy: the user runs these (CLAUDE.md, Autonomy). */
   const RULES = [

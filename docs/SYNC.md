@@ -20,8 +20,8 @@ The exact session API, Firestore document shapes, rules and UI labels family syn
 ## Core and store support
 
 - core: `Round.id?`, `Round.by?` (player id of the member who scored), `Game.startedBy?`, `Preset.roundsPerPlayer?`, goal `'wins'`. `migrate` / `withRoundIds` give old rounds ids `<gameId>-r<n>`; samples have ids.
-- store: `submitRound` assigns a unique round id; `submitWinner(id)` is a `submitRound` of 1/0 scores, and `crownWinner(id)` finishes a tied game for one tied leader, so both sync as ordinary round and finish writes. `replaceData(next)` reacts to remote changes: a remote round → `flash` only; a remote finish → victory if watching, else toast `COPY.toast.wonElsewhere`; a remote discard → home + `COPY.toast.endedElsewhere`. Echoes of this phone's own writes are no-ops.
-- `SheetSpec` includes `{ type: 'signin' }`, routed in `TallyApp`'s sheet host to `packages/app/src/sheets/SignInSheet.tsx`.
+- store: `submitRound` assigns a unique round id; `submitWinner(id)` is a `submitRound` of 1/0 scores, and `crownWinner(id)` finishes a tied game for one tied leader, so both sync as ordinary round and finish writes. `replaceData(next)` reacts to remote changes: a remote round → `flash` only; a remote finish → victory if watching, else toast `COPY.toast.wonElsewhere`; a remote discard → home, and 400ms later `COPY.toast.endedElsewhere` unless this phone's write of that game was refused (then `gameRefused` already said so). Echoes of this phone's own writes are no-ops. `gameRefused(gameId, name)` records a game the family record refused (`COPY.toast.gameRefused`); `restoreDefaultGames()` rewrites every `DEFAULT_PRESETS` id to today's defaults (re-adding deleted ones, keeping the family's own presets), so it syncs as ordinary preset sets/updates.
+- `SheetSpec` includes `{ type: 'signin' }`, routed in `TallyApp`'s sheet host to `packages/app/src/sheets/SignInSheet.tsx` (stories use it). In the app, Settings pushes the same sign-in content as a page on its `SheetNav` stack (`go('signin')`).
 
 ## Session API (`packages/app/src/sync/session.ts`)
 
@@ -51,8 +51,8 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore // the 
 
 - **Boot:** with `tallyho.session` present, the app boots straight into family mode from the mirror (synchronous first paint), then loads Firebase lazily (dynamic `import()`) and restores auth (`indexedDBLocalPersistence`). If auth says nobody (or someone else) is signed in, or `members/{email}` is missing or refused → sign out to demo. Offline at launch → stay in family mode and check next launch.
 - **`signIn`:** `signInWithEmailAndPassword` with the lowercased email, then read `members/{email}` from the server; missing or `permission-denied` → sign out, throw `not-family`. Error mapping (`signInErrorOf`): `auth/invalid-credential`, `auth/invalid-login-credentials`, `auth/wrong-password`, `auth/user-not-found`, `auth/invalid-email`, `auth/missing-password` → `wrong-credentials`; `auth/network-request-failed`, `unavailable`, or an SDK that can't load → `offline`; `auth/too-many-requests` → `too-many-attempts`; else `unknown`.
-- **Seeding:** the first family sign-in writes `players` (`DEFAULT_PLAYERS`) and `presets` (`DEFAULT_PRESETS`) with their fixed ids if the collections are empty (idempotent set-merge; retried on the next sign-in if it fails). Never samples. Changing `DEFAULT_PRESETS` never rewrites a family's existing presets: an already-seeded family edits them in Settings › Games.
-- **`TallyApp`:** `useSessionController()` → `<SessionContext.Provider>` → the app keyed on mode + email + provider. `onRejected` → toast `COPY.toast.syncRejected`. Explicit `provider` / `store` props mean a static demo-like session (`demoSession()`); a `session` prop injects a fake `SessionApi` (stories).
+- **Seeding:** the first family sign-in writes `players` (`DEFAULT_PLAYERS`) and `presets` (`DEFAULT_PRESETS`) with their fixed ids if the collections are empty (idempotent set-merge; retried on the next sign-in if it fails). Never samples. Changing `DEFAULT_PRESETS` never rewrites a family's existing presets by itself: an already-seeded family picks up new defaults with Settings › Games › **Restore default games** (`restoreDefaultGames`), or edits a game by hand.
+- **`TallyApp`:** `useSessionController()` → `<SessionContext.Provider>` → the app keyed on mode + email + provider. `onRejected` → `reactToRejection` (`store.ts`): a refused games `set` (usually rules older than the app) → `gameRefused`, toast `COPY.toast.gameRefused`; any other refusal → toast `COPY.toast.syncRejected`. Explicit `provider` / `store` props mean a static demo-like session (`demoSession()`); a `session` prop injects a fake `SessionApi` (stories).
 
 ## Modules (`packages/app/src/sync/`)
 
@@ -75,7 +75,7 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore // the 
 | `members/{lowercase email}` | `name: string, playerId: string`. Console-only |
 | `players/{id}` | `id, name (1–16), color (0–7 int), archived?: bool, updatedAt: string` |
 | `presets/{id}` | `id, name (1–32), goal ('score'\|'rounds'\|'wins'\|'open'), target (int>0 \| null; an int for 'wins'), lowWins: bool, roundsPerPlayer?: bool, updatedAt`. `roundsPerPlayer` is optional (old clients' docs lack it, and the rules still accept them); switching it off writes `false`; a preset that drops the key sends `deleteField()` (both valid) |
-| `games/{id}` | `id, name (1–40), goal (as presets), target (int>0 \| null; an int for 'wins'), lowWins, playerIds (list 2–12), startedAt, completedAt (string\|null), winnerId (string\|null), startedBy?, deletedAt?: string, sample?: bool, updatedAt, rounds: map<roundId, { scores: map<playerId, int\|null>, at: string, by?: string }>` (≤ 1000 rounds). A "Who won?" (`wins`) round is an ordinary round scored `{ winner: 1, others: 0 }`; games never carry `roundsPerPlayer` (the round count is fixed into `target` when dealt) |
+| `games/{id}` | `id, name (1–40), goal (as presets), target (int>0 \| null; an int for 'wins'), lowWins, playerIds (list 2–12), startedAt, completedAt (string\|null), winnerId (string\|null), startedBy?, deletedAt?: string, sample?: bool (legacy: still accepted, never written; sample games don't sync), updatedAt, rounds: map<roundId, { scores: map<playerId, int\|null>, at: string, by?: string }>` (≤ 1000 rounds). A "Who won?" (`wins`) round is an ordinary round scored `{ winner: 1, others: 0 }`; games never carry `roundsPerPlayer` (the round count is fixed into `target` when dealt) |
 
 ## Rules (`firestore.rules`)
 
@@ -92,18 +92,20 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore // the 
 Exact strings; e2e selects by them. Source: `packages/app/src/copy.ts` (`COPY.family`, `COPY.signIn`) and `packages/ui/src/primitives/SyncBadge.tsx`.
 
 - **Settings › Family** (heading "Family"):
-  - signed out: Button **"Family sign in"** (opens `{ type: 'signin' }`) and Button **"Reset demo"**.
+  - signed out: Button **"Family sign in"** (pushes the sign-in page) and Button **"Reset demo"**.
   - signed in: "Signed in as {name}", the `SyncBadge`, `ConfirmButton` **"Sign out"** (armed: **"Tap again to sign out"**), Button **"Export family record"** (downloads `tally-ho-{yyyy-mm-dd}.json`).
 - **SignInSheet:** title "Family sign in"; TextInput **"Email"** (`type=email`, `autoComplete="username"`, `inputMode="email"`), **"Password"** (`type=password`, `autoComplete="current-password"`), Button **"Sign in"**, link-button **"Forgot password?"**. Errors (`role="alert"`):
   - wrong-credentials: "That email and password don't match."
   - not-family: "This scoreboard is just for the family."
   - offline: "Signing in needs the internet once. After that, Tally Ho! works offline."
   - too-many-attempts: "Too many tries. Wait a minute and try again."
-  - On success the sheet closes and toasts "Welcome, {name}!".
+  - unknown: "Couldn't sign in. Try again."
+  - On success the app re-keys into family mode and the new Home toasts "Welcome, {name}!" once (`takeWelcome`).
 - **Home header:** demo → a small pill button **"Demo"** (opens Settings); family → `SyncBadge`.
 - **`SyncBadge`** (`aria-label`, 44px icon button; tapping toasts the label): synced **"Synced"**, pending **"Saved on this phone · syncing"**, offline **"Offline · saved on this phone"**, error **"Sync problem"**.
 - **NewGameSheet:** when a game is live, a notice "{game} is in progress" (+ " · started by {name}" when `startedBy`) and Button **"Resume"**. Starting anyway replaces it as before.
 - **RoundLog:** with `nameOf`, rounds carrying `by` show the scorer's initial.
+- **Settings › Games:** `ConfirmButton` **"Restore default games"** (armed: **"Tap again to restore"**), toast **"Default games restored"**.
 
 ## Emulators and tests
 

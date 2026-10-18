@@ -36,12 +36,12 @@ You prepare; the user releases. Never `git push`, `pnpm deploy`, `pnpm deploy:st
 
 ## Post-deploy checklist (iPhone, production URL)
 
-- [ ] Swipe Tally Ho! closed and reopen it (twice if needed): the new version loads.
+- [ ] Swipe Tally Ho! closed and reopen it (twice if needed): the build line at the bottom of Settings shows the new commit and **Family sync on**.
 - [ ] With the Ring/Silent switch on silent, score a round: sound plays (speaker button in the Home header lit).
 - [ ] Signed in: Home shows the sync badge → **Synced**; score on one phone, see it on another.
 - [ ] Airplane mode: app opens, a round saves (**Offline · saved on this phone**), syncs when back.
 - [ ] Daylight phone: no dark flash at launch.
-- [ ] If defaults changed: **Settings › Reset demo** on demo phones (it wipes demo games).
+- [ ] If defaults changed: **Settings › Games › Restore default games** once on a signed-in phone (syncs to the family), and on demo phones (or Reset demo, which wipes demo games).
 
 ## Report template
 

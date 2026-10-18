@@ -64,10 +64,11 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
   - Each op is appended to the persisted outbox (`sync/outbox.ts`, key `tallyho.outbox`) **before** it is sent, and leaves only when Firestore confirms or refuses it for good. A phone killed before the SDK loads replays it next launch.
   - Firestore runs with `persistentLocalCache` (IndexedDB), so it also queues offline.
   - Snapshots of `players`, `presets`, `games` are assembled into a `Store` (prefs and `lastPlayerIds` stay local) and passed to subscribers, skipping ones that say nothing new.
-  - `watchStatus` feeds the `SyncBadge`; `onRejected` reports writes the rules refused (`TallyApp` toasts `COPY.toast.syncRejected`).
+  - `watchStatus` feeds the `SyncBadge`; `onRejected` reports writes the rules refused (`TallyApp` hands them to `reactToRejection`: a refused new game → `gameRefused`, else toast `COPY.toast.syncRejected`).
 - **Session** (`sync/session.ts`): `createSessionCore` / `useSessionController` picks the mode. The `tallyho.session` flag boots straight into family mode from the mirror, then loads Firebase and verifies auth and `members/{email}`. `Root` in `TallyApp.tsx` keys the app on mode + email + provider, so sign-in/out swaps in a fresh store.
 - **Firebase is lazy:** `sync/firebase.ts` uses dynamic `import()`; demo mode never loads it.
-- **Remote reactions** (`replaceData` in `store.ts`): a remote round on the live game → `flash` only; a remote win → victory if watching, else a toast (`wonElsewhere`); a remote discard → home + toast (`endedElsewhere`).
+- **Remote reactions** (`replaceData` in `store.ts`): a remote round on the live game → `flash` only; a remote win → victory if watching, else a toast (`wonElsewhere`); a remote discard → home + toast (`endedElsewhere`, 400ms later, skipped for a game this phone was refused).
+- **Defaults** (`DEFAULT_PRESETS`) seed new stores only; `restoreDefaultGames` (Settings › Games) brings an existing demo or family record up to date.
 
 The full contract (document shapes, rules, session API, labels) is [SYNC.md](SYNC.md).
 

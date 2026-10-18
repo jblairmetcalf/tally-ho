@@ -62,7 +62,7 @@ const preview: Preview = {
       storySort: {
         order: [
           'Foundations',
-          ['Start here', 'Colour', 'Type', 'Shape', 'Motion', 'Sound', 'Haptics', 'Icons', 'Brand'],
+          ['Start here', 'Colour', 'Type', 'Shape', 'Motion', 'Sound', 'Haptics', 'Icons'],
           'Brand',
           'Primitives',
           'Scoreboard',

@@ -1,6 +1,5 @@
 export {
   type Roster,
-  rosterOf,
   TallyContext,
   useActions,
   useRoster,
@@ -13,7 +12,6 @@ export { useThemePref, useWakeLock } from './hooks'
 export {
   createLocalProvider,
   type DataProvider,
-  LEGACY_KEY,
   localProvider,
   memoryProvider,
   STORAGE_KEY,
@@ -30,7 +28,6 @@ export {
   createTallyStore,
   type Flash,
   type NewGameConfig,
-  nextColor,
   type Screen,
   type SheetSpec,
   type TallyActions,

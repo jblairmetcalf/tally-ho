@@ -26,7 +26,6 @@ export function Chip({ name, color, size = 36, crown = false, crownKey }: ChipPr
           <path
             d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"
             fill="currentColor"
-            stroke="#13112E"
             strokeWidth="1.6"
             strokeLinejoin="round"
           />

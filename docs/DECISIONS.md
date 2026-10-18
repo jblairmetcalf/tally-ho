@@ -16,11 +16,13 @@ An architecture decision log: why things are the way they are. Read the relevant
 | 10 | iOS audio: `playback` only while sounding | Accepted |
 | 11 | Native feel | Accepted |
 | 12 | Calm sheets | Accepted |
-| 13 | Default games and how they end | Accepted (revised by 16) |
+| 13 | Default games and how they end | Accepted (revised by 16 and 19) |
 | 14 | Demo for signed-out visitors | Accepted |
 | 15 | Storybook shape and manager smoke suite | Accepted |
 | 16 | How games end: score / rounds / Who won? / open, set from the rulebooks | Accepted |
 | 17 | Install guide shows once; share by QR (`uqr`) at the running origin | Accepted |
+| 18 | One sheet, one navigation stack (`SheetNav`) | Accepted |
+| 19 | Defaults follow how the family plays | Accepted |
 
 ## 1. Static export + PWA on Vercel, prebuilt
 *2026-10 · Accepted*
@@ -97,7 +99,7 @@ An architecture decision log: why things are the way they are. Read the relevant
 ## 13. Default games and how they end
 *2026-10 · Accepted, revised 2026-10 by 16*
 - **Context:** The family's shelf has games that end in different ways; the app counts, it doesn't enforce rules.
-- **Decision:** Four goals, each preset set from its rulebook (the research is in 16): race to a score (`score`), fixed rounds (`rounds`, optionally `roundsPerPlayer`), "Who won?" (`wins`: tap the round's winner, first to `target` wins) and open-ended (`open`, crowned with the flag); `score` and `rounds` can be lowest-wins. `DEFAULT_PRESETS` (`packages/core/src/presets.ts`): Uno is now "Who won?" (the 2022 official rules: first to empty their hand wins; 500 points is an optional variant), Jaipur is first to 2 Seals, The Fox in the Forest stays a race to 21 (its rulebook's standard game; 16 and 35 are variants), Scout is one round per player, Push is one final tally. Games won outright (Schotten Totten, Monopoly Deal…) moved from open-ended to "Who won?".
+- **Decision:** Four goals, each preset set from its rulebook (the research is in 16): race to a score (`score`), fixed rounds (`rounds`, optionally `roundsPerPlayer`), "Who won?" (`wins`: tap the round's winner, first to `target` wins) and open-ended (`open`, crowned with the flag); `score` and `rounds` can be lowest-wins. `DEFAULT_PRESETS` (`packages/core/src/presets.ts`): Uno is now "Who won?" (the 2022 official rules: first to empty their hand wins; 500 points is an optional variant), Jaipur is first to 2 Seals, The Fox in the Forest stays a race to 21 (its rulebook's standard game; 16 and 35 are variants), Scout is one round per player, Push is one final tally. *(Superseded by 19: Fox, Scout and Mille Bornes now default to Who won?)* Games won outright (Schotten Totten, Monopoly Deal…) moved from open-ended to "Who won?".
 - **Consequences:** A tie at the end offers two ways out: pick the winner by the game's own tiebreak (`crownWinner`, one of the tied leaders) or play a tiebreak round. Preset names must be unique (React keys); Settings adds "New game", "New game 2"… Defaults only seed new stores: an already-seeded family keeps its presets until someone edits them.
 
 ## 14. Demo for signed-out visitors

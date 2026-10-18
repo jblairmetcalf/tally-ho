@@ -11,12 +11,12 @@ Read how the rulebook ends the game (the official rules, current edition), not h
 
 | Goal | Ends when | Use for | In `DEFAULT_PRESETS` |
 |---|---|---|---|
-| `wins` + `target: 1` ("Who won?") | the round's winner is tapped; one round, one winner | games won outright, not on points | Monopoly Deal, High Society, Spicy, Uno (official rules since 2022), Schotten Totten |
+| `wins` + `target: 1` ("Who won?") | the round's winner is tapped; one round, one winner | games won outright, not on points | Monopoly Deal, High Society, Spicy, Uno (official rules since 2022), Schotten Totten; The Fox in the Forest, Scout and Mille Bornes as the family plays them (decision 19) |
 | `wins` + `target: N` ("First to N wins") | someone has won N rounds (each round: tap the winner) | best-of series | **Jaipur 2** (first to two Seals of Excellence) |
-| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | The Fox in the Forest 21 and Mille Bornes 5000 by their rulebooks (the family plays both as Who won?, decision 19), Flip 7 200 |
+| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | Flip 7 200 (The Fox in the Forest 21 and Mille Bornes 5000 are their rulebook modes, one tap away; not defaults) |
 | `rounds` + `target` ("N rounds") | after N rounds, highest total wins | a fixed number of hands | Sushi Go 3 |
 | `rounds` + `target: 1` ("Final scores") | one tally at the end | games played once and scored at the end | **Push** (one final tally when the deck runs out) |
-| `rounds` + `roundsPerPlayer: true` | after one round per player (`targetFor` sets the count from the line-up) | one round per dealer | Scout by its rulebook (`target` is only the fallback); the family plays it as Who won? (decision 19) |
+| `rounds` + `roundsPerPlayer: true` | after one round per player (`targetFor` sets the count from the line-up) | one round per dealer | none by default (Scout's rulebook mode; `target` is only the fallback; tests use a Round Robin preset) |
 | `open`, `target: null` ("Open-ended") | when you tap the flag; the leader is crowned | no fixed end at all | none by default |
 
 `lowWins: true` flips `score` and `rounds`: lowest total wins and a score target becomes a bust line (Hearts 100, Golf, Skyjo). Keep it `false` for `wins`. Decision points:
@@ -56,7 +56,7 @@ pnpm exec playwright test --project=web
 
 - **New installs / Reset demo** get the new list (`emptyStore`, `freshStore`).
 - **Existing phones and the family record keep their saved presets**: Settings › Games › **Restore default games** puts the built-in games back to the current defaults (syncs in family mode; the family's own games stay). Reset demo also works for the demo.
-- **The family record only seeds presets when the collection is empty** (first family sign-in). Existing family phones won't see the new game: add it once on any signed-in phone via Settings › Games › Add a game, and it syncs.
+- **The family record only seeds presets when the collection is empty** (first family sign-in). An existing family record gets a new default game from Restore default games (it re-adds every built-in id) on any signed-in phone, and it syncs.
 
 ## Report template
 

@@ -37,13 +37,13 @@ pnpm deploy:storybook
 ### 1. Push to GitHub
 The repo is `github.com/jblairmetcalf/tally-ho`, on branch `main`.
 ```sh
-pnpm lint && pnpm typecheck && pnpm test   # optional: the same checks CI runs first
+pnpm lint && pnpm check:harness && pnpm typecheck && pnpm test   # optional: the checks CI runs first
 git add -A
 git commit -m "What changed"
 git push
 ```
 Each push to `main` (and each pull request) runs **CI** (`.github/workflows/ci.yml`) in three jobs:
-1. Lint, typecheck and unit tests.
+1. Lint, the harness check, typecheck and unit tests.
 2. The Playwright suites: the app, plus every Storybook story in both themes.
 3. Family sync: the Firestore rules tests and the cloud e2e, against the Firebase emulators (CI installs Java for them).
 
@@ -55,10 +55,12 @@ Results are under the repo's **Actions** tab. A failed run uploads its Playwrigh
 **One-time setup:**
 ```sh
 npx vercel login                       # opens the browser
-npx vercel link --cwd apps/web         # Set up? Yes · your account · existing project? No · name: tally-ho
+npx vercel link --cwd apps/web         # Set up? Yes · your account · existing project? No · name: e.g. tally-ho-pwa
 npx vercel link --cwd apps/storybook   # optional: a separate project for Storybook
 ```
-The links are saved in `apps/web/.vercel` and `apps/storybook/.vercel`. Both are gitignored, and later builds don't touch them.
+The link is saved in `.vercel/repo.json` at the repo root (newer Vercel CLIs link per repo; older ones wrote `apps/web/.vercel/project.json`). It's gitignored, and later builds don't touch it.
+
+**Environment variables:** because the deploy is prebuilt, the Firebase config comes from `apps/web/.env.local` on the machine that runs `pnpm deploy` (`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`; see `apps/web/.env.example`). Variables set in the Vercel dashboard are not used: Vercel builds nothing. They do no harm, but a build without `.env.local` is demo-only (no Family sign in).
 
 **Every release:**
 ```sh
@@ -72,12 +74,13 @@ pnpm deploy:storybook   # optional: the design system
 3. Open it once while online. That caches the whole app, so it works offline from then on.
 
 ### 4. Updates
-After `pnpm deploy`, swipe Tally Ho! closed and reopen it. The app checks the network for a new version each time it opens, and `sw.js` is served uncached, so the update arrives right away. Scores live on the phone and are kept across updates.
+After `pnpm deploy`, swipe Tally Ho! closed and reopen it. The bottom line of Settings names the build the phone is running (`Tally Ho! · <commit>[+ if uncommitted] · <date> · Family sync on|off`, from `NEXT_PUBLIC_BUILD` set in `apps/web/next.config.ts`), so you can see whether the update arrived and whether that build can sign in. The app checks the network for a new version each time it opens, and `sw.js` is served uncached, so the update arrives right away. Scores live on the phone and are kept across updates.
 
 ### Troubleshooting
 - **`No existing credentials found`:** run `npx vercel login`, then `pnpm deploy` again.
 - **Vercel asks to set up a project on every deploy:** run `npx vercel link --cwd apps/web` once.
-- **The phone shows an old version:** close and reopen the app. If it's still stale, delete it from the Home Screen and add it again from the production URL. Deleting it also erases its scores.
+- **Family sign in is missing on one device:** check the build line at the bottom of Settings. "Family sync off" means that build was made without `apps/web/.env.local`; redeploy from a machine that has it.
+- **The phone shows an old version:** compare the build line at the bottom of Settings with `git log -1`, then close and reopen the app. If it's still stale, delete it from the Home Screen and add it again from the production URL. Deleting it also erases its scores.
 - **No sound on iPhone:**
   - Check that the speaker button in the Home header is lit.
   - Turn the volume up.
@@ -100,7 +103,7 @@ Signed out, Tally Ho! is a **demo**: sample games, saved on that phone only. Kat
    | `alder@…` | `Alder` | `alder` |
 
    `playerId` ties the person to their player chip, so rounds they score are marked as theirs. Only the console can write `members`; the app can only read your own.
-6. **Register the web app.** *Project settings (gear) → General → Your apps → Web (`</>`)*, name it `Tally Ho!`, no Hosting. Copy `apps/web/.env.example` to `apps/web/.env.local` and fill in `apiKey`, `authDomain`, `projectId` and `appId` from the config it shows. These identify the project; they aren't secrets (the rules guard the data), but `.env.local` stays out of git anyway.
+6. **Register the web app.** *Project settings (gear) → General → Your apps → Web (`</>`)*, name it `Tally Ho!`, no Hosting. Copy `apps/web/.env.example` to `apps/web/.env.local` and fill in `apiKey`, `authDomain`, `projectId` and `appId` from the config it shows (as `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_APP_ID`). These identify the project; they aren't secrets (the rules guard the data), but `.env.local` stays out of git anyway.
 7. **Point the CLI at your project.** If your project ID isn't `tally-ho`, change `default` in `.firebaserc`. Then:
    ```sh
    npx firebase-tools login   # opens the browser

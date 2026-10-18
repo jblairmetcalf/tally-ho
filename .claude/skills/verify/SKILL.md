@@ -7,7 +7,7 @@ description: Run Tally Ho!'s full local check (format, lint, typecheck, unit tes
 
 Never claim green without the command output in front of you. If a step fails, stop, fix the cause (or report it), and rerun from that step.
 
-## Full run (≈5–6 min)
+## Full run (≈5 min)
 
 Run from the repo root, in order:
 
@@ -25,7 +25,7 @@ Run from the repo root, in order:
    ```sh
    pnpm typecheck
    ```
-4. Unit tests (Vitest via turbo; core and app have tests, ui passes with none):
+4. Unit tests (Vitest via turbo; core, ui and app each have tests):
    ```sh
    pnpm test
    ```
@@ -65,7 +65,7 @@ Verify (fresh build, <date/time>)
 - format: <clean | fixed N files: …>
 - lint: <clean | N errors>
 - typecheck: <pass | fail: …>
-- unit: core <p passed>, app <p passed, s skipped (rules: emulator-only)>
+- unit: core <p passed>, ui <p passed>, app <p passed, s skipped (rules: emulator-only)>
 - e2e web: <p passed / f failed / k flaky> of <n>
 - e2e storybook: <p passed / f failed / k flaky> of <n>  (stories + manager)
 - not run locally: pnpm test:rules, pnpm e2e:cloud (need Java; CI runs them)

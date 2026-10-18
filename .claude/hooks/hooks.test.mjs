@@ -103,6 +103,9 @@ test('guard judges commands, not text that mentions them', () => {
     'grep -n "\\.vercel" README.md',
     "python3 - <<'EOF'\nGENERATED = r'(\\.vercel|out)'\nEOF",
     'echo "never git push from here"',
+    // An alternation inside a quoted pattern is not a pipe into a new command.
+    'grep -n -i "pnpm\\|port\\|vercel\\|deploy" CONVENTIONS.md',
+    "rg 'push|vercel deploy' docs",
   ])
     assert.equal(bash(c).status, 0, `${c} should be allowed`)
   // ...but a real command after one, or behind npx, still is.
@@ -111,6 +114,10 @@ test('guard judges commands, not text that mentions them', () => {
     'npx vercel login',
     'cd x; pnpm exec vercel deploy',
     'FOO=1 git push',
+    // A command hidden in a shell string is still a command.
+    'bash -c "git push"',
+    "sh -c 'pnpm lint | vercel deploy'",
+    'eval "pnpm deploy"',
   ])
     assert.equal(bash(c).status, 2, `${c} should be blocked`)
 })

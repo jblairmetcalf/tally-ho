@@ -15,7 +15,7 @@ export interface DataProvider {
 
 export const STORAGE_KEY = 'tallyho.v3'
 /** The prototype's key. Read once on first load and migrated. */
-export const LEGACY_KEY = 'tallyho.v2'
+const LEGACY_KEY = 'tallyho.v2'
 const SAVE_DEBOUNCE_MS = 150
 
 function read(key: string): Store | null {

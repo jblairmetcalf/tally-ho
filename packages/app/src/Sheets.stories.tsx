@@ -71,8 +71,10 @@ const pickGame = (name: string) => (frame: HTMLElement) => {
 /** Uno: "Who won?" with one win needed; the low-wins switch gives way to how it scores. */
 export const NewGameWhoWon: Story = { args: { ...NewGame.args, act: pickGame('Uno') } }
 
-/** Scout: Rounds, one per player, so the count shows the line-up's size (3) and follows it. */
-export const NewGameRoundsPerPlayer: Story = { args: { ...NewGame.args, act: pickGame('Scout') } }
+/** One round per player: the count shows the line-up's size (3) and follows it. */
+export const NewGameRoundsPerPlayer: Story = {
+  args: { ...NewGame.args, store: SCENARIOS.roundRobin, act: pickGame('Round Robin') },
+}
 
 export const EditRound: Story = {
   args: {

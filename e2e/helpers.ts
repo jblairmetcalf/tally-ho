@@ -19,6 +19,15 @@ export async function seed(page: Page, store: Store) {
  */
 const TEST_PRESETS: Preset[] = [
   { id: 'hearts', name: 'Hearts', goal: 'score', target: 100, lowWins: true },
+  // One round per player: no default uses it any more (the family plays Scout as "Who won?").
+  {
+    id: 'round-robin',
+    name: 'Round Robin',
+    goal: 'rounds',
+    target: 3,
+    lowWins: false,
+    roundsPerPlayer: true,
+  },
 ]
 
 /**

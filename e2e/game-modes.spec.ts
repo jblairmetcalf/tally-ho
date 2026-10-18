@@ -65,10 +65,12 @@ test('Jaipur, two players: first to two wins, rounds can be re-picked', async ({
   await expect(victory(page)).toContainText('wins Jaipur, 2–1')
 })
 
-test('Scout deals one round per player, following the line-up', async ({ page }) => {
+test('a one-round-per-player game deals a round per player, following the line-up', async ({
+  page,
+}) => {
   await openNewGame(page)
   const sheet = page.getByRole('dialog', { name: 'New game' })
-  await sheet.getByRole('button', { name: 'Scout', exact: true }).click()
+  await sheet.getByRole('button', { name: 'Round Robin', exact: true }).click()
   await expect(sheet.getByRole('switch', { name: 'One round per player' })).toBeChecked()
   const rounds = sheet.getByLabel('Number of rounds')
   await expect(rounds).toHaveValue('3')
@@ -77,7 +79,7 @@ test('Scout deals one round per player, following the line-up', async ({ page })
     .getByRole('button', { name: 'Alder' })
     .click()
   await expect(rounds).toHaveValue('2')
-  await sheet.getByRole('button', { name: 'Deal in · Scout' }).click()
+  await sheet.getByRole('button', { name: 'Deal in · Round Robin' }).click()
   await expect(sheet).toBeHidden()
   await expect(page.getByText('Round 1 · 2 rounds')).toBeVisible()
 
@@ -139,7 +141,7 @@ test.describe('at 320 wide', () => {
     const sheet = page.getByRole('dialog', { name: 'New game' })
     const height = () => sheet.evaluate((el) => el.scrollHeight)
     const before = await height()
-    await sheet.getByRole('button', { name: 'Scout', exact: true }).click()
+    await sheet.getByRole('button', { name: 'Round Robin', exact: true }).click()
     expect(await height()).toBe(before)
     for (const goal of ['Score', 'Rounds', 'Who won?', 'Open']) {
       const radio = sheet.getByRole('radio', { name: goal })

@@ -157,7 +157,7 @@ test('a "Who won?" game in Settings: wins needed, no low-wins, never a blank tar
   await page.goto('/')
   const { sheet: settings } = await openSettingsArea(page, 'Games')
   await expect(settings.locator('.player-line', { hasText: 'Uno' })).toContainText('Who won?')
-  await expect(settings.locator('.player-line', { hasText: 'Scout' })).toContainText(
+  await expect(settings.locator('.player-line', { hasText: 'Round Robin' })).toContainText(
     'One round per player',
   )
   await settings.getByRole('button', { name: 'Edit Uno' }).click()

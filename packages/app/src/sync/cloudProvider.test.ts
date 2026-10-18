@@ -361,16 +361,26 @@ describe('cloudProvider', () => {
   it('a one-round-per-player preset syncs its flag, and clearing it reaches the other phone', async () => {
     const { backend, k, b } = family()
     await settle()
-    expect(b.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBe(true)
-    const scout = k.data().presets.find((p) => p.id === 'scout')!
-    k.a.upsertPreset({ ...scout, roundsPerPlayer: undefined, target: 4 })
+    // A game of our own: no default uses the flag (the family plays Scout as "Who won?").
+    const rr = {
+      id: 'round-robin',
+      name: 'Round Robin',
+      goal: 'rounds' as const,
+      target: 3,
+      lowWins: false,
+      roundsPerPlayer: true,
+    }
+    k.a.upsertPreset(rr)
     await settle()
-    expect(backend.get('presets', 'scout')).not.toHaveProperty('roundsPerPlayer')
-    expect(b.data().presets.find((p) => p.id === 'scout')).toMatchObject({ target: 4 })
-    expect(b.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBeUndefined()
-    b.a.upsertPreset({ ...scout, roundsPerPlayer: true })
+    expect(b.data().presets.find((p) => p.id === 'round-robin')?.roundsPerPlayer).toBe(true)
+    k.a.upsertPreset({ ...rr, roundsPerPlayer: undefined, target: 4 })
     await settle()
-    expect(backend.get('presets', 'scout')?.roundsPerPlayer).toBe(true)
-    expect(k.data().presets.find((p) => p.id === 'scout')?.roundsPerPlayer).toBe(true)
+    expect(backend.get('presets', 'round-robin')).not.toHaveProperty('roundsPerPlayer')
+    expect(b.data().presets.find((p) => p.id === 'round-robin')).toMatchObject({ target: 4 })
+    expect(b.data().presets.find((p) => p.id === 'round-robin')?.roundsPerPlayer).toBeUndefined()
+    b.a.upsertPreset({ ...rr, roundsPerPlayer: true })
+    await settle()
+    expect(backend.get('presets', 'round-robin')?.roundsPerPlayer).toBe(true)
+    expect(k.data().presets.find((p) => p.id === 'round-robin')?.roundsPerPlayer).toBe(true)
   })
 })

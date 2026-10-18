@@ -373,7 +373,7 @@ function GameCreator({ onDone }: { onDone: () => void }) {
   )
 }
 
-/** The line under a game in Settings: its goal, or "One round per player" (Scout). */
+/** The line under a game in Settings: its goal, or "One round per player". */
 const presetLabel = (p: Preset) =>
   p.goal === 'rounds' && p.roundsPerPlayer ? COPY.newGame.perPlayer : goalLabel(p)
 

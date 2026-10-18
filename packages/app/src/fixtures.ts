@@ -43,6 +43,19 @@ const withActive = (active: Game): Store => ({ ...played(), active })
 
 export const SCENARIOS = {
   firstRun: () => freshStore(fixedClock),
+  /** First run plus a one-round-per-player game (no default uses it since Scout went "Who won?"). */
+  roundRobin: () => {
+    const s = freshStore(fixedClock)
+    s.presets.push({
+      id: 'round-robin',
+      name: 'Round Robin',
+      goal: 'rounds',
+      target: 3,
+      lowWins: false,
+      roundsPerPlayer: true,
+    })
+    return s
+  },
   empty: () => emptyStore(),
   /** The leader's latest wins dropped until the top two are level: the champion card ties. */
   deadHeat: () => {

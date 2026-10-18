@@ -125,11 +125,11 @@ An architecture decision log: why things are the way they are. Read the relevant
   | Uno | 2022 official rules: first to play all their cards wins; scoring to 500 is optional | Who won? (`wins` 1) |
   | Schotten Totten | Claim 5 stones, or 3 adjacent stones | Who won? (`wins` 1) |
   | Jaipur | Best of three rounds: first to 2 Seals of Excellence | First to 2 wins (`wins` 2) |
-  | Mille Bornes | Hands until a player reaches 5,000 points | Race to 1000 (`score`): the family plays to 1,000 (a single trip's distance) by choice, not the rulebook's 5,000 |
-  | The Fox in the Forest | Rounds until someone reaches 21 points (16 and 35 are variants) | Race to 21 (`score`) |
+  | Mille Bornes | Hands until a player reaches 5,000 points | Who won? (`wins`, 1): family choice (19); was a race to 1,000 |
+  | The Fox in the Forest | Rounds until someone reaches 21 points (16 and 35 are variants) | Who won? (`wins`, 1): family choice (19); the rulebook race to 21 is one switch away |
   | Flip 7 | First to 200 points at the end of a round | Race to 200 (`score`) |
   | Sushi Go | 3 rounds, puddings scored at the end | 3 rounds (`rounds`) |
-  | Scout | As many rounds as players, each dealing once | One round per player (`rounds` + `roundsPerPlayer`) |
+  | Scout | As many rounds as players, each dealing once | Who won? (`wins`, 1): family choice (19); one round per player stays available |
   | Push | One game, banked cards counted when the deck runs out | Final scores (`rounds` 1) |
 
 - **Consequences:** `goal` and `roundsPerPlayer` are synced: `firestore.rules` accepts `'wins'` (with an int `target`) and an optional `roundsPerPlayer` bool, in `hasOnly` so older clients' documents stay valid; rules must deploy before the app that writes them. An older app version reading a `wins` game or preset drops it as unreadable (its Zod enum lacks `'wins'`) rather than mis-scoring it. Ties offer "pick the winner by the game's tiebreak" or a tiebreak round (13). Adding a game follows the same research: skill `add-game`. In the UI the four choices read Score / Rounds / Who won? / **Open** (not "Open-ended": four segments must fit one row at 320px; the goal still reads "Open-ended" everywhere else), and every goal keeps its own target so switching never turns 200 points into 200 rounds.
@@ -146,3 +146,10 @@ An architecture decision log: why things are the way they are. Read the relevant
 - **Decision:** One `Sheet` per thing opened; going deeper pushes a page inside it with `SheetNav` (`packages/ui/src/primitives/SheetNav.tsx`, used as `<Sheet nav>`). One header that never scrolls: back (chevron, "Back") top left on any page past the root, the page title, and Close always top right, closing everything. Pages push from the right with the page beneath stepping left, like iOS navigation; back reverses it. The page title is the Radix `Dialog.Title`, so the dialog's accessible name follows the page ("Settings", "Players", "Edit Kate", "Family sign in"). Escape goes back a page, and closes at the root; the grab handle and backdrop close the whole sheet. Settings is a router over a `Route[]` stack in `SettingsSheet`; push plays `open`, back plays `close`, archive/delete/add pop silently after their own cue. The slide uses a new `--glide` curve (cubic-bezier(.32,.72,0,1)) rather than `--spring`: a spring's overshoot on a full-width page would open a gap at the sheet's edge. Not in the prototype (it had no nested pages); this is a native-feel deviation.
 - **Consequences:** Nothing nests sheets any more, so the Sheet's nesting support (`SheetDepth`, `.nested`, `data-depth`, `tall`) is gone; a sheet that needs pages uses `SheetNav`. Pages beneath stay mounted (inert, `aria-hidden`), so their scroll and drafts survive a round trip; a page whose player or game disappears (archived on another phone) drops out of the stack. e2e selects the dialog by the page title (`getByRole('dialog', { name: 'Edit Kate' })`), and `getByRole('dialog', { name: 'Settings' })` matches only on the landing.
 
+
+## 19. Defaults follow how the family plays, not only the rulebook
+
+- **Date / status:** 2026-10 · Accepted
+- **Context:** The defaults were set from the rulebooks (16). The family plays several of them simply to a winner.
+- **Decision:** The Fox in the Forest (rulebook: race to 21), Scout (one round per player) and Mille Bornes (race to 5,000; we had 1,000) default to **Who won?** (`wins`, 1), alongside Monopoly Deal, High Society and Spicy, which already were. The rulebook modes stay one tap away in New game and Settings › Games.
+- **Consequences:** No default uses one round per player any more; the feature stays (tests use a "Round Robin" test preset). The demo's sample history keeps its scored games (history can predate a preference, and real totals give the demo stats something to show). Defaults only seed new records: an existing demo needs Reset demo, and a family record already seeded changes these in Settings › Games. A drift audit should treat these as family choices, not rulebook errors.

@@ -138,9 +138,16 @@ describe('diff', () => {
   })
 
   it('presets carry roundsPerPlayer; turning it off clears the field', () => {
-    const a = base()
-    const scout = a.presets.find((p) => p.id === 'scout')!
-    expect(scout.roundsPerPlayer).toBe(true)
+    // A one-round-per-player game of our own (no default uses the flag).
+    const rr = {
+      id: 'round-robin',
+      name: 'Round Robin',
+      goal: 'rounds' as const,
+      target: 3,
+      lowWins: false,
+      roundsPerPlayer: true,
+    }
+    const a = { ...base(), presets: [...base().presets, rr] }
     const custom = { id: 'p1', name: 'Hearts', goal: 'rounds' as const, target: 4, lowWins: true }
     const withNew = { ...a, presets: [...a.presets, { ...custom, roundsPerPlayer: true }] }
     expect(diff(a, withNew, 'kate')).toEqual([
@@ -153,13 +160,15 @@ describe('diff', () => {
     ])
     const off = {
       ...a,
-      presets: a.presets.map((p) => (p.id === 'scout' ? { ...p, roundsPerPlayer: undefined } : p)),
+      presets: a.presets.map((p) =>
+        p.id === 'round-robin' ? { ...p, roundsPerPlayer: undefined } : p,
+      ),
     }
     expect(diff(a, off, 'kate')).toEqual([
-      { type: 'update', col: 'presets', id: 'scout', data: { roundsPerPlayer: DELETE } },
+      { type: 'update', col: 'presets', id: 'round-robin', data: { roundsPerPlayer: DELETE } },
     ])
     expect(diff(off, a, 'kate')).toEqual([
-      { type: 'update', col: 'presets', id: 'scout', data: { roundsPerPlayer: true } },
+      { type: 'update', col: 'presets', id: 'round-robin', data: { roundsPerPlayer: true } },
     ])
     // A preset without the flag writes no key (old clients' docs look the same).
     expect('roundsPerPlayer' in presetDoc(custom)).toBe(false)

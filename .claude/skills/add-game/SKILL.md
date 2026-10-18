@@ -13,10 +13,10 @@ Read how the rulebook ends the game (the official rules, current edition), not h
 |---|---|---|---|
 | `wins` + `target: 1` ("Who won?") | the round's winner is tapped; one round, one winner | games won outright, not on points | Monopoly Deal, High Society, Spicy, Uno (official rules since 2022), Schotten Totten |
 | `wins` + `target: N` ("First to N wins") | someone has won N rounds (each round: tap the winner) | best-of series | **Jaipur 2** (first to two Seals of Excellence) |
-| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | Mille Bornes 1000 (family choice; rulebook 5000), The Fox in the Forest 21, Flip 7 200 |
+| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | The Fox in the Forest 21 and Mille Bornes 5000 by their rulebooks (the family plays both as Who won?, decision 19), Flip 7 200 |
 | `rounds` + `target` ("N rounds") | after N rounds, highest total wins | a fixed number of hands | Sushi Go 3 |
 | `rounds` + `target: 1` ("Final scores") | one tally at the end | games played once and scored at the end | **Push** (one final tally when the deck runs out) |
-| `rounds` + `roundsPerPlayer: true` | after one round per player (`targetFor` sets the count from the line-up) | one round per dealer | **Scout** (`target` 3 is only the fallback) |
+| `rounds` + `roundsPerPlayer: true` | after one round per player (`targetFor` sets the count from the line-up) | one round per dealer | Scout by its rulebook (`target` is only the fallback); the family plays it as Who won? (decision 19) |
 | `open`, `target: null` ("Open-ended") | when you tap the flag; the leader is crowned | no fixed end at all | none by default |
 
 `lowWins: true` flips `score` and `rounds`: lowest total wins and a score target becomes a bust line (Hearts 100, Golf, Skyjo). Keep it `false` for `wins`. Decision points:

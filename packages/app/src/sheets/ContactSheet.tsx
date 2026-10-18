@@ -1,15 +1,17 @@
-import { ButtonLink, FoxNote, SheetTitle } from '@tally/ui'
+import { ButtonLink, FoxNote } from '@tally/ui'
 import { useActions } from '../context'
 import { COPY } from '../copy'
 
 const K = COPY.contact
 
-/** Say hi to the maker: who built it, why, and a link to his site (a new tab). No email. */
-export function ContactContent({ onClose }: { onClose: () => void }) {
+/**
+ * Say hi to the maker: who built it, why, and a link to his site (a new tab). No email.
+ * A page in Settings (the nav header gives it its title, back and close).
+ */
+export function ContactContent() {
   const a = useActions()
   return (
     <>
-      <SheetTitle title={K.title} onClose={onClose} />
       <FoxNote layout="center" wink title={K.hello} body={K.body} />
       <div className="sheet-cta">
         <ButtonLink

@@ -13,14 +13,15 @@ import {
   SectionTitle,
   Segmented,
   Setting,
-  Sheet,
-  SheetTitle,
+  SheetNav,
+  type SheetNavPage,
   Swatches,
   Switch,
   SyncBadge,
   TextInput,
 } from '@tally/ui'
-import { useRef, useState } from 'react'
+import { type ReactNode, useState } from 'react'
+import { buildStamp } from '../build'
 import { useActions, useRoster, useTally, useTallyStore } from '../context'
 import { COPY } from '../copy'
 import { useInstall } from '../install'
@@ -30,48 +31,18 @@ import { ContactContent } from './ContactSheet'
 import { GoalFields, refill, type Targets, targetsFor } from './GoalFields'
 import { InstallGuide } from './InstallSheet'
 import { ShareContent } from './ShareSheet'
-import { SignInSheet } from './SignInSheet'
+import { SignInContent } from './SignInSheet'
 
 const C = COPY.settings
 
-/**
- * Which item's editor sheet is up. The last item stays rendered while the sheet slides away,
- * even if it was just archived or deleted.
- */
-function useEditor<T extends { id: string }>(items: T[]) {
-  const a = useActions()
-  const [id, setId] = useState<string | null>(null)
-  const [open, setOpen] = useState(false)
-  const last = useRef<T | null>(null)
-  const live = items.find((x) => x.id === id) ?? null
-  if (live) last.current = live
-  return {
-    item: live ?? last.current,
-    open: open && !!live,
-    show: (next: string, cue: 'open' | 'add' = 'open') => {
-      a.play(cue)
-      setId(next)
-      setOpen(true)
-    },
-    /** Escape, backdrop, drag or the close button. */
-    close: () => {
-      a.play('close')
-      setOpen(false)
-    },
-    /** Gone without the close sound (archived, deleted: they play their own). */
-    dismiss: () => setOpen(false),
-  }
-}
-
+/** Settings › Players › Edit Kate: name, colour, archive (which goes back to the line-up). */
 function PlayerEditor({
   player,
   others,
-  onClose,
   onArchived,
 }: {
   player: Player
   others: Player[]
-  onClose: () => void
   onArchived: () => void
 }) {
   const a = useActions()
@@ -90,7 +61,6 @@ function PlayerEditor({
   }
   return (
     <>
-      <SheetTitle title={C.editPlayer(player.name)} onClose={onClose} />
       <div className="group">
         <TextInput
           aria-label={C.nameOf(player.name)}
@@ -140,12 +110,12 @@ function PlayerEditor({
   )
 }
 
-function PlayersSection() {
+/** Settings › Players: the line-up, each player's editor a page pushed over it, and Add a player. */
+function PlayersContent({ onEdit }: { onEdit: (id: string) => void }) {
   const a = useActions()
   const players = useTally((s) => s.data.players)
   const live = players.filter((p) => !p.archived)
   const archived = players.filter((p) => p.archived)
-  const editor = useEditor(live)
   const [np, setNp] = useState('')
   const [err, setErr] = useState('')
 
@@ -164,37 +134,14 @@ function PlayersSection() {
   }
 
   return (
-    <section className="group" aria-labelledby="set-players">
-      <SectionTitle>
-        <span id="set-players">{C.players}</span>
-      </SectionTitle>
+    <div className="group">
       {live.map((p) => (
         <div className="player-line" key={p.id}>
           <Chip name={p.name} color={p.color} size={34} />
           <span className="n">{p.name}</span>
-          <IconButton
-            icon="pencil"
-            label={C.editPlayer(p.name)}
-            aria-haspopup="dialog"
-            onClick={() => editor.show(p.id)}
-          />
+          <IconButton icon="pencil" label={C.editPlayer(p.name)} onClick={() => onEdit(p.id)} />
         </div>
       ))}
-      <Sheet
-        open={editor.open}
-        onClose={editor.close}
-        label={editor.item ? C.editPlayer(editor.item.name) : C.players}
-      >
-        {editor.item && (
-          <PlayerEditor
-            key={editor.item.id}
-            player={editor.item}
-            others={live.filter((q) => q.id !== editor.item?.id)}
-            onClose={editor.close}
-            onArchived={editor.dismiss}
-          />
-        )}
-      </Sheet>
       <div className="row2">
         <TextInput
           placeholder={C.addPlayer}
@@ -246,19 +193,12 @@ function PlayersSection() {
           </PillRow>
         </>
       )}
-    </section>
+    </div>
   )
 }
 
-function PresetEditor({
-  preset,
-  onClose,
-  onDeleted,
-}: {
-  preset: Preset
-  onClose: () => void
-  onDeleted: () => void
-}) {
+/** Settings › Games › Edit Uno: name, how it ends, low-wins, delete (back to the list). */
+function PresetEditor({ preset, onDeleted }: { preset: Preset; onDeleted: () => void }) {
   const a = useActions()
   const [name, setName] = useState(preset.name)
   const [targets, setTargets] = useState<Targets>(() => targetsFor(preset.goal, preset.target))
@@ -271,7 +211,6 @@ function PresetEditor({
   const goal = preset.goal
   return (
     <>
-      <SheetTitle title={C.editGame(preset.name)} onClose={onClose} />
       <div className="group">
         <TextInput
           aria-label={C.gameName}
@@ -336,10 +275,11 @@ function PresetEditor({
 }
 
 /**
- * Add a game: a draft held here until "Add game", so closing the sheet (or never naming it)
- * leaves no empty row behind. The add button waits for a name the family doesn't have yet.
+ * Add a game: a draft held here until "Add game", so going back (or never naming it) leaves no
+ * empty row behind. The add button waits for a name the family doesn't have yet; adding goes
+ * back to Games.
  */
-function GameCreator({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
+function GameCreator({ onDone }: { onDone: () => void }) {
   const a = useActions()
   const presets = useTally((s) => s.data.presets)
   const lineup = useTally((s) => {
@@ -375,7 +315,6 @@ function GameCreator({ onDone, onClose }: { onDone: () => void; onClose: () => v
   }
   return (
     <>
-      <SheetTitle title={C.addGameTitle} onClose={onClose} />
       <p className="hint" style={{ margin: 0 }}>
         {C.addGameHint}
       </p>
@@ -438,70 +377,122 @@ function GameCreator({ onDone, onClose }: { onDone: () => void; onClose: () => v
 const presetLabel = (p: Preset) =>
   p.goal === 'rounds' && p.roundsPerPlayer ? COPY.newGame.perPlayer : goalLabel(p)
 
-function GamesSection() {
-  const a = useActions()
+/** Settings › Games: every game and how it ends; Add a game and each editor are pages pushed over it. */
+function GamesContent({ onEdit, onAdd }: { onEdit: (id: string) => void; onAdd: () => void }) {
   const presets = useTally((s) => s.data.presets)
-  const editor = useEditor(presets)
-  // A new game is a draft in its own sheet until it's added: no empty rows.
-  const [adding, setAdding] = useState(false)
-  const [addKey, setAddKey] = useState(0)
-  const addGame = () => {
-    a.play('open')
-    setAddKey((k) => k + 1)
-    setAdding(true)
-  }
-  const closeAdd = () => {
-    a.play('close')
-    setAdding(false)
-  }
   return (
-    <section className="group" aria-labelledby="set-games">
-      <SectionTitle>
-        <span id="set-games">{C.games}</span>
-      </SectionTitle>
-      {presets.map((p) => (
-        <div className="player-line" key={p.id}>
-          <span className="n" style={{ display: 'flex', flexDirection: 'column' }}>
-            {p.name}
-            <span className="hint" style={{ fontWeight: 700, color: 'var(--muted)' }}>
-              {presetLabel(p)}
+    <>
+      <div className="group">
+        {presets.map((p) => (
+          <div className="player-line" key={p.id}>
+            <span className="n" style={{ display: 'flex', flexDirection: 'column' }}>
+              {p.name}
+              <span className="hint" style={{ fontWeight: 700, color: 'var(--muted)' }}>
+                {presetLabel(p)}
+              </span>
             </span>
-          </span>
-          <IconButton
-            icon="pencil"
-            label={C.editGame(p.name)}
-            aria-haspopup="dialog"
-            onClick={() => editor.show(p.id)}
+            <IconButton icon="pencil" label={C.editGame(p.name)} onClick={() => onEdit(p.id)} />
+          </div>
+        ))}
+      </div>
+      {/* Adding a game is this page's main action: pinned, however long the list. */}
+      <div className="sheet-cta">
+        <Button block icon="plus" iconSize={20} onClick={onAdd}>
+          {C.addGame}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+/** Settings › Appearance: theme, sound, haptics, keep awake, and clearing the samples. */
+function AppearanceContent() {
+  const a = useActions()
+  const prefs = useTally((s) => s.data.prefs)
+  const hasSamples = useTally((s) => s.data.hasSamples)
+  return (
+    <div className="group">
+      <Segmented<ThemePref>
+        label={C.theme}
+        options={[
+          { value: 'system', label: C.themes.system },
+          { value: 'dark', label: C.themes.dark },
+          { value: 'light', label: C.themes.light },
+        ]}
+        value={prefs.theme}
+        onChange={(v) => {
+          a.play('tap')
+          a.setPref('theme', v)
+        }}
+      />
+      <div>
+        <Setting title={C.sound} hint={C.soundHint}>
+          <Switch checked={!prefs.muted} label={C.sound} onChange={() => a.toggleMute()} />
+        </Setting>
+        <Setting title={C.haptics} hint={C.hapticsHint}>
+          <Switch
+            checked={prefs.haptics}
+            label={C.haptics}
+            onChange={(v) => {
+              a.setPref('haptics', v)
+              a.play('tap')
+            }}
           />
-        </div>
-      ))}
-      <Button
-        variant="ghost"
-        block
-        icon="plus"
-        iconSize={18}
-        aria-haspopup="dialog"
-        onClick={addGame}
-      >
-        {C.addGame}
-      </Button>
-      <Sheet open={adding} onClose={closeAdd} label={C.addGameTitle}>
-        <GameCreator key={addKey} onClose={closeAdd} onDone={() => setAdding(false)} />
-      </Sheet>
-      <Sheet
-        open={editor.open}
-        onClose={editor.close}
-        label={editor.item ? C.editGame(editor.item.name) : C.games}
-      >
-        {editor.item && (
-          <PresetEditor
-            key={editor.item.id}
-            preset={editor.item}
-            onClose={editor.close}
-            onDeleted={editor.dismiss}
+        </Setting>
+        <Setting title={C.wakeLock} hint={C.wakeLockHint}>
+          <Switch
+            checked={prefs.wakeLock}
+            label={C.wakeLock}
+            onChange={(v) => {
+              a.play('tap')
+              a.setPref('wakeLock', v)
+            }}
           />
+        </Setting>
+        {hasSamples && (
+          <Setting title={C.samples} hint={C.samplesHint}>
+            <Button variant="ghost" size="sm" onClick={a.clearSamples}>
+              {C.clearSamples}
+            </Button>
+          </Setting>
         )}
-      </Sheet>
+      </div>
+    </div>
+  )
+}
+
+/** Players, Games and Appearance: one row each on the landing, each pushing its page. */
+function Areas({ go }: { go: (r: Route) => void }) {
+  const players = useTally((s) => s.data.players)
+  const games = useTally((s) => s.data.presets.length)
+  const prefs = useTally((s) => s.data.prefs)
+  const names = players.filter((p) => !p.archived).map((p) => p.name)
+  return (
+    <section className="group" aria-labelledby="set-yours">
+      <SectionTitle>
+        <span id="set-yours">{C.yours}</span>
+      </SectionTitle>
+      <LinkRow
+        icon="users"
+        tone="fox"
+        title={C.players}
+        hint={C.playersHint(names)}
+        onClick={() => go('players')}
+      />
+      <LinkRow
+        icon="cards"
+        tone="lav"
+        title={C.games}
+        hint={C.gamesHint(games)}
+        onClick={() => go('games')}
+      />
+      <LinkRow
+        icon="sun"
+        tone="jade"
+        title={C.appearance}
+        hint={C.appearanceHint(C.themes[prefs.theme], !prefs.muted)}
+        onClick={() => go('appearance')}
+      />
     </section>
   )
 }
@@ -535,21 +526,12 @@ function downloadRecord(data: { players: unknown; presets: unknown; games: unkno
 
 const F = COPY.family
 
-function FamilySection() {
+/** Family, inline at the bottom of the landing; signing in is a page pushed over it. */
+function FamilySection({ go }: { go: (r: Route) => void }) {
   const a = useActions()
   const api = useSession()
   const store = useTallyStore()
   const roster = useRoster()
-  // Sign-in layers over Settings like the editors, so closing it lands back here.
-  const [signingIn, setSigningIn] = useState(false)
-  const openSignIn = () => {
-    a.play('open')
-    setSigningIn(true)
-  }
-  const closeSignIn = () => {
-    a.play('close')
-    setSigningIn(false)
-  }
   if (!api.enabled) return null
   const { session } = api
   return (
@@ -560,12 +542,9 @@ function FamilySection() {
       {session.mode === 'demo' ? (
         <>
           <span className="hint">{F.demoHint}</span>
-          <Button block icon="lock" iconSize={20} aria-haspopup="dialog" onClick={openSignIn}>
+          <Button block icon="lock" iconSize={20} onClick={() => go('signin')}>
             {F.signIn}
           </Button>
-          <Sheet open={signingIn} onClose={closeSignIn} label={COPY.sheetLabel.signin}>
-            <SignInSheet onClose={closeSignIn} />
-          </Sheet>
           <Button
             variant="ghost"
             block
@@ -631,128 +610,139 @@ function FamilySection() {
   )
 }
 
-type Corner = 'install' | 'share' | 'contact'
-
-/**
- * The friendly top of Settings: the fox says hi, then three ways out (install, share, the
- * maker), each a sheet nested over Settings.
- */
-function Landing() {
-  const a = useActions()
+/** Three ways out near the top of Settings (install, share, the maker), each pushing its page. */
+function Corners({ go }: { go: (r: Route) => void }) {
   const install = useInstall()
-  const [open, setOpen] = useState<Corner | null>(null)
-  const show = (which: Corner) => {
-    a.play('open')
-    setOpen(which)
-  }
-  const close = () => {
-    a.play('close')
-    // Seen from Settings counts too: it won't pop up by itself after this.
-    if (open === 'install') a.setPref('installHintSeen', true)
-    setOpen(null)
-  }
   return (
     <section className="group" aria-label={C.more}>
-      <FoxNote title={C.hello} body={C.helloBody} className="mb-1.5" />
       <LinkRow
         icon="phone"
         tone="jade"
         title={C.install}
         hint={install.installed ? C.installedHint : C.installHint}
-        aria-haspopup="dialog"
-        onClick={() => show('install')}
+        onClick={() => go('install')}
       />
       <LinkRow
         icon="share"
         tone="amber"
         title={C.share}
         hint={C.shareHint}
-        aria-haspopup="dialog"
-        onClick={() => show('share')}
+        onClick={() => go('share')}
       />
       <LinkRow
         icon="heart"
         tone="coral"
         title={C.contact}
         hint={C.contactHint}
-        aria-haspopup="dialog"
-        onClick={() => show('contact')}
+        onClick={() => go('contact')}
       />
-      <Sheet open={open === 'install'} onClose={close} label={COPY.sheetLabel.install}>
-        <InstallGuide onClose={close} />
-      </Sheet>
-      <Sheet open={open === 'share'} onClose={close} label={COPY.sheetLabel.share}>
-        <ShareContent onClose={close} />
-      </Sheet>
-      <Sheet open={open === 'contact'} onClose={close} label={COPY.sheetLabel.contact}>
-        <ContactContent onClose={close} />
-      </Sheet>
     </section>
   )
 }
 
+/** Every page Settings can push. Editors carry the id of what they edit. */
+export type Route =
+  | 'root'
+  | 'install'
+  | 'share'
+  | 'contact'
+  | 'players'
+  | `player:${string}`
+  | 'games'
+  | `game:${string}`
+  | 'add-game'
+  | 'appearance'
+  | 'signin'
+
+/**
+ * Settings is one sheet with a navigation stack (`SheetNav`): a short landing (the fox, install /
+ * share / the maker, then Players, Games and Appearance, Family inline, the build line), and
+ * every row pushes its page from the right; editors (Edit Kate, Add a game, Edit Uno) push a
+ * third. Back (top left, or Escape) pops one page; Close (top right) closes it all.
+ */
 export function SettingsSheet() {
   const a = useActions()
-  const prefs = useTally((s) => s.data.prefs)
-  const hasSamples = useTally((s) => s.data.hasSamples)
-  return (
-    <>
-      <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
-      <Landing />
-      <FamilySection />
-      <PlayersSection />
-      <GamesSection />
+  const session = useSession()
+  const players = useTally((s) => s.data.players)
+  const presets = useTally((s) => s.data.presets)
+  const [stack, setStack] = useState<Route[]>(['root'])
 
-      <section className="group" aria-labelledby="set-look">
-        <SectionTitle>
-          <span id="set-look">{C.appearance}</span>
-        </SectionTitle>
-        <Segmented<ThemePref>
-          label={C.theme}
-          options={[
-            { value: 'system', label: C.themes.system },
-            { value: 'dark', label: C.themes.dark },
-            { value: 'light', label: C.themes.light },
-          ]}
-          value={prefs.theme}
-          onChange={(v) => {
-            a.play('tap')
-            a.setPref('theme', v)
-          }}
-        />
-        <div>
-          <Setting title={C.sound} hint={C.soundHint}>
-            <Switch checked={!prefs.muted} label={C.sound} onChange={() => a.toggleMute()} />
-          </Setting>
-          <Setting title={C.haptics} hint={C.hapticsHint}>
-            <Switch
-              checked={prefs.haptics}
-              label={C.haptics}
-              onChange={(v) => {
-                a.setPref('haptics', v)
-                a.play('tap')
-              }}
-            />
-          </Setting>
-          <Setting title={C.wakeLock} hint={C.wakeLockHint}>
-            <Switch
-              checked={prefs.wakeLock}
-              label={C.wakeLock}
-              onChange={(v) => {
-                a.play('tap')
-                a.setPref('wakeLock', v)
-              }}
-            />
-          </Setting>
-          {hasSamples && (
-            <Setting title={C.samples} hint={C.samplesHint}>
-              <Button variant="ghost" size="sm" onClick={a.clearSamples}>
-                {C.clearSamples}
-              </Button>
-            </Setting>
-          )}
-        </div>
-      </section>
-    </>
+  const livePlayer = (id: string) => players.find((p) => p.id === id && !p.archived)
+  const preset = (id: string) => presets.find((p) => p.id === id)
+  // An editor whose player or game is gone (archived here, or on another phone) drops out.
+  const valid = stack.filter((r) =>
+    r.startsWith('player:')
+      ? !!livePlayer(r.slice(7))
+      : r.startsWith('game:')
+        ? !!preset(r.slice(5))
+        : true,
+  )
+
+  const go = (r: Route) => {
+    a.play('open')
+    // Seen from Settings counts too: the guide won't pop up by itself after this.
+    if (r === 'install') a.setPref('installHintSeen', true)
+    setStack([...valid, r])
+  }
+  /** Back one page, silently (archive, delete and add play their own cue). */
+  const pop = () => setStack(valid.slice(0, -1))
+  const back = () => {
+    if (valid.length < 2) return
+    a.play('close')
+    pop()
+  }
+
+  const page = (r: Route): SheetNavPage | null => {
+    const p = (title: string, content: ReactNode): SheetNavPage => ({ key: r, title, content })
+    if (r === 'root')
+      return p(
+        C.title,
+        <>
+          <FoxNote title={C.hello} body={C.helloBody} />
+          {/* Install / share / say hi first, then the family's own setup, then sign-in last. */}
+          <Corners go={go} />
+          <Areas go={go} />
+          <FamilySection go={go} />
+          <p className="hint" style={{ margin: 0, textAlign: 'center' }} data-testid="build-stamp">
+            {C.about(buildStamp(), session.enabled)}
+          </p>
+        </>,
+      )
+    if (r === 'install') return p(COPY.install.title, <InstallGuide onDone={back} />)
+    if (r === 'share') return p(COPY.share.title, <ShareContent />)
+    if (r === 'contact') return p(COPY.contact.title, <ContactContent />)
+    if (r === 'players') return p(C.players, <PlayersContent onEdit={(id) => go(`player:${id}`)} />)
+    if (r === 'games')
+      return p(
+        C.games,
+        <GamesContent onEdit={(id) => go(`game:${id}`)} onAdd={() => go('add-game')} />,
+      )
+    if (r === 'add-game') return p(C.addGameTitle, <GameCreator onDone={pop} />)
+    if (r === 'appearance') return p(C.appearance, <AppearanceContent />)
+    if (r === 'signin') return p(COPY.signIn.title, <SignInContent onDone={back} />)
+    if (r.startsWith('player:')) {
+      const player = livePlayer(r.slice(7))
+      if (!player) return null
+      return p(
+        C.editPlayer(player.name),
+        <PlayerEditor
+          player={player}
+          others={players.filter((q) => !q.archived && q.id !== player.id)}
+          onArchived={pop}
+        />,
+      )
+    }
+    const game = preset(r.slice(5))
+    return game ? p(C.editGame(game.name), <PresetEditor preset={game} onDeleted={pop} />) : null
+  }
+
+  return (
+    <SheetNav
+      pages={valid.map(page).filter((x): x is SheetNavPage => !!x)}
+      onBack={back}
+      onClose={() => a.closeSheet()}
+      backLabel={COPY.sheetBack}
+      closeLabel={COPY.close}
+    />
   )
 }

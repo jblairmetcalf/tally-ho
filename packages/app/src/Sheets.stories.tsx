@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { COPY } from './copy'
 import { SCENARIOS } from './fixtures'
-import { clickButton, Frames } from './StoryFrames'
+import { clickButton, clickRow, Frames, pushPages } from './StoryFrames'
+import { demoSession } from './sync/session'
 
 const meta: Meta<typeof Frames> = {
   title: 'Sheets/App sheets',
@@ -101,37 +102,72 @@ export const GameDetail: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'detail', id: 's0' }, sheetKey: 1 } },
 }
 
+/** Settings is a short landing: the fox, Players / Games / Appearance rows, Family, the way out. */
 export const Settings: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'settings' }, sheetKey: 1 } },
 }
 
-/** Adding a game: a draft sheet over Settings; nothing is saved until it has a name. */
-export const SettingsAddGame: Story = {
-  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.addGame) },
+const S = COPY.settings
+/** Push a Settings area from its landing row. */
+const area = (title: string) => ({ title, press: (p: HTMLElement) => clickRow(p, title) })
+/** Then press a button (by its accessible name) on that page, landing on `title`. */
+const tap = (title: string, name = title) => ({
+  title,
+  press: (p: HTMLElement) => clickButton(p, name),
+})
+
+/** Settings › Players: back top left, close top right, the line-up, archived players, Add a player. */
+export const SettingsPlayers: Story = {
+  args: { ...Settings.args, act: pushPages(area(S.players)) },
 }
 
-/** Editing a player opens a second sheet over Settings, with its own backdrop. */
+/** Settings › Games: every game with how it ends, and Add a game pinned at the bottom. */
+export const SettingsGames: Story = {
+  args: { ...Settings.args, act: pushPages(area(S.games)) },
+}
+
+/** Settings › Appearance: theme, sound, haptics, keep awake, and clearing the samples. */
+export const SettingsAppearance: Story = {
+  args: { ...Settings.args, act: pushPages(area(S.appearance)) },
+}
+
+/** Two deep: Settings › Players › Edit Kate, pushed from the right; Back returns to Players. */
 export const SettingsEditPlayer: Story = {
-  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.editPlayer('Kate')) },
+  args: {
+    ...Settings.args,
+    act: pushPages(area(S.players), tap(S.editPlayer('Kate'))),
+  },
 }
 
-/** Editing a game: name, how it ends, low-wins and delete, in a sheet over Settings. */
+/** Settings › Games › Add a game: a draft page; nothing is saved until it has a name. */
+export const SettingsAddGame: Story = {
+  args: {
+    ...Settings.args,
+    act: pushPages(area(S.games), tap(S.addGameTitle, S.addGame)),
+  },
+}
+
+/** Settings › Games › Edit Flip 7: name, how it ends, low-wins and delete. */
 export const SettingsEditGame: Story = {
   args: {
     ...Settings.args,
-    act: (frame) => {
-      const edit = [
-        ...frame.querySelectorAll<HTMLButtonElement>(
-          '[aria-labelledby="set-games"] button[aria-haspopup]',
-        ),
-      ][0]
-      edit?.click()
-      return !!edit
-    },
+    act: pushPages(area(S.games), tap(S.editGame('Flip 7'))),
   },
 }
 
 /** Editing a "Who won?" game (Uno): the wins needed, and no low-wins switch. */
 export const SettingsEditWhoWon: Story = {
-  args: { ...Settings.args, act: (frame) => clickButton(frame, COPY.settings.editGame('Uno')) },
+  args: {
+    ...Settings.args,
+    act: pushPages(area(S.games), tap(S.editGame('Uno'))),
+  },
+}
+
+/** Settings › Family sign in: the form as a page, back to Settings top left. */
+export const SettingsSignIn: Story = {
+  args: {
+    ...Settings.args,
+    session: () => demoSession({ enabled: true }),
+    act: pushPages(tap(COPY.signIn.title, COPY.family.signIn)),
+  },
 }

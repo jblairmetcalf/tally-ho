@@ -89,7 +89,7 @@ const open = (label: string) => (frame: HTMLElement) => {
   return !!b
 }
 
-/** The top of Settings: the fox says hi, then install, share and the maker. */
+/** Settings: the fox, the Players / Games / Appearance rows, then install, share, the maker. */
 export const SettingsLanding: Story = { args: settings }
 
 /** Settings when it's already installed: the install row says so. */
@@ -98,7 +98,7 @@ export const SettingsLandingInstalled: Story = {
   decorators: [as({ ...IPHONE, installed: true })],
 }
 
-/** Settings › Install on your phone: the same guide, nested over Settings. */
+/** Settings › Install on your phone: the same guide, as a page pushed over Settings (back, close). */
 export const SettingsInstall: Story = { args: { ...settings, act: open(COPY.settings.install) } }
 
 /** Settings › Share Tally Ho!: the QR code with the fox, the address, Share… and Copy link. */

@@ -1,4 +1,4 @@
-import { Button, QrCode, SheetTitle } from '@tally/ui'
+import { Button, QrCode } from '@tally/ui'
 import { useActions } from '../context'
 import { COPY } from '../copy'
 import { useShareUrl } from '../install'
@@ -27,8 +27,9 @@ function copyByHand(text: string): boolean {
 /**
  * Share the game: a QR code of wherever Tally Ho! is running (the Vercel address once
  * deployed), the address itself, the phone's share sheet when there is one, and Copy link.
+ * A page in Settings (the nav header gives it its title, back and close).
  */
-export function ShareContent({ onClose }: { onClose: () => void }) {
+export function ShareContent() {
   const a = useActions()
   const url = useShareUrl()
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
@@ -47,7 +48,6 @@ export function ShareContent({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <SheetTitle title={S.title} onClose={onClose} />
       <p className="share-lede">{S.lede}</p>
       <QrCode value={url} label={S.qrLabel(url)} size={232} badge />
       <p className="share-url selectable">{url}</p>

@@ -26,19 +26,23 @@ export function takeWelcome(session: Session): string | null {
   return match && session.mode === 'family' ? session.member.name : null
 }
 
-/**
- * Family sign in. A real `<form>` so password managers and iOS autofill recognise it; Enter
- * submits. While signing in the button spins and the fields hold still; a failure shakes in
- * a `role="alert"` line; success closes the sheet and says welcome.
- */
 export interface SignInSheetProps {
   /** Stories only: start mid-flow (filled in, spinning, or showing an error). */
   preview?: { email?: string; password?: string; busy?: boolean; error?: SignInErrorCode }
-  /** Nested over Settings: close just this sheet (default: the app's top-level sheet). */
-  onClose?: () => void
 }
 
-export function SignInSheet({ preview, onClose }: SignInSheetProps = {}) {
+export interface SignInContentProps extends SignInSheetProps {
+  /** Signed in but the app hasn't re-keyed yet: leave this page or sheet (then it says welcome). */
+  onDone: () => void
+}
+
+/**
+ * Family sign in, the form: a page in Settings (the nav header titles it) or the body of the
+ * standalone sign-in sheet. A real `<form>` so password managers and iOS autofill recognise it;
+ * Enter submits. While signing in the button spins and the fields hold still; a failure shakes
+ * in a `role="alert"` line; success re-keys the app, whose new Home says welcome.
+ */
+export function SignInContent({ preview, onDone }: SignInContentProps) {
   const a = useActions()
   const api = useSession()
   const [email, setEmail] = useState(preview?.email ?? '')
@@ -76,8 +80,7 @@ export function SignInSheet({ preview, onClose }: SignInSheetProps = {}) {
       // Normally the app has re-keyed by now and Home says welcome. If not, do it here.
       if (alive.current && welcomeFor) {
         welcomeFor = null
-        if (onClose) onClose()
-        else a.closeSheet(true)
+        onDone()
         a.showToast(C.welcome(api.session.mode === 'family' ? api.session.member.name : em))
       }
     } catch (x) {
@@ -109,7 +112,6 @@ export function SignInSheet({ preview, onClose }: SignInSheetProps = {}) {
 
   return (
     <>
-      <SheetTitle title={C.title} onClose={onClose ?? (() => a.closeSheet())} />
       <p className="signin-lede">{C.lede}</p>
       <form className="group" onSubmit={submit} noValidate aria-busy={busy}>
         <label className="field-label" htmlFor="signin-email">
@@ -174,6 +176,17 @@ export function SignInSheet({ preview, onClose }: SignInSheetProps = {}) {
       >
         {C.forgot}
       </button>
+    </>
+  )
+}
+
+/** The standalone sign-in sheet (routed in SheetHost): its title row with close, then the form. */
+export function SignInSheet({ preview }: SignInSheetProps = {}) {
+  const a = useActions()
+  return (
+    <>
+      <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
+      <SignInContent preview={preview} onDone={() => a.closeSheet(true)} />
     </>
   )
 }

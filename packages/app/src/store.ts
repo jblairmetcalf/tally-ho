@@ -97,6 +97,11 @@ export interface TallyActions {
    * alternative to playing a tiebreak round). Ignored for anyone not tied for the lead.
    */
   crownWinner(playerId: string): void
+  /**
+   * The family record refused a game this phone created (a rules mismatch). Says so, and stops
+   * the rollback that follows from being reported as "ended on another phone".
+   */
+  gameRefused(gameId: string, name: string): void
   saveRound(idx: number, vals: string[]): void
   deleteRound(idx: number): void
   endGame(): void
@@ -243,6 +248,8 @@ export function createTallyStore(
     }
 
     const nameOf = (id: string) => data().players.find((p) => p.id === id)?.name ?? id
+    /** Games the family record refused: their rollback isn't another phone's doing. */
+    const refused = new Set<string>()
 
     const actions: TallyActions = {
       play: (cue) => fx.play(cue),
@@ -330,6 +337,12 @@ export function createTallyStore(
             })
           }
         }
+      },
+
+      gameRefused(gameId, name) {
+        refused.add(gameId)
+        fx.play('error')
+        showToast(COPY.toast.gameRefused(name))
       },
 
       submitWinner(playerId, btn) {
@@ -539,7 +552,11 @@ export function createTallyStore(
         }
         if (!now && cur.screen === 'game' && !cur.finished) {
           go('home')
-          showToast(COPY.toast.endedElsewhere(was.name))
+          // A refused write rolls the game back the same way; its rejection can land just
+          // before or after this snapshot, so wait a moment before blaming another phone.
+          fx.later(400, () => {
+            if (!refused.has(was.id)) showToast(COPY.toast.endedElsewhere(was.name))
+          })
         }
       },
 
@@ -581,4 +598,17 @@ export function createTallyStore(
   })
 
   return store
+}
+
+/**
+ * What the app says when the family record refuses a write: a new game refused outright
+ * (usually the family's rules predate this app) vs. a late change to a finished game.
+ */
+export function reactToRejection(
+  actions: TallyActions,
+  { op }: { op: { col: string; type: string; id: string; data?: Record<string, unknown> } },
+): void {
+  if (op.col === 'games' && op.type === 'set')
+    actions.gameRefused(op.id, typeof op.data?.name === 'string' ? op.data.name : op.id)
+  else actions.showToast(COPY.toast.syncRejected)
 }

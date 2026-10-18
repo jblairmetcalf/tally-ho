@@ -162,7 +162,7 @@ export const SettingsDemoOnlyBuild: Story = {
   args: { store: SCENARIOS.firstRun, session: () => demoSession(), ui: settings },
 }
 
-/** The empty sign-in sheet, as opened from Settings. */
+/** The standalone sign-in sheet (its own title row and close); in Settings it's a page. */
 export const SignIn: Story = {
   args: {
     store: SCENARIOS.firstRun,

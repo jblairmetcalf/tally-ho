@@ -304,7 +304,23 @@ describe('changes from another phone (replaceData)', () => {
     remote.active = null
     a.replaceData(remote)
     expect(s().screen).toBe('home')
+    // The note waits a moment, in case it was really a refused write (then it says so instead).
+    expect(s().toast).toBeNull()
+    vi.advanceTimersByTime(400)
     expect(s().toast?.msg).toBe(COPY.toast.endedElsewhere('Flip 7'))
+  })
+
+  it('a refused game says so instead of blaming another phone', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    const id = s().data.active!.id
+    const remote = structuredClone(s().data)
+    remote.active = null
+    a.replaceData(remote)
+    a.gameRefused(id, 'Flip 7')
+    vi.advanceTimersByTime(400)
+    expect(s().toast?.msg).toBe(COPY.toast.gameRefused('Flip 7'))
   })
 })
 

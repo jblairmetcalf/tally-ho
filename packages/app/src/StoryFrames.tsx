@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { withTheme } from './fixtures'
 import { memoryProvider } from './provider'
 import type { UiState } from './store'
+import type { SessionApi } from './sync/session'
 import { TallyApp } from './TallyApp'
 
 export interface FramesProps {
@@ -13,7 +14,42 @@ export interface FramesProps {
    * editor). Called after mount, then every 50 ms until it returns true (or 3 s pass).
    */
   act?: (frame: HTMLElement) => boolean
+  /** A fake session (`demoSession(...)`), for the sign-in UI; default: the build's own. */
+  session?: () => SessionApi
 }
+
+/** The title of the page on top of a sheet with pages (Settings), or undefined. */
+const pageTitle = (root: ParentNode) =>
+  root.querySelector('.sheet-nav-head h3')?.textContent ?? undefined
+
+/** The page on top of a sheet with pages: the one that isn't inert. */
+const topPage = (root: ParentNode) =>
+  root.querySelector<HTMLElement>('.sheet-page:not([inert])') ?? undefined
+
+/** Tap the menu row titled `title` (a `LinkRow`) inside `root`. */
+export function clickRow(root: ParentNode, title: string): boolean {
+  const row = [...root.querySelectorAll<HTMLButtonElement>('.link-row')].find(
+    (b) => b.querySelector('b')?.textContent === title,
+  )
+  row?.click()
+  return !!row
+}
+
+/**
+ * Push Settings pages one after another: each step taps something on the page on top
+ * (`press`) and waits until the header reads `title`. For a story's `act`.
+ */
+export const pushPages =
+  (...steps: { title: string; press: (page: HTMLElement) => boolean }[]) =>
+  (frame: HTMLElement) => {
+    const now = pageTitle(frame)
+    const at = steps.findIndex((s) => s.title === now)
+    const next = steps[at + 1]
+    if (!next) return at === steps.length - 1
+    const page = topPage(frame)
+    if (page) next.press(page)
+    return false
+  }
 
 /** Click the first button in `root` whose accessible name is exactly `name`. */
 export function clickButton(root: ParentNode, name: string): boolean {
@@ -34,7 +70,7 @@ const THEMES: { id: Exclude<ThemePref, 'system'>; label: string }[] = [
  * own in-memory store. `transform` makes each frame the containing block for the app's fixed
  * nav, sheets, toasts and overlays, so they stay inside it.
  */
-export function Frames({ store, ui, act }: FramesProps) {
+export function Frames({ store, ui, act, session }: FramesProps) {
   return (
     <div
       style={{ display: 'flex', flexWrap: 'wrap', gap: 24, padding: 24, alignItems: 'flex-start' }}
@@ -42,15 +78,16 @@ export function Frames({ store, ui, act }: FramesProps) {
       {THEMES.map((t) => (
         <figure key={t.id} style={{ margin: 0 }}>
           <figcaption className="sb-label">{t.label}</figcaption>
-          <Frame theme={t.id} store={store} ui={ui} act={act} />
+          <Frame theme={t.id} store={store} ui={ui} act={act} session={session} />
         </figure>
       ))}
     </div>
   )
 }
 
-function Frame({ theme, store, ui, act }: FramesProps & { theme: ThemePref }) {
+function Frame({ theme, store, ui, act, session }: FramesProps & { theme: ThemePref }) {
   const [provider] = useState(() => memoryProvider(withTheme(store(), theme)))
+  const [api] = useState(() => session?.())
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = ref.current
@@ -73,7 +110,7 @@ function Frame({ theme, store, ui, act }: FramesProps & { theme: ThemePref }) {
         boxShadow: '0 0 0 1px rgb(127 127 127 / 0.3)',
       }}
     >
-      <TallyApp provider={provider} initialUi={ui} embedded />
+      <TallyApp provider={provider} session={api} initialUi={ui} embedded />
     </div>
   )
 }

@@ -61,9 +61,10 @@ function InstallHere({
  * How to add Tally Ho! to the Home Screen, for this phone: iPhone Safari's Share steps, other
  * iPhone browsers (with a nudge to Safari), Chromium's one-tap prompt or its menu, and on a
  * computer a QR code to open it on the phone. Already installed: "You're all set".
- * The same content as a top-level sheet (the one-time pop-up) and nested in Settings.
+ * The same content as a top-level sheet (the one-time pop-up, with its own title row) and as a
+ * page in Settings (the nav header gives it its title). "Got it" calls `onDone`.
  */
-export function InstallGuide({ onClose }: { onClose: () => void }) {
+export function InstallGuide({ onDone }: { onDone: () => void }) {
   const install = useInstall()
   const url = useShareUrl()
   const { platform } = install
@@ -104,14 +105,13 @@ export function InstallGuide({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <SheetTitle title={I.title} onClose={onClose} />
       {body}
       <div className="sheet-cta">
         <Button
           block
           variant={install.canPrompt && !install.installed ? 'ghost' : 'jade'}
           icon="check"
-          onClick={onClose}
+          onClick={onDone}
         >
           {I.done}
         </Button>
@@ -123,5 +123,11 @@ export function InstallGuide({ onClose }: { onClose: () => void }) {
 /** The guide as a top-level sheet (the one-time pop-up, routed in SheetHost). */
 export function InstallSheet() {
   const a = useActions()
-  return <InstallGuide onClose={() => a.closeSheet()} />
+  const close = () => a.closeSheet()
+  return (
+    <>
+      <SheetTitle title={I.title} onClose={close} />
+      <InstallGuide onDone={close} />
+    </>
+  )
 }

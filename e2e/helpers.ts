@@ -59,6 +59,27 @@ export async function startPreset(page: Page, preset: string) {
   await expect(sheet).toBeHidden()
 }
 
+/** Open Settings from the home header. */
+export async function openSettings(page: Page) {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  const settings = page.getByRole('dialog', { name: 'Settings' })
+  await expect(settings).toBeVisible()
+  return settings
+}
+
+/**
+ * Settings, then one of its areas: Players, Games and Appearance are rows on the landing, each
+ * pushing its page inside the one Settings sheet (their editors push a third). The dialog is
+ * named by the page on top, so `settings` matches again once you're back on the landing.
+ */
+export async function openSettingsArea(page: Page, area: 'Players' | 'Games' | 'Appearance') {
+  const settings = await openSettings(page)
+  await settings.getByRole('button', { name: new RegExp(`^${area}`) }).click()
+  const sheet = page.getByRole('dialog', { name: area })
+  await expect(sheet).toBeVisible()
+  return { settings, sheet }
+}
+
 /** Type one round on the game screen and score it. */
 export async function scoreRound(page: Page, scores: Record<string, number | ''>) {
   for (const [name, v] of Object.entries(scores))

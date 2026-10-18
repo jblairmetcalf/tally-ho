@@ -126,6 +126,8 @@
 
   /* motion */
   --spring: cubic-bezier(0.25, 1.45, 0.45, 1);
+  /* a page push: fast out, long settle, no overshoot (a spring would open a gap at the edge) */
+  --glide: cubic-bezier(0.32, 0.72, 0, 1);
   --nav-h: 76px;
 
   /* QR codes are always dark on light, in both themes: cameras read that best */

@@ -1,5 +1,6 @@
 /*
- * Every keyframe from the prototype, verbatim, plus `dangerGlow` for low-score-wins games.
+ * Every keyframe from the prototype, verbatim, plus `dangerGlow` for low-score-wins games and
+ * the `nav…` page slides for SheetNav (not in the prototype, which had no nested pages).
  * The reduced-motion block at the bottom is the single kill switch: do not bypass it.
  */
 
@@ -13,6 +14,10 @@
 @keyframes ribbon{0%{transform:translateX(-120vw) rotate(-4deg) skewX(-12deg)}22%{transform:translateX(0) rotate(-4deg) skewX(4deg)}32%{transform:translateX(0) rotate(-4deg)}74%{transform:translateX(0) rotate(-4deg)}100%{transform:translateX(120vw) rotate(-4deg) skewX(-12deg)}}
 @keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @keyframes sheetOut{from{transform:translateY(var(--from,0px))}to{transform:translateY(105%)}}
+@keyframes navInPush{from{transform:translateX(100%)}to{transform:none}}
+@keyframes navOutPush{from{transform:none}to{transform:translateX(-30%)}}
+@keyframes navInPop{from{transform:translateX(-30%)}to{transform:none}}
+@keyframes navOutPop{from{transform:none}to{transform:translateX(100%)}}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes fadeOut{to{opacity:0}}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,30px) scale(.8)}}
@@ -33,7 +38,7 @@
 @keyframes earTwitch{0%,100%{transform:none}40%{transform:rotate(-10deg)}70%{transform:rotate(6deg)}}
 
 /** The names, for the Motion foundations story. */
-/* rise pop badgeIn letterDrop crownDrop bump deltaUp ribbon sheetIn sheetOut fadeIn fadeOut toastIn
+/* rise pop badgeIn letterDrop crownDrop bump deltaUp ribbon sheetIn sheetOut navInPush navOutPush navInPop navOutPop fadeIn fadeOut toastIn
    livePulse matchGlow dangerGlow grow draw rowIn bob spin stamp wobble shake flicker blink wink earTwitch */
 
 @media (prefers-reduced-motion: reduce) {

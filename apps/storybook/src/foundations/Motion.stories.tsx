@@ -121,6 +121,30 @@ const TILES: Tile[] = [
     demo: <MiniSheet style={anim('sheetOut', '.28s cubic-bezier(.5,0,.75,0) .7s both')} />,
   },
   {
+    name: 'navInPush',
+    timing: '0.42s glide',
+    use: 'A page pushed in a sheet, arriving from the right',
+    demo: <MiniPages enter="navInPush" exit="navOutPush" />,
+  },
+  {
+    name: 'navOutPush',
+    timing: '0.42s glide',
+    use: 'The page beneath, stepping a little left',
+    demo: <MiniPages enter="navInPush" exit="navOutPush" />,
+  },
+  {
+    name: 'navInPop',
+    timing: '0.42s glide',
+    use: 'Back: the page beneath returning from the left',
+    demo: <MiniPages enter="navInPop" exit="navOutPop" back />,
+  },
+  {
+    name: 'navOutPop',
+    timing: '0.42s glide',
+    use: 'Back: the top page leaving to the right',
+    demo: <MiniPages enter="navInPop" exit="navOutPop" back />,
+  },
+  {
     name: 'fadeIn',
     timing: '0.25s ease',
     use: 'The scrim behind a sheet; the victory veil',
@@ -324,6 +348,25 @@ function MiniSheet({ style }: { style: CSSProperties }) {
   )
 }
 
+/** Two pages in a tiny sheet: one slides in over (or out from over) the other. */
+function MiniPages({ enter, exit, back }: { enter: string; exit: string; back?: boolean }) {
+  const spec = '.42s var(--glide) .4s both'
+  const page = 'absolute inset-0 grid place-items-center bg-sunk text-[13px] font-black'
+  return (
+    <div className="relative h-[90px] w-[150px] overflow-hidden rounded-[14px] border-[1.5px] border-line">
+      <div className={page} style={anim(back ? enter : exit, spec)}>
+        Players
+      </div>
+      <div
+        className={page}
+        style={{ ...anim(back ? exit : enter, spec), boxShadow: '-1px 0 0 var(--line)' }}
+      >
+        Edit Kate
+      </div>
+    </div>
+  )
+}
+
 function Scrim({ style }: { style: CSSProperties }) {
   return (
     <div className="relative grid h-[90px] w-[150px] place-items-center overflow-hidden rounded-[14px] bg-surface">
@@ -424,6 +467,13 @@ const CURVES = [
     p: [0.5, 0, 0.75, 0],
     tone: 'coral',
     use: 'Leaving: accelerates away, no bounce.',
+  },
+  {
+    name: '--glide',
+    css: 'cubic-bezier(.32, .72, 0, 1)',
+    p: [0.32, 0.72, 0, 1],
+    tone: 'lav',
+    use: 'A page pushed in a sheet: quick, long settle, no overshoot at the edge.',
   },
   {
     name: 'ribbon',

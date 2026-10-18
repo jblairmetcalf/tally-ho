@@ -5,7 +5,6 @@ import {
   createContext,
   type PointerEvent,
   type ReactNode,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -18,15 +17,24 @@ const CLOSE_MS = 290
 /** Drag the grab handle further than this to dismiss. */
 const DISMISS_PX = 100
 
-/** How many sheets deep we are: a Sheet rendered inside another's content is nested. */
-const SheetDepth = createContext(0)
+/**
+ * Lets content inside a Sheet take Escape first (a `SheetNav` goes back a page). The handler
+ * returns true when it used the key; otherwise Escape closes the sheet.
+ */
+export const SheetEscape = createContext<{ current: (() => boolean) | null } | null>(null)
 
 export interface SheetProps {
   open: boolean
   /** Escape, backdrop tap or a drag past 100px. The caller flips `open` (and plays `SFX.close`). */
   onClose: () => void
-  /** The dialog's accessible name. */
+  /** The dialog's accessible name (a `nav` sheet is named by its current page instead). */
   label: string
+  /**
+   * The content is a `SheetNav`: the sheet stands at full height (so pages of any length never
+   * resize it), the nav's fixed header supplies the dialog's title (the current page's, so the
+   * accessible name follows the page) and each page scrolls on its own.
+   */
+  nav?: boolean
   children: ReactNode
 }
 
@@ -36,12 +44,11 @@ export interface SheetProps {
  * exactly like the prototype: the sheet follows the finger, past 100px it leaves from where it
  * was let go, otherwise it springs back. Portals into the nearest ThemeRoot so tokens apply.
  *
- * Sheets nest: render a Sheet inside another's children and it portals after it into the same
- * ThemeRoot, so it stacks on top with its own backdrop. Radix keeps the layers straight: Escape,
- * outside taps and the focus trap belong to the top sheet; closing it hands focus back to what
- * opened it. The sheet beneath sits under the top one's backdrop, so only the top one drags.
+ * One sheet at a time. Somewhere deeper to go (Settings › Players › Edit Kate) is a page pushed
+ * inside it with `SheetNav`, never a second sheet on top: Escape goes back a page there, and
+ * closing (the close button, a backdrop tap, a drag) always closes the whole sheet.
  */
-export function Sheet({ open, onClose, label, children }: SheetProps) {
+export function Sheet({ open, onClose, label, nav = false, children }: SheetProps) {
   const [shown, setShown] = useState(open)
   const [prevOpen, setPrevOpen] = useState(open)
   const [dy, setDy] = useState(0)
@@ -51,13 +58,9 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
   const drag = useRef<number | null>(null)
   const dyRef = useRef(0)
   const [anchor, setAnchor] = useState<HTMLSpanElement | null>(null)
-  const depth = useContext(SheetDepth)
-  const wrap = useRef<HTMLDivElement>(null)
+  const [onEscape] = useState<{ current: (() => boolean) | null }>(() => ({ current: null }))
   // What opened the sheet, so closing hands focus back (Radix only knows a Dialog.Trigger).
-  const opener = useRef<{ el: HTMLElement | null; dialog: HTMLElement | null }>({
-    el: null,
-    dialog: null,
-  })
+  const opener = useRef<HTMLElement | null>(null)
 
   if (open !== prevOpen) {
     setPrevOpen(open)
@@ -70,22 +73,6 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
     }
   }
   const closing = shown && !open
-
-  // Radix tracks its layers a render late, so for a beat after a nested sheet opens, Escape
-  // would close the sheet beneath. The DOM knows at once: the last sheet in the root is on top.
-  useEffect(() => {
-    if (!open) return
-    const key = (e: KeyboardEvent) => {
-      const el = wrap.current
-      if (e.key !== 'Escape' || !el) return
-      const sheets = el.parentElement?.querySelectorAll(':scope > .sheet-wrap')
-      if (!sheets || sheets[sheets.length - 1] !== el) return
-      e.preventDefault()
-      onClose()
-    }
-    document.addEventListener('keydown', key)
-    return () => document.removeEventListener('keydown', key)
-  }, [open, onClose])
 
   useEffect(() => {
     if (!closing) return
@@ -140,37 +127,35 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
           }}
         >
           <Dialog.Portal container={container}>
-            <div
-              ref={wrap}
-              className={cx('sheet-wrap', depth > 0 && 'nested', closing && 'closing')}
-            >
+            <div className={cx('sheet-wrap', nav && 'paged', closing && 'closing')}>
               <Dialog.Overlay className="backdrop" />
               <Dialog.Content
                 className="sheet"
                 style={style}
                 aria-describedby={undefined}
-                // Escape is ours (below), not Radix's: see `isTop`.
-                onEscapeKeyDown={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => {
+                  // A nav deeper than its root goes back a page; otherwise the sheet closes.
+                  e.preventDefault()
+                  if (closing || onEscape.current?.()) return
+                  onClose()
+                }}
                 onOpenAutoFocus={() => {
                   const el = document.activeElement
-                  opener.current =
-                    el instanceof HTMLElement && el !== document.body
-                      ? { el, dialog: el.closest<HTMLElement>('[role="dialog"]') }
-                      : { el: null, dialog: null }
+                  opener.current = el instanceof HTMLElement && el !== document.body ? el : null
                 }}
                 onCloseAutoFocus={(e) => {
-                  // Back to the opener; if it's gone (an archived player's row), to the sheet
-                  // beneath, so focus never falls out of a still-open sheet.
-                  const { el, dialog } = opener.current
-                  const to = el?.isConnected ? el : dialog?.isConnected ? dialog : null
-                  if (!to) return
+                  // Back to the opener, if it's still there.
+                  const el = opener.current
+                  if (!el?.isConnected) return
                   e.preventDefault()
-                  to.focus({ preventScroll: true })
+                  el.focus({ preventScroll: true })
                 }}
               >
-                <VisuallyHidden asChild>
-                  <Dialog.Title>{label}</Dialog.Title>
-                </VisuallyHidden>
+                {!nav && (
+                  <VisuallyHidden asChild>
+                    <Dialog.Title>{label}</Dialog.Title>
+                  </VisuallyHidden>
+                )}
                 <div
                   className="grab"
                   aria-hidden="true"
@@ -181,9 +166,9 @@ export function Sheet({ open, onClose, label, children }: SheetProps) {
                 >
                   <span />
                 </div>
-                <div className="sheet-body">
-                  <SheetDepth.Provider value={depth + 1}>{children}</SheetDepth.Provider>
-                </div>
+                <SheetEscape.Provider value={onEscape}>
+                  {nav ? children : <div className="sheet-body">{children}</div>}
+                </SheetEscape.Provider>
               </Dialog.Content>
             </div>
           </Dialog.Portal>
@@ -198,7 +183,10 @@ export interface SheetTitleProps {
   onClose: () => void
 }
 
-/** The sheet's heading row: a display-face h3 and a close button. */
+/**
+ * A single-page sheet's heading row: a display-face h3 and the close button, top right. A sheet
+ * with pages uses `SheetNav`, whose header adds the back button on every page past the first.
+ */
 export function SheetTitle({ title, onClose }: SheetTitleProps) {
   return (
     <div className="sheet-title">

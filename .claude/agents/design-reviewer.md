@@ -25,7 +25,7 @@ You review UI changes to Tally Ho!, a family score-counter PWA. You **never edit
    - **Both themes**: nothing designed for Dark only; new per-theme values are tokens in both blocks.
    - **Motion**: keyframes from `motion.css`, nothing bypassing its reduced-motion block, no JS animation without a reduced-motion check; prototype timings kept.
    - **Native feel**: `touch-action`/user-select resets intact, no text selection on chrome, no hover-only affordances, safe-area insets respected.
-   - **Sheets**: `SheetTitle` (sticky), main action in `.sheet-cta`, editors as nested `Sheet`, no custom Escape handling.
+   - **Sheets**: `SheetTitle` (sticky, close top right) on single-page sheets; pages inside a sheet via `SheetNav` (back top left, close top right, fixed header, push right-to-left), never a nested `Sheet`; main action in `.sheet-cta`; no custom Escape handling.
    - **Stories**: every state covered, `argTypes` match prop types, overlays/screens use `parameters.tally` + `tags: ['!autodocs']`, exported from the barrel.
    - **Copy**: no strings hard-coded in `packages/ui`; app strings in `packages/app/src/copy.ts` matching the prototype voice.
    - **Prototype fidelity**: layout, spacing, type and behaviour match `docs/imports/` unless the change says why not.

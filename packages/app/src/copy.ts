@@ -16,6 +16,8 @@ export const COPY = {
   back: 'Back to home',
   endGameLabel: 'End game',
   close: 'Close',
+  /** New: top left on any page of a sheet past its first (Settings › Players › Edit Kate). */
+  sheetBack: 'Back',
 
   home: {
     samples:
@@ -100,6 +102,9 @@ export const COPY = {
     wonElsewhere: (winner: string, game: string) => `${winner} won ${game}!`,
     endedElsewhere: (game: string) => `${game} was ended on another phone`,
     syncRejected: 'That change came in after the game ended',
+    /** The family record refused a new game outright (usually: its rules predate this app). */
+    gameRefused: (game: string) =>
+      `${game} couldn't be saved to the family record. The family's sync rules need updating.`,
   },
   banner: {
     start: (name: string) => `${name}!`,
@@ -207,6 +212,9 @@ export const COPY = {
     gameName: 'Game name',
     addGame: 'Add a game',
     newGameName: 'New game',
+    /** The bottom line of Settings: which build this phone runs, and whether it can sign in. */
+    about: (build: string | null, sync: boolean) =>
+      `Tally Ho! · ${build ?? 'dev build'} · Family sync ${sync ? 'on' : 'off'}`,
     /** The add-a-game sheet: nothing is saved until "Add game". */
     addGameTitle: 'Add a game',
     addGameSave: 'Add game',
@@ -237,6 +245,14 @@ export const COPY = {
     shareHint: 'Show a QR code',
     contact: 'Say hi to the maker',
     contactHint: 'Blair Metcalf',
+    /** New: Players, Games and Appearance are rows on the landing, each a page pushed over it. */
+    yours: 'Make it yours',
+    playersHint: (names: string[]) =>
+      names.length === 0
+        ? 'Add the family'
+        : names.slice(0, 3).join(', ') + (names.length > 3 ? ` +${names.length - 3}` : ''),
+    gamesHint: (n: number) => `${n} ${n === 1 ? 'game' : 'games'}`,
+    appearanceHint: (theme: string, sound: boolean) => `${theme} · Sound ${sound ? 'on' : 'off'}`,
   },
 
   /** New: how to add Tally Ho! to the Home Screen (shown once by itself, and from Settings). */
@@ -347,8 +363,6 @@ export const COPY = {
     settings: 'Settings',
     signin: 'Family sign in',
     install: 'Add to Home Screen',
-    share: 'Share Tally Ho!',
-    contact: 'Say hi',
   },
 } as const
 

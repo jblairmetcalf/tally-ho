@@ -1729,7 +1729,7 @@
   }
 }
 
-/* Calm sheets: skeletons, stacked slots, nested sheets and the stat list (append-only) */
+/* Calm sheets: skeletons, stacked slots, full-height nav sheets and the stat list (append-only) */
 @layer components {
   /* A placeholder for controls that aren't ready yet: a token-coloured slab with a soft sweep. */
   .skeleton {
@@ -1808,9 +1808,9 @@
     margin-bottom: 8px;
   }
 
-  /* A sheet opened from inside another: a touch shorter, so the one beneath peeks out on top. */
-  .sheet-wrap.nested .sheet {
-    max-height: calc(84% + 48px);
+  /* A sheet with pages (SheetNav) stands at full height, so pushing a shorter page never resizes it. */
+  .sheet-wrap.paged .sheet {
+    height: calc(90% + 48px);
   }
 
   /* StatList: one card of label/value rows split by hairlines ("pin lines"). */
@@ -2046,6 +2046,9 @@
   }
   .link-text .hint {
     color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .link-chev {
     flex: none;
@@ -2214,5 +2217,80 @@
     font-size: 15px;
     color: var(--jade-text);
     overflow-wrap: anywhere;
+  }
+}
+
+/* SheetNav: one sheet, a stack of pages pushed from the right (append-only) */
+@layer components {
+  .sheet-nav {
+    --sheet-pad: max(18px, env(safe-area-inset-left, 0px));
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  /* The header never scrolls: it sits above the pages, not inside them. */
+  .sheet-nav-head {
+    position: relative;
+    top: auto;
+    margin: 0;
+  }
+  /* Long titles ("Add to Home Screen", "Edit Monopoly Deal") wrap to two lines, never more. */
+  .sheet-nav-head h3 {
+    min-width: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
+    padding-block: 2px;
+    animation: fadeIn 0.25s ease both;
+  }
+  /* The title takes focus on a push so it's announced; it isn't a control, so no ring. */
+  .sheet-nav-head h3:focus {
+    outline: none;
+  }
+  .sheet-back {
+    margin-left: -6px;
+    animation: fadeIn 0.25s ease both;
+  }
+  .sheet-nav-pages {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    /* clip, not hidden: a field autofocusing on a page still offscreen can't scroll it into view
+       mid-slide (hidden stays as the fallback) */
+    overflow: clip;
+  }
+  /* Each page is its own scroller (it keeps .sheet-body's padding, so .sheet-cta pins the same). */
+  .sheet-page {
+    position: absolute;
+    inset: 0;
+    background: var(--sheet-bg, var(--sunk));
+    /* clear of the header's fade at rest, like a sheet's first row under its sticky title */
+    padding-top: 14px;
+  }
+  /* A page is full height, so its main action sits at the bottom even when the page is short. */
+  .sheet-page > .sheet-cta {
+    margin-top: auto;
+  }
+  .sheet-page.off {
+    visibility: hidden;
+  }
+  .sheet-page.in-push {
+    animation: navInPush 0.42s var(--glide) both;
+    box-shadow: -1px 0 0 var(--line);
+  }
+  .sheet-page.out-push {
+    animation: navOutPush 0.42s var(--glide) both;
+  }
+  .sheet-page.in-pop {
+    animation: navInPop 0.42s var(--glide) both;
+  }
+  .sheet-page.out-pop {
+    animation: navOutPop 0.42s var(--glide) both;
+    box-shadow: -1px 0 0 var(--line);
   }
 }

@@ -44,6 +44,7 @@ Fonts load via `next/font` in `apps/web/app/layout.tsx`. Numbers use `.num` (tab
 
 - Keyframes live in `packages/ui/src/styles/motion.css`: every prototype keyframe verbatim (`rise`, `pop`, `crownDrop`, `bump`, `deltaUp`, `ribbon`, `sheetIn`, `toastIn`, `matchGlow`…) plus `dangerGlow` for lowest-wins games. Add new ones there.
 - The spring curve is `--spring: cubic-bezier(0.25, 1.45, 0.45, 1)` (`ease-spring`).
+- A page pushed inside a sheet glides on `--glide: cubic-bezier(0.32, 0.72, 0, 1)` (no overshoot, so no gap opens at the sheet's edge; [decision 18](DECISIONS.md)).
 - **Reduced motion:** the `prefers-reduced-motion: reduce` block at the bottom of `motion.css` is the single kill switch (durations → 0.001ms). Never bypass it with JS timing; confetti (`FX`) skips itself.
 - Motion must never delay input: the next tap is always available.
 
@@ -94,7 +95,9 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 
 - `.sheet-title` (title + close button) is sticky at the top while the sheet scrolls.
 - `.sheet-cta` pins the sheet's main action to the bottom, always one tap away; its label stays on one line.
-- Editors open as **nested sheets** over their parent (Settings → edit player / edit game); a sheet inside another's content is nested automatically (`SheetDepth`), and Escape closes only the top one.
+- **One sheet, one navigation stack.** Somewhere deeper to go inside a sheet (Settings › Players › Edit Kate) is a page pushed with `SheetNav` (`packages/ui/src/primitives/SheetNav.tsx`) inside `<Sheet nav>`, never a sheet on top of a sheet. Its header never scrolls away: a back chevron top left on any page past the root, the page's title (also the dialog's accessible name), and close **always top right**, closing the whole sheet. Pushing slides the new page in from the right while the one beneath steps 30% left (`navInPush` / `navOutPush`, 0.42 s on `--glide`, no overshoot); back plays it in reverse; reduced motion swaps instantly. Each page scrolls on its own and stays mounted (inert, hidden) while it's beneath, so its scroll and state are there on the way back. Focus goes to the new page's title on a push and back to the control that pushed on a pop. Escape goes back a page (closes at the root); a drag on the handle or a backdrop tap closes the sheet. A nav sheet stands at full height, and a page's `.sheet-cta` sits at its bottom.
+- Single-page sheets (New game, Edit round, End game, Game detail, the install pop-up, the standalone sign-in) keep `SheetTitle`: title left, close top right, no back.
+- **Settings is a landing of entry rows**, so it never scrolls on and on: the fox, then `LinkRow`s for install / share / the maker, then Players, Games and Appearance (each hinting what's inside: names, a count, "Dark · Sound on"), then Family (sign-in) inline at the bottom, then the build line. Each row (install, share, the maker, Players, Games, Appearance, Family sign in) **pushes a page**, and the editors (Edit Kate, Add a game, Edit Uno) push a third; archiving, deleting or adding goes back to the list by itself. Back is one tap top left; Close (top right) leaves from any depth.
 - **Stable layout:** a sheet is laid out at full height from the start. Controls that aren't ready yet show skeletons (`.skeleton`, `.skeleton-stack` in `components.css`; see `NewGameSheet.tsx`) in the same slot, so nothing jumps when they appear. No progressive-disclosure jumps.
 - Opening plays `open`, closing `close`. Drag down past 100px, backdrop tap or Escape closes.
 
@@ -103,7 +106,7 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 | Group | Path | Examples |
 |---|---|---|
 | Brand | `packages/ui/src/brand/` | `Fox`, `Icon`, `Wordmark`, `Chip`, `Badge`, `FoxNote` (the fox's badge with a headline and a line) |
-| Primitives | `packages/ui/src/primitives/` | `Button` (+ `ButtonLink`), `IconButton`, `ConfirmButton`, `Sheet`, `Segmented`, `Switch`, `TextInput`, `Toast`, `SyncBadge`, `LinkRow` (menu row: tile, title, hint, chevron), `StepList` (numbered how-to steps), `QrCode` (always dark-on-white, optional fox badge; encoder `uqr` loaded on demand) |
+| Primitives | `packages/ui/src/primitives/` | `Button` (+ `ButtonLink`), `IconButton`, `ConfirmButton`, `Sheet`, `SheetNav` (pages pushed inside one sheet), `Segmented`, `Switch`, `TextInput`, `Toast`, `SyncBadge`, `LinkRow` (menu row: tile, title, hint, chevron), `StepList` (numbered how-to steps), `QrCode` (always dark-on-white, optional fox badge; encoder `uqr` loaded on demand) |
 | Scoreboard | `packages/ui/src/scoreboard/` | `PlayerCard`, `RaceTrack`, `RoundPips`, `RoundLog` (scores or wins), `WinnerPicker` ("Who won?"), `Standings`, `StatList`, `Podium`, `WinsChart`, `VictoryOverlay` |
 | App sheets and screens | `packages/app/src/*.stories.tsx` | `Sheets.stories.tsx`, `Family.stories.tsx`, `TallyApp.stories.tsx` |
 | Foundations | `apps/storybook/src/foundations/` | Colour, Type, Shape, Motion, Sound, Haptics, Icons |
@@ -124,5 +127,5 @@ Warm, short, playful; the fox is the narrator. Sentence case, plain words, no ja
 | `--faint` lifted from `#6a64a0` to `#8d86be` (dark); `--faint-deco` keeps the old value for placeholders | WCAG AA (4.5:1 on `--surface`) |
 | Daylight theme and `-text` tokens | Two themes, AA for small coloured text |
 | No selection/callouts, `touch-action` everywhere | Native feel in an installed PWA |
-| Sticky sheet titles and CTA, nested editors, skeletons | Sheet stability: nothing jumps, the main action is always reachable |
+| Sticky sheet titles and CTA, editors as pushed pages (SheetNav), skeletons | Sheet stability: nothing jumps, the main action is always reachable |
 | Sound audible on silent, released when idle | The family's iPhones live on silent |

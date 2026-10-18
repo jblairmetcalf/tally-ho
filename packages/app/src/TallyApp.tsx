@@ -27,7 +27,13 @@ import { InstallSheet } from './sheets/InstallSheet'
 import { NewGameSheet } from './sheets/NewGameSheet'
 import { SettingsSheet } from './sheets/SettingsSheet'
 import { SignInSheet } from './sheets/SignInSheet'
-import { createTallyStore, type SheetSpec, type TallyStore, type UiState } from './store'
+import {
+  createTallyStore,
+  reactToRejection,
+  type SheetSpec,
+  type TallyStore,
+  type UiState,
+} from './store'
 import type { CloudProvider } from './sync/cloudProvider'
 import { demoSession, type SessionApi, SessionContext, useSessionController } from './sync/session'
 
@@ -115,7 +121,7 @@ function SessionApp({
   // A write the family record refused (a round after the game was won elsewhere).
   useEffect(() => {
     const cloud = provider as Partial<CloudProvider>
-    return cloud.onRejected?.(() => store.getState().actions.showToast(COPY.toast.syncRejected))
+    return cloud.onRejected?.((r) => reactToRejection(store.getState().actions, r))
   }, [provider, store])
   return (
     <TallyContext.Provider value={store}>
@@ -278,6 +284,8 @@ function SheetHost() {
     <Sheet
       open={!!sheet}
       onClose={() => a.closeSheet()}
+      // Settings is a stack of pages (SheetNav): full height, named by the page on top.
+      nav={spec?.type === 'settings'}
       label={labelOf(spec, (id) => games.find((g) => g.id === id)?.name ?? '')}
     >
       <div key={sheetKey} style={{ display: 'contents' }}>

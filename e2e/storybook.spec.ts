@@ -23,6 +23,10 @@ const stories = Object.values(index.entries).filter((e) => e.type === 'story')
 /** Foundations pages deliberately show low-contrast pairs as data (that's the point). */
 const showsContrastAsData = (e: Entry) => e.title === 'Foundations/Colour'
 
+// Two themes plus axe per story, with every worker doing the same at once: under machine load
+// a few stories brushed the 30s default. Give them room rather than retrying flakes.
+test.describe.configure({ timeout: 60_000 })
+
 for (const story of stories) {
   for (const theme of ['both', 'light'] as const) {
     test(`${story.title} › ${story.name} (${theme})`, async ({ page }) => {

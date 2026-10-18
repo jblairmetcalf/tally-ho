@@ -191,3 +191,26 @@ test('sound: plays on tap, the toggle silences it, and it comes back after leavi
   expect(back.contexts).toBeGreaterThan(away.contexts)
   expect(back.notes).toBeGreaterThan(away.notes)
 })
+
+test('a shared link unfurls: absolute Open Graph and Twitter card tags, and the image is served', async ({
+  page,
+  request,
+}) => {
+  await seed(page, household())
+  await page.goto('/')
+  const meta = (sel: string) => page.locator(`meta[${sel}]`).getAttribute('content')
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    /Who.s winning tonight/,
+  )
+  expect(await meta('property="og:description"')).toMatch(/Free, works offline/)
+  expect(await meta('name="twitter:card"')).toBe('summary_large_image')
+  const image = await meta('property="og:image"')
+  // iMessage, Slack and WhatsApp ignore a relative image: it must be absolute, on the real site.
+  expect(image).toMatch(/^https:\/\/.+\/og\.jpg$/)
+  expect(await meta('property="og:image:width"')).toBe('1200')
+  const res = await request.get('/og.jpg')
+  expect(res.status()).toBe(200)
+  expect(res.headers()['content-type']).toContain('image/jpeg')
+  expect((await res.body()).length).toBeLessThan(300_000)
+})

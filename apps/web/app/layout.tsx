@@ -21,9 +21,43 @@ const INK = '#13112E'
  */
 const THEME_BOOT = `(function(){try{var t='system';var r=localStorage.getItem('tallyho.v3');if(r){var p=JSON.parse(r).prefs;if(p&&p.theme)t=p.theme}if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var d=document.documentElement;d.dataset.theme=t;d.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.removeAttribute('media');m.content=t==='light'?'#FFF4E2':'${INK}'}}catch(e){}})()`
 
+/**
+ * Where the app lives, for the absolute URLs link previews need (iMessage, Slack and WhatsApp
+ * ignore a relative og:image). Override with NEXT_PUBLIC_SITE_URL for another domain.
+ */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tally-ho-pwa.vercel.app'
+
+/** The link preview: the words beside the card from `pnpm og` (scripts/og.ts). Keep them in step. */
+const SHARE = {
+  title: 'Tally Ho! · Who’s winning tonight?',
+  description:
+    'The scorekeeper for game night. Tap in scores, hear the fanfare, crown the champion. Free, works offline, no sign-up. Deal me in!',
+  image: {
+    url: '/og.jpg',
+    width: 1200,
+    height: 630,
+    alt: 'Tally Ho! The crowned fox badge beside “Who’s winning tonight?”, a scoreboard with Kate in the lead, and a Deal me in! button.',
+  },
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'Tally Ho!',
-  description: 'The family scoreboard for card and board games.',
+  description: SHARE.description,
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Tally Ho!',
+    title: SHARE.title,
+    description: SHARE.description,
+    images: [SHARE.image],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SHARE.title,
+    description: SHARE.description,
+    images: [SHARE.image],
+  },
   applicationName: 'Tally Ho!',
   appleWebApp: {
     capable: true,

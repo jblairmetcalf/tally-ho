@@ -89,8 +89,11 @@
   .app {
     max-width: 520px;
     margin: 0 auto;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    /* The side gutters, named so edge-to-edge rows (.pills.scroll) can bleed back out to them. */
+    --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+    --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+    padding-left: var(--gutter-l);
+    padding-right: var(--gutter-r);
     padding-block: calc(18px + env(safe-area-inset-top, 0px)) calc(var(--nav-h) + 32px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
@@ -290,12 +293,16 @@
     flex-wrap: wrap;
     gap: 8px;
   }
+  /* A scrolling row runs edge to edge: it bleeds through its container's gutter and pads back in,
+     so chips slide off the screen's edge instead of being cut at the gutter, and the first and last
+     chip still line up with the content. Room above and below for the press shadow and the pop. */
   .pills.scroll {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    margin-inline: -4px;
-    padding: 4px;
+    margin: -4px calc(-1 * var(--gutter-r, 16px)) -4px calc(-1 * var(--gutter-l, 16px));
+    padding: 8px var(--gutter-r, 16px) 10px var(--gutter-l, 16px);
+    scroll-padding-inline: var(--gutter-l, 16px) var(--gutter-r, 16px);
   }
   .pills.scroll::-webkit-scrollbar {
     display: none;
@@ -1169,6 +1176,8 @@
   }
   .sheet-body {
     --sheet-pad: max(18px, env(safe-area-inset-left, 0px));
+    --gutter-l: var(--sheet-pad);
+    --gutter-r: max(18px, env(safe-area-inset-right, 0px));
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-left: max(18px, env(safe-area-inset-left, 0px));

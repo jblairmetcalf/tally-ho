@@ -3,10 +3,10 @@ import type { Player, Prefs, Preset, Store } from './schemas'
 /**
  * The family's games. Researched from the rulebooks (docs/DECISIONS.md 16), then set to how the
  * family actually plays (19):
- * - Who won? (`wins`): Monopoly Deal, High Society, Spicy, Uno, Schotten Totten by their rules;
+ * - Who won? (`wins`): Monopoly Deal, High Society, Spicy, Uno, Schotten Totten, Bananagrams by their rules;
  *   The Fox in the Forest (rulebook: race to 21), Scout (one round per player) and Mille Bornes
  *   (race to 5000) by family choice. Jaipur: first to 2 Seals.
- * - Score race: Flip 7 200. Rounds: Sushi Go 3; Push is one final tally when the deck runs out.
+ * - Score race: Flip 7 200; Bocce 10 (family choice: rulebooks play to 12, 13 or 16). Rounds: Sushi Go 3; Push is one final tally when the deck runs out.
  */
 export const DEFAULT_PRESETS: Preset[] = [
   { id: 'monopoly-deal', name: 'Monopoly Deal', goal: 'wins', target: 1, lowWins: false },
@@ -27,6 +27,11 @@ export const DEFAULT_PRESETS: Preset[] = [
   { id: 'sushi-go', name: 'Sushi Go', goal: 'rounds', target: 3, lowWins: false },
   { id: 'jaipur', name: 'Jaipur', goal: 'wins', target: 2, lowWins: false },
   { id: 'schotten-totten', name: 'Schotten Totten', goal: 'wins', target: 1, lowWins: false },
+  // Bananagrams: the first to use all their tiles once the bunch is empty calls "Bananas!" and wins.
+  { id: 'bananagrams', name: 'Bananagrams', goal: 'wins', target: 1, lowWins: false },
+  // Bocce: frames until a side reaches the target. Rulebooks say 12 (13 or 16 in some leagues);
+  // the family plays to 10.
+  { id: 'bocce', name: 'Bocce', goal: 'score', target: 10, lowWins: false },
 ]
 
 export const DEFAULT_PLAYERS: Player[] = [

@@ -17,6 +17,7 @@
     "e2e": "pnpm --filter @tally/storybook build && playwright test",
     "e2e:cloud": "firebase emulators:exec --only auth,firestore --project demo-tally \"CLOUD_E2E=1 playwright test\"",
     "icons": "tsx scripts/icons.ts",
+    "og": "tsx scripts/og.ts",
     "deploy": "pnpm --filter @tally/web build && node scripts/vercel-output.mjs apps/web/out apps/web && npx --yes vercel deploy --prebuilt --prod --cwd apps/web",
     "deploy:storybook": "pnpm --filter @tally/storybook build && node scripts/vercel-output.mjs apps/storybook/storybook-static apps/storybook && npx --yes vercel deploy --prebuilt --prod --cwd apps/storybook",
     "firebase:rules": "firebase deploy --only firestore:rules",

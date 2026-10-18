@@ -40,6 +40,7 @@ const PROTECTED = [
     /^apps\/web\/public\/(icon-|maskable-|splash-|apple-touch-icon|favicon)/,
     'icons and splash screens are generated: run `pnpm icons` (scripts/icons.ts).',
   ],
+  [/^apps\/web\/public\/og\./, 'the link preview is generated: run `pnpm og` (scripts/og.ts).'],
 ]
 
 const FILE_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit'])

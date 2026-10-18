@@ -11,9 +11,9 @@ Read how the rulebook ends the game (the official rules, current edition), not h
 
 | Goal | Ends when | Use for | In `DEFAULT_PRESETS` |
 |---|---|---|---|
-| `wins` + `target: 1` ("Who won?") | the round's winner is tapped; one round, one winner | games won outright, not on points | Monopoly Deal, High Society, Spicy, Uno (official rules since 2022), Schotten Totten; The Fox in the Forest, Scout and Mille Bornes as the family plays them (decision 19) |
+| `wins` + `target: 1` ("Who won?") | the round's winner is tapped; one round, one winner | games won outright, not on points | Monopoly Deal, High Society, Spicy, Uno (official rules since 2022), Schotten Totten, Bananagrams; The Fox in the Forest, Scout and Mille Bornes as the family plays them (decision 19) |
 | `wins` + `target: N` ("First to N wins") | someone has won N rounds (each round: tap the winner) | best-of series | **Jaipur 2** (first to two Seals of Excellence) |
-| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | Flip 7 200 (The Fox in the Forest 21 and Mille Bornes 5000 are their rulebook modes, one tap away; not defaults) |
+| `score` + `target` ("Race to N") | someone reaches the target (ties → tiebreak round or pick by the game's tiebreak) | games won on accumulated points over several hands | Flip 7 200, Bocce 10 (family choice; rulebooks say 12) (The Fox in the Forest 21 and Mille Bornes 5000 are their rulebook modes, one tap away; not defaults) |
 | `rounds` + `target` ("N rounds") | after N rounds, highest total wins | a fixed number of hands | Sushi Go 3 |
 | `rounds` + `target: 1` ("Final scores") | one tally at the end | games played once and scored at the end | **Push** (one final tally when the deck runs out) |
 | `rounds` + `roundsPerPlayer: true` | after one round per player (`targetFor` sets the count from the line-up) | one round per dealer | none by default (Scout's rulebook mode; `target` is only the fallback; tests use a Round Robin preset) |

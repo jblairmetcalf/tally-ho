@@ -4,6 +4,8 @@ A score counter for family game night. Pick a game, deal in, and tap in scores e
 
 It's an installable, offline PWA. Anyone can try it in **demo** mode (scores live on that phone). The family signs in to share one scoreboard across their phones (see [Family sync](#family-sync-firebase)).
 
+**Want your own?** [Build it with one prompt](docs/exports/build-it-with-one-prompt.md): the whole app, design system and agent harness from a single Claude Code prompt, for your family and your games.
+
 ## What's in the box
 - **Scoreboard:** every game ends the way its rulebook says: race-to-a-score games (with a race track to the finish line), fixed-round games (with round pips; one round per player, or a single final tally), **Who won?** games where you just tap the winner (one game, or first to N wins) and open-ended games. Ties at the end trigger a tiebreak round, or you pick the winner by the game's own tiebreak. Any score or rounds game can be set so the **lowest score wins** (Hearts, Golf, Skyjo…), counting down to a bust line instead.
 - **Feel:**
@@ -67,6 +69,8 @@ The link is saved in `.vercel/repo.json` at the repo root (newer Vercel CLIs lin
 pnpm deploy             # the app → https://<your-project>.vercel.app
 pnpm deploy:storybook   # optional: the design system
 ```
+
+**Link previews:** a shared link shows the card in `apps/web/public/og.jpg` with the title and description from `apps/web/app/layout.tsx` (iMessage, Slack, WhatsApp…). Regenerate the card with `pnpm og` (online; it uses the brand fonts). Apps cache a preview for a while after they first see a link, so a changed card can take a day to show up in old threads.
 
 ### 3. Install on iPhone
 1. Open the **production** URL in Safari. Don't use a preview URL: an installed web app is tied to the address it was installed from, and preview URLs change on every deploy.

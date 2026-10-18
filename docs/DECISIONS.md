@@ -126,10 +126,12 @@ An architecture decision log: why things are the way they are. Read the relevant
   | Spicy | First to 2 trophy cards wins (or the most points if the deck runs out) | Who won? (`wins` 1) |
   | Uno | 2022 official rules: first to play all their cards wins; scoring to 500 is optional | Who won? (`wins` 1) |
   | Schotten Totten | Claim 5 stones, or 3 adjacent stones | Who won? (`wins` 1) |
+  | Bananagrams | First to use all their tiles once the bunch is empty calls "Bananas!" and wins | Who won? (`wins` 1) |
   | Jaipur | Best of three rounds: first to 2 Seals of Excellence | First to 2 wins (`wins` 2) |
   | Mille Bornes | Hands until a player reaches 5,000 points | Who won? (`wins`, 1): family choice (19); was a race to 1,000 |
   | The Fox in the Forest | Rounds until someone reaches 21 points (16 and 35 are variants) | Who won? (`wins`, 1): family choice (19); the rulebook race to 21 is one switch away |
   | Flip 7 | First to 200 points at the end of a round | Race to 200 (`score`) |
+  | Bocce | Frames until a side reaches 12 points (13 or 16 in some leagues) | Race to 10 (`score`): family choice |
   | Sushi Go | 3 rounds, puddings scored at the end | 3 rounds (`rounds`) |
   | Scout | As many rounds as players, each dealing once | Who won? (`wins`, 1): family choice (19); one round per player stays available |
   | Push | One game, banked cards counted when the deck runs out | Final scores (`rounds` 1) |

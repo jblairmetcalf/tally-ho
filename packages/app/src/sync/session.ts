@@ -39,6 +39,8 @@ export type SignInErrorCode =
   | 'wrong-credentials'
   | 'not-family'
   | 'offline'
+  /** Online (the password check got through) but the family record didn't answer. */
+  | 'unreachable'
   | 'too-many-attempts'
   | 'unknown'
 
@@ -66,6 +68,15 @@ export interface SessionApi {
   /** Demo store back to fresh samples. */
   resetDemo(): void
   sendPasswordReset(email: string): Promise<void>
+}
+
+/**
+ * The sheet shows a friendly sentence; this keeps the real cause findable (DevTools console),
+ * since several different failures share one sentence.
+ */
+function report(step: string, e: unknown) {
+  const err = e as (FsError & Error) | undefined
+  console.warn(`Tally Ho! sign-in failed at ${step}:`, err?.code ?? '', err?.message ?? e)
 }
 
 /** Firebase Auth error codes → what the sign-in sheet says. */
@@ -237,11 +248,13 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore {
     try {
       h = await connect()
     } catch (e) {
+      report('loading Firebase', e)
       throw e instanceof SignInError ? e : new SignInError('offline')
     }
     try {
       await h.auth.signIn(address, password)
     } catch (e) {
+      report('the password check', e)
       throw signInErrorOf(e)
     }
     let doc: { data: Record<string, unknown> } | null
@@ -249,8 +262,12 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore {
       doc = await h.db.getServer('members', address)
     } catch (e) {
       if ((e as FsError).code !== 'permission-denied') {
+        report('the family check (members)', e)
         await h.auth.signOut().catch(() => {})
-        throw signInErrorOf(e)
+        // The password check just got through, so this phone is online: "needs the internet"
+        // would be wrong. Firestore says "unavailable" when it can't get an answer in time.
+        const err = signInErrorOf(e)
+        throw err.code === 'offline' ? new SignInError('unreachable') : err
       }
       doc = null
     }

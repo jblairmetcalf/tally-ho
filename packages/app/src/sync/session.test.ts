@@ -131,6 +131,22 @@ describe('session', () => {
     expect(signInErrorOf(new Error('?')).code).toBe('unknown')
   })
 
+  it('signed in but the family record never answers: says so, not "needs the internet"', async () => {
+    // The password check just reached Firebase, so the phone is online; a members read that
+    // times out ("client is offline") is the family record not answering (another tab holding
+    // Firestore's cache, a blocker, a VPN). The sign-in is undone.
+    const { core, db, auth } = setup()
+    db.getServer = async () => {
+      throw Object.assign(new Error('Failed to get document because the client is offline.'), {
+        code: 'unavailable',
+      })
+    }
+    await expect(core().getSnapshot().signIn(KATE.email, 'secret')).rejects.toMatchObject({
+      code: 'unreachable',
+    })
+    expect(auth.user).toBeNull()
+  })
+
   it('an SDK that cannot load (offline) is an offline error', async () => {
     const core = createSessionCore({
       config,

@@ -36,7 +36,7 @@ const SHARE = {
     url: '/og.jpg',
     width: 1200,
     height: 630,
-    alt: 'Tally Ho! The crowned fox badge beside “Who’s winning tonight?”, a scoreboard with Kate in the lead, and a Deal me in! button.',
+    alt: 'Tally Ho! The crowned fox badge beside “Who’s winning tonight?” and a Deal me in! button.',
   },
 }
 

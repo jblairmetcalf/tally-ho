@@ -223,6 +223,11 @@ export const SignInOffline: StoryObj<typeof SignInAt> = {
   render: () => <SignInAt preview={{ ...filled, error: 'offline' }} />,
   parameters: { tally: { overlay: true, bare: false } },
 }
+/** Online (the password check got through), but the family record didn't answer in time. */
+export const SignInUnreachable: StoryObj<typeof SignInAt> = {
+  render: () => <SignInAt preview={{ ...filled, error: 'unreachable' }} />,
+  parameters: { tally: { overlay: true, bare: false } },
+}
 export const SignInTooManyTries: StoryObj<typeof SignInAt> = {
   render: () => <SignInAt preview={{ ...filled, error: 'too-many-attempts' }} />,
   parameters: { tally: { overlay: true, bare: false } },

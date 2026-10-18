@@ -347,6 +347,8 @@ export const COPY = {
       'wrong-credentials': "That email and password don't match.",
       'not-family': 'This scoreboard is just for the family.',
       offline: 'Signing in needs the internet once. After that, Tally Ho! works offline.',
+      unreachable:
+        "You're online, but the family record didn't answer. Close any other Tally Ho! tabs or windows and try again.",
       'too-many-attempts': 'Too many tries. Wait a minute and try again.',
       unknown: "Couldn't sign in. Try again.",
     },

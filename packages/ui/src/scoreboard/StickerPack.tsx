@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Chip } from '../brand/Chip'
 import { Fox } from '../brand/Fox'
 import type { IconName } from '../brand/Icon'
@@ -76,8 +76,8 @@ export function StickerPack({
     )
   return (
     <ul className="haul" aria-live="polite" ref={haul} tabIndex={-1}>
-      {items.slice(0, shown).map((it, i) => (
-        <li key={it.key} style={{ '--r': `${(i % 2 ? 1 : -1) * (3 + i * 2)}deg` } as CSSProperties}>
+      {items.slice(0, shown).map((it) => (
+        <li key={it.key}>
           {it.sticker ? (
             // Decorative: its name and owner are the text right under it (announced once).
             <Sticker

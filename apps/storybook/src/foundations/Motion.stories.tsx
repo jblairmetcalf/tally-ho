@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Badge, Chip, Fox, Icon, IconButton, Sticker, Wordmark } from '@tally/ui'
+import { Badge, Chip, Fox, Icon, IconButton, Wordmark } from '@tally/ui'
 import { type CSSProperties, type ReactNode, useState } from 'react'
 import motionCss from '../../../../packages/ui/src/styles/motion.css?raw'
 import { BARE, Mono, Page, pageTheme, Section, Tag } from './chrome'
@@ -332,50 +332,6 @@ const TILES: Tile[] = [
     timing: '0.5s ease',
     use: 'The FAB fox after each scored round',
     demo: <Fox twitch className="h-[80px] w-[80px]" />,
-  },
-  {
-    name: 'peelIn',
-    timing: '0.5s spring, staggered',
-    use: 'Stickers peeling onto the sticker book page',
-    demo: (
-      <Sticker
-        tone="fox"
-        icon="flame"
-        shape="burst"
-        size={64}
-        style={anim('peelIn', '1.2s var(--spring) infinite')}
-      />
-    ),
-  },
-  {
-    name: 'slapIn',
-    timing: '0.5s spring',
-    use: 'Each sticker slapping down out of the victory pack',
-    demo: (
-      <Sticker
-        tone="coral"
-        icon="camera"
-        shape="circle"
-        size={64}
-        style={anim('slapIn', '1.2s var(--spring) infinite')}
-      />
-    ),
-  },
-  {
-    name: 'packIdle',
-    timing: '3.2s ease-in-out, forever',
-    use: 'The sealed sticker pack swaying, to invite the tap',
-    loop: true,
-    demo: (
-      <div
-        className="h-[80px] w-[64px] rounded-[10px]"
-        style={{
-          background:
-            'linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade))',
-          ...anim('packIdle', '3.2s ease-in-out infinite'),
-        }}
-      />
-    ),
   },
   {
     name: 'foil',

@@ -93,11 +93,11 @@ test('a win opens to a sticker pack: tear it open for the stickers; Done works w
   await expect(page.getByRole('dialog', { name: 'Uno' })).toBeVisible()
 })
 
-test('a sticker book opens with the sticker sound (peel, slap, note)', async ({ page }) => {
-  // Count the synth's notes (tones; the peel and slap noise run alongside them).
+test('a sticker book opens with the sticker sound (the synth, no samples)', async ({ page }) => {
+  // Count the synth's notes, and the buffer sources beyond iOS's one-sample unlock.
   await page.addInitScript(() => {
     const Real = window.AudioContext
-    const log = { notes: 0, noise: 0 }
+    const log = { notes: 0, buffers: 0 }
     ;(window as unknown as { __audio: typeof log }).__audio = log
     window.AudioContext = class extends Real {
       constructor(...args: ConstructorParameters<typeof Real>) {
@@ -109,7 +109,7 @@ test('a sticker book opens with the sticker sound (peel, slap, note)', async ({ 
           return osc()
         }
         this.createBufferSource = () => {
-          log.noise++
+          log.buffers++
           return src()
         }
       }
@@ -119,11 +119,12 @@ test('a sticker book opens with the sticker sound (peel, slap, note)', async ({ 
   await page.goto('/')
   const audio = () =>
     page.evaluate(
-      () => (window as unknown as { __audio: { notes: number; noise: number } }).__audio,
+      () => (window as unknown as { __audio: { notes: number; buffers: number } }).__audio,
     )
   const before = await audio()
   await page.getByRole('button', { name: /^Kate, .*Open sticker book$/ }).click()
   await expect(page.getByRole('dialog', { name: 'Sticker book' })).toBeVisible()
-  await expect.poll(async () => (await audio()).notes - before.notes).toBeGreaterThanOrEqual(2)
-  expect((await audio()).noise - before.noise).toBeGreaterThanOrEqual(2)
+  await expect.poll(async () => (await audio()).notes - before.notes).toBeGreaterThanOrEqual(3)
+  // Every cue is the 8-bit synth: at most the unlock buffer of a fresh context, never noise.
+  expect((await audio()).buffers - before.buffers).toBeLessThanOrEqual(1)
 })

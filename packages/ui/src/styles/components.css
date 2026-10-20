@@ -2457,7 +2457,7 @@
     align-items: center;
     gap: 4px;
     text-align: center;
-    animation: peelIn 0.5s var(--spring) both;
+    animation: rise 0.5s var(--spring) both;
     animation-delay: calc(var(--i, 0) * 45ms);
   }
   .sticker-grid .name {
@@ -2498,24 +2498,25 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    animation: peelIn 0.7s var(--spring) 0.6s both;
+    /* in with the podium, then the podium winner's nudge to invite the tap */
+    animation:
+      rise 0.5s var(--spring) 0.6s both,
+      wobble 0.9s ease-in-out 2.4s 2;
   }
   .pack {
     display: flex;
     flex-direction: column;
     width: 170px;
-    animation: packIdle 3.2s ease-in-out 1.4s infinite;
     border-radius: 14px;
     overflow: hidden;
     color: var(--on-accent);
     box-shadow:
       0 0 0 4px var(--die),
       0 16px 30px var(--drop);
-    transform: rotate(-3deg);
     transition: transform 0.2s var(--spring);
   }
   .pack:active {
-    transform: rotate(-3deg) scale(0.94);
+    transform: scale(0.94);
   }
   .pack .crimp {
     height: 12px;
@@ -2570,7 +2571,7 @@
     text-align: center;
   }
   .haul li > :first-child {
-    animation: slapIn 0.5s var(--spring) both;
+    animation: pop 0.45s var(--spring) both;
   }
   .haul .hi-name {
     font-weight: 900;

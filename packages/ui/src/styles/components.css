@@ -458,6 +458,7 @@
     color: var(--faint-deco);
   }
   .seg {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(var(--cols, 3), 1fr);
     gap: 4px;
@@ -467,6 +468,8 @@
     padding: 4px;
   }
   .seg button {
+    position: relative;
+    z-index: 1;
     border-radius: 10px;
     padding: 10px 4px;
     min-height: 40px;
@@ -476,9 +479,28 @@
     transition: background 0.2s, color 0.2s, transform 0.15s var(--spring);
   }
   .seg button.on {
-    background: var(--seg-on);
     color: var(--text);
+  }
+  /* the raised background: one piece that springs between segments (positioned by Segmented) */
+  .seg-track {
+    position: absolute;
+    inset: 4px;
+    overflow: hidden;
+    border-radius: 10px;
+    pointer-events: none;
+  }
+  .seg-thumb {
+    position: absolute;
+    top: 0;
+    bottom: 2px; /* room for its 2px edge inside the clip */
+    left: 0;
+    border-radius: 10px;
+    background: var(--seg-on);
     box-shadow: 0 2px 0 var(--drop);
+    transition:
+      transform 0.38s var(--spring),
+      width 0.38s var(--spring);
+    pointer-events: none;
   }
   .seg button:active {
     transform: scale(0.94);

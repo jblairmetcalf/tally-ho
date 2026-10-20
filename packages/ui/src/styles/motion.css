@@ -36,10 +36,24 @@
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 @keyframes wink{0%,100%{transform:scaleY(1)}40%,60%{transform:scaleY(.08)}}
 @keyframes earTwitch{0%,100%{transform:none}40%{transform:rotate(-10deg)}70%{transform:rotate(6deg)}}
+@keyframes themeReveal{from{clip-path:circle(0 at var(--reveal-x,50%) var(--reveal-y,50%))}to{clip-path:circle(var(--reveal-r,150%) at var(--reveal-x,50%) var(--reveal-y,50%))}}
+
+/* A theme change (revealFrom in feel/reveal.ts): the new page grows out of the tapped button as a
+   circle over a still snapshot of the old one. Only while .theme-reveal is on <html>. */
+.theme-reveal::view-transition-old(root),
+.theme-reveal::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+.theme-reveal::view-transition-new(root) {
+  /* even, so it visibly spreads from the finger rather than snapping open */
+  animation: themeReveal 0.7s cubic-bezier(0.45, 0, 0.25, 1) both;
+}
 
 /** The names, for the Motion foundations story. */
 /* rise pop badgeIn letterDrop crownDrop bump deltaUp ribbon sheetIn sheetOut navInPush navOutPush navInPop navOutPop fadeIn fadeOut toastIn
-   livePulse matchGlow dangerGlow grow draw rowIn bob spin stamp wobble shake flicker blink wink earTwitch */
+   livePulse matchGlow dangerGlow grow draw rowIn bob spin stamp wobble shake flicker blink wink earTwitch
+   themeReveal */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -49,6 +63,11 @@
     animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0.001ms !important;
   }
   .chart .ln {
     stroke-dashoffset: 0;

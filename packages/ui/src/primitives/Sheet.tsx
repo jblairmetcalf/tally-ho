@@ -133,6 +133,16 @@ export function Sheet({ open, onClose, label, nav = false, children }: SheetProp
                 className="sheet"
                 style={style}
                 aria-describedby={undefined}
+                onInteractOutside={(e) => {
+                  // During a view transition (the theme reveal) the browser's overlay takes
+                  // every tap, so it lands on <html>: that's not a tap on the backdrop.
+                  const target = (e.detail.originalEvent as Event | undefined)?.target ?? e.target
+                  if (
+                    target === document.documentElement ||
+                    document.documentElement.classList.contains('theme-reveal')
+                  )
+                    e.preventDefault()
+                }}
                 onEscapeKeyDown={(e) => {
                   // A nav deeper than its root goes back a page; otherwise the sheet closes.
                   e.preventDefault()

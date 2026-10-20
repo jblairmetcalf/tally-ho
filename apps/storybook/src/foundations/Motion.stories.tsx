@@ -333,6 +333,30 @@ const TILES: Tile[] = [
     use: 'The FAB fox after each scored round',
     demo: <Fox twitch className="h-[80px] w-[80px]" />,
   },
+  {
+    name: 'themeReveal',
+    timing: '0.7s ease-in-out',
+    use: 'Changing the theme: the next one grows out of the button you tapped',
+    loop: true,
+    demo: (
+      <div className="relative h-[80px] w-[120px] overflow-hidden rounded-[14px] border-[1.5px] border-line">
+        <div className="absolute inset-0" data-theme="dark" style={{ background: 'var(--page)' }} />
+        <div
+          className="absolute inset-0"
+          data-theme="light"
+          style={
+            {
+              background: 'var(--page)',
+              '--reveal-x': '24px',
+              '--reveal-y': '58px',
+              '--reveal-r': '130px',
+              ...anim('themeReveal', '1.4s var(--glide) infinite'),
+            } as CSSProperties
+          }
+        />
+      </div>
+    ),
+  },
 ]
 
 function MiniSheet({ style }: { style: CSSProperties }) {

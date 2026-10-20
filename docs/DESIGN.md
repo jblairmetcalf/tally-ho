@@ -45,6 +45,8 @@ Fonts load via `next/font` in `apps/web/app/layout.tsx`. Numbers use `.num` (tab
 
 - Keyframes live in `packages/ui/src/styles/motion.css`: every prototype keyframe verbatim (`rise`, `pop`, `crownDrop`, `bump`, `deltaUp`, `ribbon`, `sheetIn`, `toastIn`, `matchGlow`…) plus `dangerGlow` for lowest-wins games. Add new ones there.
 - The spring curve is `--spring: cubic-bezier(0.25, 1.45, 0.45, 1)`.
+- **Segmented controls** slide: the raised background is one thumb (`.seg-thumb`) that springs to the chosen segment on `--spring`, measured from the button (columns may differ in width), inside a clipped track so the overshoot never leaves the well.
+- **Changing the theme** (Settings › Appearance) reveals the next one as a circle growing from the tapped segment (`revealFrom` in `packages/ui/src/feel/reveal.ts`, `themeReveal` in `motion.css`, 0.7 s ease-in-out). It's a View Transition: the old page is a still snapshot, the new one is clipped to the circle, and the theme switches synchronously inside it (`flushSync`). From the keyboard it grows from the focused segment. Without View Transitions (older browsers) or under reduced motion it switches instantly.
 - A page pushed inside a sheet glides on `--glide: cubic-bezier(0.32, 0.72, 0, 1)` (no overshoot, so no gap opens at the sheet's edge; [decision 18](DECISIONS.md)).
 - **Reduced motion:** the `prefers-reduced-motion: reduce` block at the bottom of `motion.css` is the single kill switch (durations → 0.001ms). Never bypass it with JS timing; confetti (`FX`) skips itself.
 - Motion must never delay input: the next tap is always available.

@@ -348,3 +348,36 @@ test('Add a game takes a player count too', async ({ page }) => {
   await add.getByRole('button', { name: 'Add game' }).click()
   await expect(games.locator('.player-line', { hasText: 'Codenames' })).toContainText('4 players')
 })
+
+test('changing the theme reveals the next one from the tapped button (instantly under reduced motion)', async ({
+  page,
+}) => {
+  await seed(page, household({ theme: 'dark' }))
+  await page.goto('/')
+  const { sheet } = await openSettingsArea(page, 'Appearance')
+  const html = page.locator('html')
+
+  // Motion on: a view transition grows the new theme as a circle from the tap, then tidies up.
+  await sheet.getByRole('radio', { name: 'Light' }).click()
+  await expect(html).toHaveClass(/theme-reveal/)
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  await expect(html).not.toHaveClass(/theme-reveal/)
+  const x = await html.evaluate((el) => el.style.getPropertyValue('--reveal-x'))
+  expect(Number.parseFloat(x)).toBeGreaterThan(0)
+
+  // Quick taps while the reveal is still growing land on the page root (the transition's
+  // overlay), which the sheet must not take for a tap outside: it stays open.
+  await sheet.getByRole('radio', { name: 'Dark' }).click()
+  await page.mouse.click(200, 300)
+  await page.mouse.click(60, 700)
+  await expect(html).not.toHaveClass(/theme-reveal/)
+  await expect(page.getByRole('dialog', { name: 'Appearance' })).toBeVisible()
+  await sheet.getByRole('radio', { name: 'Light' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'light')
+
+  // Reduced motion: no reveal, just the switch.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await sheet.getByRole('radio', { name: 'Dark' }).click()
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(html).not.toHaveClass(/theme-reveal/)
+})

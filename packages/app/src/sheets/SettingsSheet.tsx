@@ -11,6 +11,7 @@ import {
   Button,
   Chip,
   ConfirmButton,
+  centreOf,
   Eyebrow,
   FoxNote,
   Icon,
@@ -18,6 +19,7 @@ import {
   LinkRow,
   Pill,
   PillRow,
+  revealFrom,
   SectionTitle,
   Segmented,
   Setting,
@@ -28,7 +30,8 @@ import {
   SyncBadge,
   TextInput,
 } from '@tally/ui'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { buildStamp } from '../build'
 import { useActions, useRoster, useTally, useTallyStore } from '../context'
 import { COPY } from '../copy'
@@ -443,21 +446,33 @@ function AppearanceContent() {
   const a = useActions()
   const prefs = useTally((s) => s.data.prefs)
   const hasSamples = useTally((s) => s.data.hasSamples)
+  // Where the theme was tapped, so the next theme can grow out of that spot.
+  const tapped = useRef<{ x: number; y: number } | null>(null)
   return (
     <div className="group">
-      <Segmented<ThemePref>
-        label={C.theme}
-        options={[
-          { value: 'system', label: C.themes.system },
-          { value: 'dark', label: C.themes.dark },
-          { value: 'light', label: C.themes.light },
-        ]}
-        value={prefs.theme}
-        onChange={(v) => {
-          a.play('tap')
-          a.setPref('theme', v)
+      <div
+        className="contents"
+        onPointerDownCapture={(e) => {
+          tapped.current = { x: e.clientX, y: e.clientY }
         }}
-      />
+      >
+        <Segmented<ThemePref>
+          label={C.theme}
+          options={[
+            { value: 'system', label: C.themes.system },
+            { value: 'dark', label: C.themes.dark },
+            { value: 'light', label: C.themes.light },
+          ]}
+          value={prefs.theme}
+          onChange={(v) => {
+            a.play('tap')
+            // A tap reveals from the finger; the keyboard from the focused segment.
+            const from = tapped.current ?? centreOf(document.activeElement)
+            tapped.current = null
+            revealFrom(from, () => flushSync(() => a.setPref('theme', v)))
+          }}
+        />
+      </div>
       <div>
         <Setting title={C.sound} hint={C.soundHint}>
           <Switch checked={!prefs.muted} label={C.sound} onChange={() => a.toggleMute()} />

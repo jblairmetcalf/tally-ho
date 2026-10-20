@@ -153,7 +153,9 @@ export function HomeScreen() {
                 color: colorOf(x.id),
                 wins: x.wins,
                 played: x.played,
+                move: x.move,
               }))}
+              moveLabel={COPY.home.moved}
             />
           </div>
 

@@ -22,6 +22,18 @@ export const Tied: Story = {
     ],
   },
 }
+/** After the last game: Blair climbed two places (▲2), Kate and Alder slipped one each (▼). */
+export const Movement: Story = {
+  args: {
+    rows: [
+      { id: 'blair', name: 'Blair', color: 1, wins: 4, played: 8, move: 2 },
+      { id: 'kate', name: 'Kate', color: 0, wins: 3, played: 8, move: -1 },
+      { id: 'alder', name: 'Alder', color: 2, wins: 2, played: 8, move: -1 },
+      { id: 'rowan', name: 'Rowan', color: 3, wins: 1, played: 4 },
+    ],
+    moveLabel: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)} since the last game`,
+  },
+}
 /** Nobody has a win yet: empty bars, 0%. */
 export const NoWins: Story = {
   args: {

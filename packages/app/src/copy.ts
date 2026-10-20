@@ -26,6 +26,9 @@ export const COPY = {
     emptyBody: 'Deal the first hand and the leaderboard starts here.',
     newGame: 'New game',
     standings: 'Standings',
+    /** New: the mark under a rank when someone moved in the last game. */
+    moved: (n: number) =>
+      `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)} ${plural(Math.abs(n), 'place', 'places')} since the last game`,
     wins: 'Wins',
     overTime: "Who's winning over time",
     statsTitle: 'By the numbers',

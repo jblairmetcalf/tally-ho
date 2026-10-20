@@ -1,6 +1,15 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { household, openNewGame, openSettingsArea, seed, withSamples } from './helpers'
+import {
+  gameSheet,
+  household,
+  openNewGame,
+  openSettingsArea,
+  seed,
+  startPreset,
+  victory,
+  withSamples,
+} from './helpers'
 
 test('renaming a player in settings shows in history', async ({ page }) => {
   await seed(page, withSamples())
@@ -380,4 +389,44 @@ test('changing the theme reveals the next one from the tapped button (instantly 
   await sheet.getByRole('radio', { name: 'Dark' }).click()
   await expect(html).toHaveAttribute('data-theme', 'dark')
   await expect(html).not.toHaveClass(/theme-reveal/)
+})
+
+test('Standings mark a real change of place: passing someone, never just drawing level', async ({
+  page,
+}) => {
+  await seed(page, withSamples())
+  await page.goto('/')
+  const row = (name: string) => page.locator('.stand', { hasText: name })
+  const up = (name: string) => row(name).getByRole('img', { name: /^Up \d+ places? since/ })
+  const down = (name: string) => row(name).getByRole('img', { name: /^Down \d+ places? since/ })
+  const marks = page.getByRole('img', { name: /since the last game/ })
+  // In the sample history Blair's last win only drew her level with Kate: no change, no marks.
+  await expect(page.getByRole('heading', { name: 'Standings' })).toBeVisible()
+  await expect(marks).toHaveCount(0)
+
+  const uno = async (winner: string) => {
+    await startPreset(page, 'Uno')
+    await gameSheet(page, 'Uno')
+      .getByRole('group', { name: 'Who won?' })
+      .getByRole('button', { name: winner })
+      .click()
+    await victory(page).getByRole('button', { name: 'Done' }).click()
+    await expect(victory(page)).toBeHidden()
+  }
+  // The first real game clears the samples: one game, nothing to compare.
+  await uno('Kate')
+  await expect(marks).toHaveCount(0)
+
+  // Blair wins: level with Kate (no change there) but past Alder, who was level on nothing.
+  await uno('Blair')
+  await expect(up('Blair')).toBeVisible()
+  await expect(down('Alder')).toBeVisible()
+  await expect(row('Kate').getByRole('img', { name: /since the last game/ })).toHaveCount(0)
+  await expect(marks).toHaveCount(2)
+
+  // Blair again: now she pulls ahead of Kate. Alder, already behind both, gets no mark.
+  await uno('Blair')
+  await expect(up('Blair')).toBeVisible()
+  await expect(down('Kate')).toBeVisible()
+  await expect(marks).toHaveCount(2)
 })

@@ -676,6 +676,37 @@
   .stand .rank.r1 {
     color: var(--amber-text);
   }
+  .stand .rank {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    gap: 3px;
+  }
+  /* climbed or slipped in the last game: a small mark under the rank */
+  .stand .move {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--f-body);
+    font-size: 10.5px;
+    font-weight: 900;
+    animation: pop 0.4s var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 60ms + 300ms);
+  }
+  .stand .move:empty {
+    height: 8px;
+  }
+  .stand .move svg {
+    width: 10px;
+    height: 8px;
+  }
+  .stand .move.up {
+    color: var(--jade-text);
+  }
+  .stand .move.down {
+    color: var(--coral-text);
+  }
   .bar {
     height: 10px;
     border-radius: 6px;

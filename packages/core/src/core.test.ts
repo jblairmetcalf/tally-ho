@@ -167,6 +167,57 @@ describe('samples', () => {
   })
 })
 
+describe('standings movement', () => {
+  const won = (n: number, winnerId: string, playerIds = ['kate', 'blair', 'alder']): Game => ({
+    id: `m${n}`,
+    name: 'Uno',
+    goal: 'wins',
+    target: 1,
+    lowWins: false,
+    playerIds,
+    rounds: [],
+    startedAt: `2026-10-0${n}T19:00:00.000Z`,
+    completedAt: `2026-10-0${n}T20:00:00.000Z`,
+    winnerId,
+  })
+  const moves = (games: Game[]) =>
+    Object.fromEntries(computeStats(games).standings.map((x) => [x.id, x.move]))
+
+  it('marks only a real change in the standings: passing someone, not drawing level', () => {
+    // Blair was behind Kate and draws level: a tie isn't a change, so no marks at all (even
+    // though the table lists Blair first by name).
+    expect(moves([won(1, 'kate'), won(2, 'kate'), won(3, 'blair'), won(4, 'blair')])).toEqual({
+      kate: 0,
+      blair: 0,
+      alder: 0,
+    })
+    // Level before, ahead now: Blair climbs past Kate, Kate slips. Alder was already behind.
+    expect(moves([won(1, 'kate'), won(2, 'blair'), won(3, 'blair')])).toEqual({
+      blair: 1,
+      kate: -1,
+      alder: 0,
+    })
+    // Blair's first win: still behind Kate (no change there), but past Alder, level on zero.
+    expect(moves([won(1, 'kate'), won(2, 'kate'), won(3, 'blair')])).toEqual({
+      kate: 0,
+      blair: 1,
+      alder: -1,
+    })
+    // All level, then Blair wins: she passes both.
+    expect(moves([won(1, 'kate'), won(2, 'alder'), won(3, 'blair'), won(4, 'blair')])).toEqual({
+      blair: 2,
+      kate: -1,
+      alder: -1,
+    })
+  })
+
+  it('shows nothing after the first game, or for someone new in the last one', () => {
+    expect(moves([won(1, 'kate')])).toEqual({ kate: 0, blair: 0, alder: 0 })
+    const rowan = moves([won(1, 'kate'), won(2, 'rowan', ['kate', 'rowan'])])
+    expect(rowan.rowan).toBe(0)
+  })
+})
+
 describe('player counts', () => {
   const fox = { id: 'the-fox-in-the-forest' }
   it('come from the preset, field by field falling back to the built-in default, then 2+', () => {

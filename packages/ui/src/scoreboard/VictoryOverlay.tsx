@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { Fox } from '../brand/Fox'
+import { cx } from '../cx'
 import { FX } from '../feel/confetti'
 import { SFX } from '../feel/sfx'
 import { Button } from '../primitives/Button'
@@ -20,6 +21,8 @@ export interface VictoryOverlayProps {
   sub?: string
   onDone: () => void
   onRematch: () => void
+  /** Shown between the name and the podium: the sticker pack. The badge shrinks to make room. */
+  children?: ReactNode
 }
 
 /** When the losers' sting plays, after the fanfare (prototype timing). */
@@ -37,6 +40,7 @@ export function VictoryOverlay({
   sub,
   onDone,
   onRematch,
+  children,
 }: VictoryOverlayProps) {
   const rematchRef = useRef<HTMLButtonElement>(null)
   const doneRef = useRef(onDone)
@@ -57,13 +61,19 @@ export function VictoryOverlay({
   }, [])
 
   return (
-    <div className="victory" role="dialog" aria-modal="true" aria-label={`${winner} wins`}>
+    <div
+      className={cx('victory', children && 'has-pack')}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${winner} wins`}
+    >
       <div className="sunburst" />
       <div className="v-badge">
         <Fox crown wink />
       </div>
       <div className="v-name">{winner}</div>
       <div className="v-sub">{sub ?? `wins ${gameName} with ${total}`}</div>
+      {children}
       <Podium rows={rows} showLast />
       <div className="v-actions">
         <Button variant="ghost" onClick={onDone}>

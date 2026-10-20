@@ -12,12 +12,15 @@ It's an installable, offline PWA. Anyone can try it in **demo** mode (scores liv
 - **Scoreboard:** every game ends the way its rulebook says: race-to-a-score games (with a race track to the finish line), fixed-round games (with round pips; one round per player, or a single final tally), **Who won?** games where you just tap the winner (one game, or first to N wins) and open-ended games. Ties at the end trigger a tiebreak round, or you pick the winner by the game's own tiebreak. Any score or rounds game can be set so the **lowest score wins** (Hearts, Golf, Skyjo…), counting down to a bust line instead.
 - **Feel:**
   - a synthesised sound cue for every action (no audio files), audible even with the iPhone on silent
+  - New game opens to its own little tune
   - suit-shaped confetti
   - rolling score totals, crowns that drop in, and score changes that float up
   - haptics, including a tick on iOS 18+
   - the screen stays awake during a game
-- **Record:** family champion, win streaks, standings, a wins-over-time chart, and a filterable history with rematch.
-- **Yours to edit:** players (names and chip colours) and game presets. Choose Dark, Daylight or System theme.
+- **Record:** family champion, win streaks, standings (with ▲ / ▼ when someone passes someone), a wins-over-time chart, and a filterable history with rematch.
+- **Sticker Club:** twelve stickers earned from your games (First Crown, Hat Trick, Comeback Kid, Night Owl…), each player's sticker book, a sticker pack to tear open after every win, and the latest stickers on Home.
+- **The game is a sheet** over Home: put it away and it stays live; Resume brings it back.
+- **Yours to edit:** players (names and chip colours) and game presets. Choose the Light (Daylight) or Dark theme, or follow the system; the next theme spreads out from the button you tap.
 
 ## Run it
 ```sh
@@ -34,7 +37,7 @@ pnpm deploy       # build and ship the app to its Vercel production URL
 pnpm deploy:storybook
 ```
 
-`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, offline after one visit, prototype-data migration, no theme flash, link-preview tags, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
+`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, the Sticker Club, the theme reveal, Standings marks, offline after one visit, prototype-data migration, no theme flash, link-preview tags, sound, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
 
 ## Ship it
 

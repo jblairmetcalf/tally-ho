@@ -4,7 +4,13 @@ import { COPY } from './copy'
 import { createEffects } from './effects'
 import { fixedClock, SCENARIOS } from './fixtures'
 import { memoryProvider } from './provider'
-import { createTallyStore, GAME_AFTER_MS, type NewGameConfig } from './store'
+import {
+  createTallyStore,
+  GAME_AFTER_MS,
+  type NewGameConfig,
+  PACK_FIRST_MS,
+  PACK_STEP_MS,
+} from './store'
 
 const P = ['kate', 'blair', 'alder']
 
@@ -163,6 +169,35 @@ describe('scoring rounds', () => {
     // The sheet makes way: the overlay's buttons can't sit outside an open (modal) sheet.
     expect(s().sheet).toBeNull()
     expect(provider.saved?.games[0]?.winnerId).toBe('kate')
+  })
+
+  it('the victory sticker pack tears open and slaps its stickers down one by one', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    a.submitRound(['200', '20', '10'])
+    vi.advanceTimersByTime(500)
+    expect(s().pack).toEqual({ open: false, shown: 0 })
+    a.openPack(3)
+    expect(s().pack).toEqual({ open: true, shown: 0 })
+    vi.advanceTimersByTime(PACK_FIRST_MS)
+    expect(s().pack?.shown).toBe(1)
+    vi.advanceTimersByTime(PACK_STEP_MS)
+    expect(s().pack?.shown).toBe(2)
+    // Done mid-reveal: the pack goes, and nothing more lands.
+    a.victoryDone()
+    vi.advanceTimersByTime(PACK_STEP_MS * 2)
+    expect(s().pack).toBeNull()
+  })
+
+  it('reduced motion opens the pack all at once', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    a.submitRound(['200', '20', '10'])
+    vi.advanceTimersByTime(500)
+    a.openPack(4, true)
+    expect(s().pack).toEqual({ open: true, shown: 4 })
+    a.openPack(4) // already open: no second rip
+    expect(s().pack?.shown).toBe(4)
   })
 
   it('calls a tiebreak when the end is level', () => {

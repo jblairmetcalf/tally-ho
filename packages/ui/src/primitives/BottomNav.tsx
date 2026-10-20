@@ -35,7 +35,7 @@ export function BottomNav({
           aria-current={screen === 'home' ? 'page' : undefined}
           onClick={onHome}
         >
-          <Icon name="home" />
+          <Icon name={screen === 'home' ? 'homeFill' : 'home'} />
           Home
         </button>
         <button
@@ -55,7 +55,7 @@ export function BottomNav({
           aria-current={screen === 'history' ? 'page' : undefined}
           onClick={onHistory}
         >
-          <Icon name="scroll" />
+          <Icon name={screen === 'history' ? 'scrollFill' : 'scroll'} />
           History
         </button>
       </div>

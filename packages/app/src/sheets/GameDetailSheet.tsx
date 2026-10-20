@@ -1,16 +1,90 @@
-import { type CompletedGame, goalLabel, ranked, totalsOf } from '@tally/core'
-import { Button, ConfirmButton, Podium, RoundLog, SheetTitle } from '@tally/ui'
-import { useActions, useRoster } from '../context'
+import {
+  type CompletedGame,
+  computeStickers,
+  goalLabel,
+  isCompleted,
+  ranked,
+  totalsOf,
+} from '@tally/core'
+import {
+  Button,
+  ConfirmButton,
+  Eyebrow,
+  Podium,
+  RoundLog,
+  SheetNav,
+  type SheetNavPage,
+  StickerShelf,
+} from '@tally/ui'
+import { useMemo, useState } from 'react'
+import { useActions, useRoster, useTally } from '../context'
 import { COPY, longDate } from '../copy'
+import { playerOfShelf, shelfItems } from '../stickerShelf'
+import { StickerBook } from './StickerBookSheet'
 
+/**
+ * A finished game, in a sheet with a page stack: the game itself, and a sticker from it pushes
+ * that player's sticker book (back returns to the game).
+ */
 export function GameDetailSheet({ game: g }: { game: CompletedGame }) {
   const a = useActions()
   const roster = useRoster()
+  const [book, setBook] = useState<string | null>(null)
+  const pages: SheetNavPage[] = [
+    {
+      key: 'game',
+      title: g.name,
+      content: (
+        <GameDetail
+          game={g}
+          onSticker={(id) => {
+            a.play('sticker')
+            setBook(id)
+          }}
+        />
+      ),
+    },
+  ]
+  if (book)
+    pages.push({
+      key: `book:${book}`,
+      title: COPY.stickers.book(roster.nameOf(book)),
+      content: <StickerBook playerId={book} />,
+    })
+  return (
+    <SheetNav
+      pages={pages}
+      onBack={() => {
+        if (!book) return
+        a.play('close')
+        setBook(null)
+      }}
+      onClose={() => a.closeSheet()}
+      backLabel={COPY.sheetBack}
+      closeLabel={COPY.close}
+    />
+  )
+}
+
+function GameDetail({
+  game: g,
+  onSticker,
+}: {
+  game: CompletedGame
+  onSticker: (playerId: string) => void
+}) {
+  const a = useActions()
+  const roster = useRoster()
   const t = totalsOf(g)
+  const games = useTally((s) => s.data.games)
+  // Stickers depend on every game before this one (streaks, firsts), so the whole history counts.
+  const earned = useMemo(
+    () => computeStickers(games.filter(isCompleted)).byGame[g.id] ?? [],
+    [games, g.id],
+  )
   return (
     <>
-      <SheetTitle title={g.name} onClose={() => a.closeSheet()} />
-      <div className="hint" style={{ marginTop: -10, color: 'var(--muted)' }}>
+      <div className="hint" style={{ color: 'var(--muted)' }}>
         {COPY.detail.sub(longDate(g.completedAt), g.rounds.length, goalLabel(g), !!g.sample)}
       </div>
       <div className="group">
@@ -33,6 +107,16 @@ export function GameDetailSheet({ game: g }: { game: CompletedGame }) {
         editable={false}
         style={{ padding: 6 }}
       />
+      {earned.length > 0 && (
+        <div className="group">
+          <Eyebrow>{COPY.stickers.fromGame}</Eyebrow>
+          <StickerShelf
+            label={COPY.stickers.fromGame}
+            items={shelfItems(earned, roster.nameOf, (e, i) => `${e.id}-${i}`)}
+            onPick={(key) => onSticker(playerOfShelf(key))}
+          />
+        </div>
+      )}
       <Button block icon="repeat" onClick={() => a.rematch(g)}>
         {COPY.detail.rematch}
       </Button>

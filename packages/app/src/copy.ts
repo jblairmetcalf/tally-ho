@@ -383,6 +383,63 @@ export const COPY = {
     winsMatch: (game: string, won: number, next: number) => `wins ${game}, ${won}–${next}`,
   },
 
+  /** New: the Sticker Club (decision 24). Names and rules per sticker id, in album order. */
+  stickers: {
+    names: {
+      crown: 'First Crown',
+      hat: 'Hat Trick',
+      comeback: 'Comeback Kid',
+      wire: 'Wire to Wire',
+      photo: 'Photo Finish',
+      steam: 'Steamroller',
+      bust: 'Big Fat Zero',
+      marathon: 'Marathon',
+      polymath: 'Polymath',
+      ten: 'Double Digits',
+      owl: 'Night Owl',
+      underdog: 'Underdog',
+    },
+    rules: {
+      crown: 'Win your first game.',
+      hat: 'Win three games in a row.',
+      comeback: 'Win after trailing by a quarter of the way.',
+      wire: 'Lead after every round (three or more).',
+      photo: 'Win by a whisker, or take the decider.',
+      steam: 'Win by half again, or win every round.',
+      bust: 'Score nothing in a round while everyone else scores.',
+      marathon: 'Play a game of ten rounds or more.',
+      polymath: 'Win three different games.',
+      ten: 'Win ten games.',
+      owl: 'Finish a game after 10 pm.',
+      underdog: 'Win from last place in the standings.',
+    },
+    /** The line under a name in Standings. */
+    tally: (got: number, total: number) =>
+      got >= total
+        ? `All ${total} stickers!`
+        : `${got} ${plural(got, 'sticker', 'stickers')} · ${total - got} to go`,
+    /** A Standings row, as a button. */
+    open: (name: string, place: string, wins: number, got: number, total: number) =>
+      `${name}, ${place} with ${wins} ${plural(wins, 'win', 'wins')}: ${got} of ${total} stickers. Open sticker book`,
+    /** Under the Standings heading: the rows open sticker books. */
+    tapHint: 'Tap a name for their stickers',
+    book: (name: string) => `${name}'s stickers`,
+    meter: (got: number, total: number) => `${got} of ${total}`,
+    who: 'Whose stickers',
+    locked: (name: string) => `${name}, not yet`,
+    times: (name: string, n: number) => (n > 1 ? `${name}, ${n} times` : name),
+    fresh: 'Fresh stickers',
+    fromGame: 'Stickers from this game',
+    earnedBy: (sticker: string, who: string) => `${sticker}, ${who}`,
+    openBook: 'Open sticker book',
+    pack: 'Tear open the sticker pack',
+    packTitle: 'Game night pack',
+    packSub: (n: number) => `${n} ${plural(n, 'sticker', 'stickers')} inside`,
+    packHint: 'Tap the pack to tear it open',
+    winner: 'Winner',
+    isNew: 'new',
+  },
+
   sheetLabel: {
     new: 'New game',
     /** The game sheet is named by its page: the game's name, Edit round N, End game. */
@@ -390,6 +447,7 @@ export const COPY = {
     detail: (name: string) => name,
     settings: 'Settings',
     install: 'Add to Home Screen',
+    stickers: 'Sticker book',
   },
 } as const
 

@@ -39,6 +39,8 @@ export type SheetSpec =
   /** The live (or just-finished) game, with Edit round / End game pushed inside it. */
   | { type: 'game'; page?: GamePage }
   | { type: 'detail'; id: string }
+  /** A player's sticker book (decision 24); the sheet switches players inside. */
+  | { type: 'stickers'; playerId?: string }
   | { type: 'settings' }
   /** How to add Tally Ho! to the Home Screen (shown once by itself, and from Settings). */
   | { type: 'install' }
@@ -59,6 +61,10 @@ export type BannerTone = 'jade' | 'amber' | 'coral'
  */
 export const GAME_AFTER_MS = 300
 
+/** The sticker pack's reveal: the first sticker lands this long after the rip, then one every step. */
+export const PACK_FIRST_MS = 500
+export const PACK_STEP_MS = 280
+
 export interface UiState {
   screen: Screen
   /** The open sheet. The Sheet keeps itself mounted to play its closing animation. */
@@ -77,6 +83,8 @@ export interface UiState {
   finished: Game | null
   /** Bumped after each round so the nav fox twitches. */
   foxWink: number
+  /** The victory sticker pack: torn open yet, and how many of its items have slapped down. */
+  pack: { open: boolean; shown: number } | null
 }
 
 export interface NewGameConfig {
@@ -107,6 +115,11 @@ export interface TallyActions {
   /** Back from that page to the scoreboard. */
   gameBack(): void
   victoryDone(): void
+  /**
+   * Tear open the victory sticker pack: the rip, then each of its `count` items slaps down
+   * (PACK_STEP_MS apart, from PACK_FIRST_MS). `instant` (reduced motion): all at once, quietly.
+   */
+  openPack(count: number, instant?: boolean): void
 
   startGame(cfg: NewGameConfig): void
   submitRound(vals: string[], btn?: Element | null): void
@@ -236,8 +249,9 @@ export function createTallyStore(
       fx.scrollTop()
     }
     const openSheet = (spec: SheetSpec, silent = false) => {
-      // New game opens to its own tune; every other sheet to the slide-up whoosh.
-      if (!silent) fx.play(spec.type === 'new' ? 'deal' : 'open')
+      // New game opens to its own tune, the sticker book to a sticker; every other sheet whooshes.
+      if (!silent)
+        fx.play(spec.type === 'new' ? 'deal' : spec.type === 'stickers' ? 'sticker' : 'open')
       set((s) => ({ sheet: spec, sheetKey: s.sheetKey + 1 }))
     }
     const closeSheet = (silent = false) => {
@@ -295,7 +309,7 @@ export function createTallyStore(
      */
     function celebrate(g: Game) {
       closeSheet(true)
-      set({ victory: g })
+      set({ victory: g, pack: { open: false, shown: 0 } })
       fx.play('win')
     }
 
@@ -332,7 +346,7 @@ export function createTallyStore(
         games: x.hasSamples ? x.games.filter((y) => !y.sample) : x.games,
         hasSamples: false,
       }))
-      set({ victory: null, finished: null, flash: null })
+      set({ victory: null, finished: null, flash: null, pack: null })
       const up = presentGame('start')
       fx.later(up + 250, () => showBanner(COPY.banner.start(cfg.name), 'amber'))
       if (hadSamples) fx.later(1500, () => showToast(COPY.toast.samplesClearedStart))
@@ -378,7 +392,25 @@ export function createTallyStore(
       victoryDone() {
         fx.play('tap')
         // The game is over (its sheet already went): Home, with it in the history.
-        set({ victory: null, finished: null })
+        set({ victory: null, finished: null, pack: null })
+      },
+      openPack(count, instant = false) {
+        const pack = get().pack
+        if (!pack || pack.open) return
+        fx.play('rip')
+        if (instant) {
+          set({ pack: { open: true, shown: count } })
+          return
+        }
+        set({ pack: { open: true, shown: 0 } })
+        for (let i = 0; i < count; i++)
+          fx.later(PACK_FIRST_MS + i * PACK_STEP_MS, () => {
+            // Done or Rematch mid-reveal: the rest stay in the pack, silently.
+            const now = get().pack
+            if (!now?.open) return
+            set({ pack: { ...now, shown: i + 1 } })
+            fx.play('sticker')
+          })
       },
 
       startGame,
@@ -684,6 +716,7 @@ export function createTallyStore(
       victory: null,
       finished: null,
       foxWink: 0,
+      pack: null,
       ...opts.ui,
       actions,
     }

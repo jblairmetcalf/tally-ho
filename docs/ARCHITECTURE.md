@@ -5,7 +5,7 @@ How the code is laid out, how data flows from a tap to localStorage or Firestore
 ## Package graph
 
 ```
-                 packages/core      Zod schemas, scoring, stats, samples, migrate (no React, no clock)
+                 packages/core      Zod schemas, scoring, stats, stickers, samples, migrate (no React, no clock)
                        │
                  packages/ui        tokens, motion, feel (SFX/Haptics/FX), brand, components
                        │
@@ -22,9 +22,10 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
 | Path | Holds |
 |---|---|
 | `packages/core/src/schemas.ts` | `Store`, `Game`, `Round`, `Player`, `Preset`, `Prefs` (Zod; source of truth) |
-| `packages/core/src/scoring.ts`, `stats.ts` | Pure scoring (totals, leader, end conditions for the four goals `score` / `rounds` / `wins` / `open`, tiebreak, match point, `goalLabel`, `winRound`, `targetFor`) and stats |
+| `packages/core/src/scoring.ts`, `stats.ts` | Pure scoring (totals, leader, end conditions for the four goals `score` / `rounds` / `wins` / `open`, tiebreak, match point, `goalLabel`, `winRound`, `targetFor`) and stats Standings carry `move`: places passed or lost in the last game ([decision 25](DECISIONS.md)). |
 | `packages/core/src/presets.ts` | `DEFAULT_PRESETS` (each set from its rulebook: [decision 16](DECISIONS.md)), `DEFAULT_PLAYERS`, `DEFAULT_PREFS`, `emptyStore()` |
 | `packages/core/src/samples.ts` | Deterministic sample history for the demo (`freshStore`) |
+| `packages/core/src/stickers.ts` | The Sticker Club ([decision 24](DECISIONS.md)): `STICKERS`, `STICKER_RULES`, `computeStickers(games)` (derived from finished games, never stored), `stickersOf`, `totalsAt`. The app turns earned stickers into shelf items with `packages/app/src/stickerShelf.ts` |
 | `packages/core/src/lineup.ts` | Player limits: `playerRangeOf(preset)` (its `minPlayers` / `maxPlayers`, else the built-in default for the id, else 2+), `rangeForGame(presets, name)`, `fitsRange`, `isLimited` ([decision 22](DECISIONS.md)) |
 | `packages/core/src/migrate.ts` | Prototype `tallyho.v2` → v3, `withRoundIds` |
 | `packages/ui/src/styles/` | `tokens.css`, `motion.css`, `components.css` |
@@ -56,7 +57,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
                                    'storage' event = other tab    snapshots ─▶ Store ─▶ mirror (tallyho.family)
 ```
 
-- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `sheetKey`, `toast`, `banner`, `flash`, `victory`, `finished`, `foxWink`). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
+- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `sheetKey`, `toast`, `banner`, `flash`, `victory`, `finished`, `foxWink`, `pack`: the victory sticker pack's open / shown). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
 - **Seam** (`DataProvider` in `packages/app/src/provider.ts`): `load()` (sync), `save(s)` (may debounce), optional `subscribe(cb)`. Screens and the store never know which provider they have.
 - **Demo:** `createLocalProvider()` writes `tallyho.v3`, debounced 150 ms, flushed on `pagehide`/hidden. First launch after the prototype migrates `tallyho.v2` once (old key kept as a backup).
 - **Family:** `createCloudProvider()` (`packages/app/src/sync/cloudProvider.ts`):

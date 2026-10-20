@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Chip } from '../brand/Chip'
 import { paletteVar } from '../brand/palette'
 import { cx } from '../cx'
@@ -8,7 +8,45 @@ export interface StandingsProps {
   rows: { id: string; name: string; color: number; wins: number; played: number; move?: number }[]
   /** The words for a move, for screen readers ("Up 1 place since the last game"). */
   moveLabel?: (move: number) => string
+  /** A short line under each name (the sticker tally: "5 stickers · 7 to go"). */
+  subOf?: (id: string) => string | undefined
+  /** Makes each row a button (their sticker book); `pickLabel` names it. */
+  onPick?: (id: string) => void
+  pickLabel?: (id: string) => string
+  /** A line under the heading (that the rows can be tapped). */
+  hint?: string
   className?: string
+}
+
+/** A standings row: a plain row, or a button when a row opens something. */
+function Row({
+  onClick,
+  label,
+  className,
+  style,
+  children,
+}: {
+  onClick?: () => void
+  label?: string
+  className: string
+  style: CSSProperties
+  children: ReactNode
+}) {
+  return onClick ? (
+    <button
+      type="button"
+      className={cx(className, 'stand-btn')}
+      style={style}
+      onClick={onClick}
+      aria-label={label}
+    >
+      {children}
+    </button>
+  ) : (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  )
 }
 
 /** ▲ or ▼ under the rank, with the count when it's more than one place. */
@@ -26,7 +64,15 @@ function Move({ move, label }: { move: number; label?: string }) {
 }
 
 /** The wins table: rank, chip, name with a growing bar, wins and win rate. */
-export function Standings({ rows, moveLabel, className }: StandingsProps) {
+export function Standings({
+  rows,
+  moveLabel,
+  subOf,
+  onPick,
+  pickLabel,
+  hint,
+  className,
+}: StandingsProps) {
   const maxW = Math.max(1, ...rows.map((r) => r.wins))
   // When anyone moved, unmoved ranks keep the mark's space so every number lines up.
   const anyMoved = rows.some((r) => r.move)
@@ -36,8 +82,15 @@ export function Standings({ rows, moveLabel, className }: StandingsProps) {
         <h2 className="sec">Standings</h2>
         <span className="eyebrow">Wins</span>
       </div>
+      {hint && <p className="hint stand-hint">{hint}</p>}
       {rows.map((x, i) => (
-        <div className="stand" key={x.id} style={{ '--i': i } as CSSProperties}>
+        <Row
+          key={x.id}
+          className="stand"
+          style={{ '--i': i } as CSSProperties}
+          onClick={onPick ? () => onPick(x.id) : undefined}
+          label={onPick ? pickLabel?.(x.id) : undefined}
+        >
           <span className={cx('rank', i === 0 && 'r1')}>
             {i + 1}
             {x.move ? (
@@ -51,6 +104,7 @@ export function Standings({ rows, moveLabel, className }: StandingsProps) {
             <div className="truncate" style={{ fontWeight: 900 }}>
               {x.name}
             </div>
+            {subOf?.(x.id) && <div className="stand-sub">{subOf(x.id)}</div>}
             <div className="bar">
               <i
                 style={
@@ -67,7 +121,7 @@ export function Standings({ rows, moveLabel, className }: StandingsProps) {
             {x.wins}
             <small>{x.played ? Math.round((x.wins / x.played) * 100) : 0}%</small>
           </div>
-        </div>
+        </Row>
       ))}
     </section>
   )

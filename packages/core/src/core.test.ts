@@ -17,6 +17,7 @@ import {
   winRound,
 } from './scoring'
 import { computeStats, winSeries } from './stats'
+import { computeStickers, STICKER_RULES, STICKERS, stickersOf, totalsAt } from './stickers'
 
 const clock = { now: () => Date.parse('2026-10-15T12:00:00Z') }
 
@@ -327,5 +328,243 @@ describe('migrate', () => {
   it('rejects garbage', () => {
     expect(migrate({ nope: 1 })).toBeNull()
     expect(migrate(null)).toBeNull()
+  })
+})
+
+describe('stickers', () => {
+  let n = 0
+  /** A finished game: scores per round as [kate, blair] (or more), finished at a local hour. */
+  const game = (
+    over: Partial<Game> & { scores?: number[][]; hour?: number; day?: number },
+  ): Game => {
+    n++
+    const playerIds = over.playerIds ?? ['kate', 'blair']
+    const rounds = (over.scores ?? [[1, 0]]).map((row, i) => ({
+      id: `r${n}-${i}`,
+      scores: Object.fromEntries(playerIds.map((p, j) => [p, row[j] ?? 0])),
+    }))
+    const at = new Date(2026, 8, over.day ?? n, over.hour ?? 19, 0).toISOString()
+    return {
+      id: `st${n}`,
+      name: 'Flip 7',
+      goal: 'score',
+      target: 200,
+      lowWins: false,
+      startedAt: at,
+      completedAt: at,
+      winnerId: 'kate',
+      ...over,
+      playerIds,
+      rounds,
+    } as Game
+  }
+  const got = (games: Game[], gameIndex = games.length - 1) =>
+    (computeStickers(games).byGame[games[gameIndex]!.id] ?? []).map((e) => `${e.playerId}:${e.id}`)
+
+  it('First Crown, Hat Trick every third win in a row, Double Digits on the 10th', () => {
+    const wins = Array.from({ length: 10 }, () => game({ scores: [[200, 10]] }))
+    const book = computeStickers(wins)
+    expect(book.counts.kate).toMatchObject({ crown: 1, hat: 3, ten: 1 })
+    expect(got(wins, 0)).toContain('kate:crown')
+    expect(got(wins, 2)).toContain('kate:hat')
+    expect(got(wins, 9)).toContain('kate:ten')
+    expect(stickersOf(book, 'kate')).toBeGreaterThanOrEqual(3)
+  })
+
+  it('Comeback Kid scales to the game: a quarter of the target, whatever the target', () => {
+    // Fox race to 21: Kate trailed 0–6 (over 21/4) and won.
+    expect(
+      got([
+        game({
+          target: 21,
+          scores: [
+            [0, 6],
+            [21, 0],
+          ],
+        }),
+      ]),
+    ).toContain('kate:comeback')
+    // Down only 0–4: not a comeback.
+    expect(
+      got([
+        game({
+          target: 21,
+          scores: [
+            [0, 4],
+            [21, 0],
+          ],
+        }),
+      ]),
+    ).not.toContain('kate:comeback')
+    // Mille Bornes to 1000: trailing by 300 is (a quarter is 250).
+    expect(
+      got([
+        game({
+          target: 1000,
+          scores: [
+            [0, 300],
+            [1000, 0],
+          ],
+        }),
+      ]),
+    ).toContain('kate:comeback')
+    // First to two: lost the first round, won the match.
+    expect(
+      got([
+        game({
+          goal: 'wins',
+          target: 2,
+          scores: [
+            [0, 1],
+            [1, 0],
+            [1, 0],
+          ],
+        }),
+      ]),
+    ).toContain('kate:comeback')
+  })
+
+  it('Wire to Wire, Photo Finish and Steamroller, in points and first-to-N', () => {
+    expect(
+      got([
+        game({
+          scores: [
+            [10, 5],
+            [10, 5],
+            [180, 5],
+          ],
+        }),
+      ]),
+    ).toContain('kate:wire')
+    expect(got([game({ scores: [[200, 195]] })])).toContain('kate:photo') // by 5 of 200
+    expect(
+      got([
+        game({
+          scores: [
+            [150, 0],
+            [60, 40],
+          ],
+        }),
+      ]),
+    ).toContain('kate:steam') // 210 vs 40
+    expect(
+      got([
+        game({
+          goal: 'wins',
+          target: 2,
+          scores: [
+            [1, 0],
+            [1, 0],
+          ],
+        }),
+      ]),
+    ).toContain('kate:steam')
+    expect(
+      got([
+        game({
+          goal: 'wins',
+          target: 2,
+          scores: [
+            [1, 0],
+            [0, 1],
+            [1, 0],
+          ],
+        }),
+      ]),
+    ).toContain('kate:photo') // the decider at one apiece
+    // A single "Who won?" game earns none of the points stickers.
+    const single = got([game({ goal: 'wins', target: 1, scores: [[1, 0]] })])
+    expect(single.filter((s) => /comeback|wire|photo|steam|bust/.test(s))).toEqual([])
+  })
+
+  it('lowest-wins games turn the comparisons round', () => {
+    // Hearts to 100: Kate 20 vs Blair 100 is a steamroller the low way round.
+    expect(
+      got([
+        game({
+          target: 100,
+          lowWins: true,
+          scores: [
+            [10, 60],
+            [10, 40],
+          ],
+        }),
+      ]),
+    ).toContain('kate:steam')
+    // No Big Fat Zero when zero is good.
+    expect(
+      got([
+        game({
+          lowWins: true,
+          scores: [
+            [0, 5],
+            [1, 5],
+          ],
+        }),
+      ]),
+    ).not.toContain('kate:bust')
+  })
+
+  it('Big Fat Zero, Marathon and Night Owl go to everyone who earned them', () => {
+    expect(
+      got([
+        game({
+          scores: [
+            [0, 5],
+            [200, 5],
+          ],
+        }),
+      ]),
+    ).toContain('kate:bust')
+    const long = got([game({ goal: 'rounds', target: 10, scores: Array(10).fill([5, 1]) })])
+    expect(long).toEqual(expect.arrayContaining(['kate:marathon', 'blair:marathon']))
+    expect(got([game({ hour: 23 })])).toEqual(expect.arrayContaining(['kate:owl', 'blair:owl']))
+    expect(got([game({ hour: 21 })])).not.toContain('kate:owl')
+  })
+
+  it('Polymath for wins in three different games; Underdog for winning from last place', () => {
+    const three = ['Uno', 'Jaipur', 'Spicy'].map((name) => game({ name, goal: 'wins', target: 1 }))
+    expect(got(three)).toContain('kate:polymath')
+    const under = [
+      game({ winnerId: 'blair', scores: [[0, 200]] }),
+      game({ winnerId: 'blair', scores: [[0, 200]] }),
+      game({ scores: [[200, 0]] }),
+    ]
+    expect(got(under)).toContain('kate:underdog')
+  })
+
+  it("counts repeats, marks firsts as new, and drops a deleted game's stickers", () => {
+    const a = game({ hour: 23 })
+    const b = game({ hour: 23 })
+    const book = computeStickers([a, b])
+    expect(book.counts.kate?.owl).toBe(2)
+    expect(book.byGame[a.id]?.find((e) => e.id === 'owl' && e.playerId === 'kate')?.isNew).toBe(
+      true,
+    )
+    expect(book.byGame[b.id]?.find((e) => e.id === 'owl' && e.playerId === 'kate')?.isNew).toBe(
+      false,
+    )
+    expect(book.recent[0]?.gameId).toBe(b.id) // newest first
+    expect(computeStickers([b]).counts.kate?.owl).toBe(1)
+  })
+
+  it('totalsAt adds up the first k rounds; the thresholds are the documented ones', () => {
+    const g = game({
+      scores: [
+        [3, 1],
+        [4, 0],
+        [5, 9],
+      ],
+    })
+    expect(totalsAt(g, 0)).toEqual({ kate: 0, blair: 0 })
+    expect(totalsAt(g, 2)).toEqual({ kate: 7, blair: 1 })
+    expect(STICKER_RULES).toMatchObject({ comeback: 0.25, photo: 0.05, steam: 1.5, marathon: 10 })
+  })
+
+  it('the sample history earns the same stickers every time', () => {
+    const a = computeStickers(makeSamples(clock))
+    expect(a).toEqual(computeStickers(makeSamples(clock)))
+    expect(a.recent.length).toBeGreaterThan(0)
+    expect(STICKERS).toHaveLength(12)
   })
 })

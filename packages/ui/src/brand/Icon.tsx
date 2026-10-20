@@ -8,6 +8,12 @@ export const ICONS = {
   back: '<path d="M15 5l-7 7 7 7"/>',
   right: '<path d="M9 5l7 7-7 7"/>',
   home: '<path d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>',
+  /** The selected Home tab: the same house, solid (the door stays cut out). */
+  homeFill:
+    '<path fill="currentColor" d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>',
+  /** The selected History tab: a solid page with its lines cut out. */
+  scrollFill:
+    '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M7.5 3h10.5a3 3 0 0 1 3 3v1.5h-2.5V18a3 3 0 0 1-3 3H7.5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM8.75 10.25h6.5v1.75h-6.5zM8.75 14.25h4.25V16h-4.25z"/>',
   scroll:
     '<path d="M7 4h11a2 2 0 0 1 2 2v1h-4M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7M7 4a2 2 0 0 1 2 2v1M9 11h6M9 15h4"/>',
   volume:
@@ -52,6 +58,19 @@ export const ICONS = {
   more: '<circle cx="12" cy="5.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="18.5" r="1.3" fill="currentColor"/>',
   install:
     '<rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 7.5v5.5M9.5 10.5L12 13l2.5-2.5"/>',
+  // stickers (the Sticker Club prototype's glyphs)
+  sticker:
+    '<path d="M5 4.5h10.5l4 4V18a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 18z"/><path d="M15.5 4.5v4h4"/>',
+  rocket:
+    '<path d="M12 3c3 2 5 5.5 5 9.5L15 15H9l-2-2.5C7 8.5 9 5 12 3z"/><circle cx="12" cy="9.5" r="1.6"/><path d="M9 15l-2 4 3-1M15 15l2 4-3-1"/>',
+  route:
+    '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/>',
+  camera:
+    '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7l1.5-3h4l1.5 3"/><circle cx="12" cy="13.5" r="3.5"/>',
+  weight: '<path d="M5.5 20h13L17 10H7z"/><path d="M9.5 10a2.5 2.5 0 1 1 5 0"/>',
+  zero: '<ellipse cx="12" cy="12" rx="5.5" ry="8"/><path d="M8 19L16 5"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  underdog: '<path d="M3.5 17.5l6-6 4 4 7-7"/><path d="M15 8.5h5.5V14"/>',
 } as const
 export type IconName = keyof typeof ICONS
 

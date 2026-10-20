@@ -1,0 +1,1268 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tally Ho Sticker Club</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Gabarito:wght@500;600;700;800;900&display=swap">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{margin:0;background-color:var(--bg);color:var(--fg);font-family:var(--f-body);overscroll-behavior-y:none;line-height:1.4}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;text-align:inherit}
+button:disabled{cursor:default}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.app{max-width:540px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px calc(116px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+.app.in-game{padding-bottom:56px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;flex:none}
+.fields{display:flex;flex-direction:column;gap:10px}
+.field-row{display:flex;align-items:center;gap:10px}
+.field-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-in{width:104px;height:54px;text-align:center;outline:none;font-variant-numeric:tabular-nums;flex:none}
+.sign{width:40px;height:50px;flex:none}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 4px;margin-inline:-4px}
+.pills.scroll::-webkit-scrollbar{display:none}
+.pill{flex:none;display:inline-flex;align-items:center;gap:7px}
+.group{display:flex;flex-direction:column;gap:9px}
+.row2{display:flex;gap:10px;align-items:center}.row2>*{flex:1;min-width:0}
+.hscroll{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:8px 4px 14px;margin-inline:-4px;scroll-snap-type:x mandatory}
+.hscroll::-webkit-scrollbar{display:none}
+.hscroll>*{scroll-snap-align:start;flex:none}
+.chip{position:relative;display:grid;place-items:center;flex:none;width:var(--s);height:var(--s)}
+.chip b{position:relative;line-height:1;font-size:calc(var(--s)*.46)}
+.chip .crown{position:absolute;left:50%;top:calc(var(--s)*-.5);width:calc(var(--s)*.64);margin-left:calc(var(--s)*-.32);animation:crownDrop .7s var(--spring) both;overflow:visible}
+.chip .crown-p{fill:var(--crown);stroke:var(--chip-ink);stroke-width:1.6;stroke-linejoin:round}
+.sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end}
+.backdrop{position:absolute;inset:0;background:var(--backdrop);animation:fadeIn .25s ease both}
+.sheet{position:relative;width:100%;max-width:560px;margin:0 auto -48px;max-height:calc(92% + 48px);display:flex;flex-direction:column;padding-bottom:48px;animation:sheetIn .5s var(--spring) both}
+.closing .backdrop{animation:fadeOut .26s ease forwards}
+.closing .sheet{animation:sheetOut .28s cubic-bezier(.5,0,.75,0) forwards}
+.grab{padding:10px 0 6px;display:grid;place-items:center;touch-action:none;cursor:grab}
+.grab span{width:44px;height:5px;border-radius:3px}
+.sheet-body{overflow-y:auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));padding-block:4px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+.sheet-title{display:flex;align-items:center;gap:12px}
+.sheet-title h3{margin:0;flex:1;text-wrap:balance}
+.log-head,.log-row{display:grid;grid-template-columns:40px repeat(var(--n),minmax(0,1fr)) 26px;align-items:center;gap:4px;padding:9px 8px}
+.log-head span,.log-row span{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-row{width:100%}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.nav-inner{max-width:540px;margin:0 auto 10px;height:64px;display:grid;grid-template-columns:1fr 96px 1fr;align-items:center}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px}
+.fab{justify-self:center;width:76px;height:76px;margin-top:-30px;display:grid;place-items:center;position:relative}
+.toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:70;transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);width:max-content;animation:toastIn .45s var(--spring) both}
+.toast.low{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.ribbon-wrap{position:fixed;left:0;right:0;top:calc(26% + env(safe-area-inset-top,0px));z-index:65;pointer-events:none;overflow:hidden;min-height:140px;display:grid;place-items:center}
+.victory{position:fixed;inset:0;z-index:80;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:max(28px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(28px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));animation:fadeIn .3s ease both}
+.victory>*{flex:none}
+.victory .v-inner{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:14px;margin:auto 0}
+#fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:90}
+.fox{overflow:visible}
+.fox .f-fur{fill:var(--fox-fur)}.fox .f-cream{fill:var(--fox-cream)}.fox .f-ink{fill:var(--fox-ink)}.fox .f-line{stroke:var(--fox-ink)}.fox .f-shade{fill:var(--fox-shade)}.fox .f-crown{fill:var(--fox-crown);stroke:var(--fox-ink)}
+.fox .eyes,.fox .eye-r{transform-box:fill-box;transform-origin:center;animation:blink 4.6s infinite}
+.fox.wink .eye-r{animation:wink .7s ease .9s}
+.fox .crown-g{transform-box:fill-box;transform-origin:50% 100%;animation:crownDrop .8s var(--spring) .3s both}
+.fox .ear-l,.fox .ear-r{transform-box:fill-box;transform-origin:50% 100%}
+.fox.twitch .ear-r{animation:earTwitch .5s ease}
+.fox.twitch .ear-l{animation:earTwitch .5s ease .08s}
+.rise{animation:rise .5s var(--spring) both;animation-delay:calc(var(--i,0)*60ms)}
+.shake{animation:shake .35s}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-new(root){animation:vtCircle .7s cubic-bezier(.65,0,.2,1)}
+@keyframes vtCircle{from{clip-path:circle(0 at var(--vt-x) var(--vt-y))}to{clip-path:circle(150vmax at var(--vt-x) var(--vt-y))}}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.97)}}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes sheetIn{from{transform:translateY(100%)}}
+@keyframes sheetOut{from{transform:translateY(var(--from,0px))}to{transform:translateY(105%)}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,30px) scale(.85)}}
+@keyframes crownDrop{0%{opacity:0;transform:translateY(-24px) rotate(-30deg)}55%{opacity:1;transform:translateY(3px) rotate(10deg)}75%{transform:translateY(-2px) rotate(-4deg)}100%{transform:none}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes wink{0%,100%{transform:scaleY(1)}40%,60%{transform:scaleY(.08)}}
+@keyframes earTwitch{0%,100%{transform:none}40%{transform:rotate(-10deg)}70%{transform:rotate(6deg)}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+/* Layout: one-column sticker book. Pages are white paper on dot-grid; anything you earn is a die-cut sticker with a white border. */
+:root{
+  --f-display:'Bagel Fat One','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Gabarito',ui-rounded,system-ui,-apple-system,sans-serif;
+  --spring:cubic-bezier(.3,1.6,.5,1);
+  --bg:#E7EAFF;--dot:#C4C9F3;--fg:#1D1947;--soft:#5A558F;--faint:#8E8ABE;
+  --page:#FFFFFF;--page-2:#F2F3FF;--rule:#DCDFF8;
+  --die:#FFFFFF;--shadow:rgba(29,25,71,.24);--shadow-2:rgba(29,25,71,.08);
+  --tape:rgba(255,95,162,.5);--tape-line:rgba(255,255,255,.45);--postit:#FFE27A;--postit-ink:#463600;
+  --t-amber:#FFB400;--t-fox:#FF6A1F;--t-jade:#00B894;--t-lav:#8C6CFF;--t-pink:#FF5FA2;--t-sky:#3FA9FF;
+  --main:#FF6A1F;--main-ink:#1D1947;--danger:#E8354E;
+  --focus:#8C6CFF;--crown:#FFB400;--chip-ink:#1D1947;
+  --p0:#00B894;--p1:#FFB400;--p2:#FF6A1F;--p3:#8C6CFF;--p4:#FF5FA2;--p5:#3FA9FF;--p6:#5DC22A;--p7:#E8354E;
+  --fox-fur:#FF6A1F;--fox-cream:#FFF3E2;--fox-ink:#1D1947;--fox-shade:#E2530C;--fox-crown:#FFB400;
+  --backdrop:rgba(29,25,71,.42);
+  --ring3:0 -3px 0 var(--die),2px -2px 0 var(--die),3px 0 0 var(--die),2px 2px 0 var(--die),0 3px 0 var(--die),-2px 2px 0 var(--die),-3px 0 0 var(--die),-2px -2px 0 var(--die);
+  --ring4:0 -4px 0 var(--die),3px -3px 0 var(--die),4px 0 0 var(--die),3px 3px 0 var(--die),0 4px 0 var(--die),-3px 3px 0 var(--die),-4px 0 0 var(--die),-3px -3px 0 var(--die),2px -4px 0 var(--die),-2px 4px 0 var(--die),4px 2px 0 var(--die),-4px -2px 0 var(--die);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15123B;--dot:#2B2665;--fg:#F5F3FF;--soft:#B4AEE6;--faint:#7D77B4;
+  --page:#221E57;--page-2:#1B184A;--rule:#35307A;
+  --die:#F7F5FF;--shadow:rgba(0,0,0,.55);--shadow-2:rgba(0,0,0,.25);
+  --tape:rgba(255,95,162,.55);--tape-line:rgba(255,255,255,.22);--postit:#FFD84D;--postit-ink:#3A2C00;
+  --t-amber:#FFC229;--t-fox:#FF7A33;--t-jade:#12D6AC;--t-lav:#9F86FF;--t-pink:#FF74B0;--t-sky:#5AB8FF;
+  --main:#FF7A33;--main-ink:#15123B;--danger:#FF5C70;
+  --focus:#9F86FF;--crown:#FFC229;--chip-ink:#15123B;
+  --p0:#12D6AC;--p1:#FFC229;--p2:#FF7A33;--p3:#9F86FF;--p4:#FF74B0;--p5:#5AB8FF;--p6:#6FD63A;--p7:#FF5C70;
+  --fox-ink:#15123B;--backdrop:rgba(4,2,20,.62);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15123B;--dot:#2B2665;--fg:#F5F3FF;--soft:#B4AEE6;--faint:#7D77B4;
+  --page:#221E57;--page-2:#1B184A;--rule:#35307A;
+  --die:#F7F5FF;--shadow:rgba(0,0,0,.55);--shadow-2:rgba(0,0,0,.25);
+  --tape:rgba(255,95,162,.55);--tape-line:rgba(255,255,255,.22);--postit:#FFD84D;--postit-ink:#3A2C00;
+  --t-amber:#FFC229;--t-fox:#FF7A33;--t-jade:#12D6AC;--t-lav:#9F86FF;--t-pink:#FF74B0;--t-sky:#5AB8FF;
+  --main:#FF7A33;--main-ink:#15123B;--danger:#FF5C70;
+  --focus:#9F86FF;--crown:#FFC229;--chip-ink:#15123B;
+  --p0:#12D6AC;--p1:#FFC229;--p2:#FF7A33;--p3:#9F86FF;--p4:#FF74B0;--p5:#5AB8FF;--p6:#6FD63A;--p7:#FF5C70;
+  --fox-ink:#15123B;--backdrop:rgba(4,2,20,.62);color-scheme:dark}
+body{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.7px);background-size:22px 22px;color:var(--fg);font-weight:600;font-size:15px}
+
+.eyebrow{font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.hint{font-size:13.5px;color:var(--soft);font-weight:600;margin:0}
+.sec{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;color:var(--fg);text-wrap:balance}
+.h-title{font-family:var(--f-display);font-weight:400;font-size:38px;margin:2px 0 0;line-height:1}
+.hist-head{display:flex;align-items:flex-end;gap:8px}
+.page{background:var(--page);border-radius:24px;padding:16px;box-shadow:0 1px 0 var(--shadow-2),0 18px 34px -20px var(--shadow);position:relative}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.stk-text{font-family:var(--f-display);font-weight:400;color:var(--c,var(--fg));text-shadow:var(--ring4),0 9px 14px var(--shadow);line-height:1.05}
+.tape{position:absolute;top:-13px;left:18px;z-index:2;padding:5px 16px 6px;background-color:var(--tape);background-image:repeating-linear-gradient(90deg,var(--tape-line) 0 2px,transparent 2px 9px);color:var(--fg);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-3deg);clip-path:polygon(3% 0,97% 0,100% 18%,97% 36%,100% 54%,97% 72%,100% 90%,97% 100%,3% 100%,0 82%,3% 64%,0 46%,3% 28%,0 10%)}
+.link{color:var(--fg);font-weight:800;font-size:14px;display:inline-flex;align-items:center;gap:2px;text-decoration:underline;text-decoration-color:var(--t-pink);text-decoration-thickness:3px;text-underline-offset:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 18px;border-radius:18px;font-weight:800;font-size:16px;transition:transform .18s var(--spring),box-shadow .18s;user-select:none}
+.btn:active{transform:scale(.94) rotate(-1.5deg)}
+.btn.block{width:100%}
+.btn.small{min-height:40px;padding:8px 14px;font-size:14px;border-radius:14px}
+.btn-main{background:var(--main);color:var(--main-ink);box-shadow:0 0 0 4px var(--die),0 10px 20px -8px var(--shadow)}
+.btn-quiet{background:var(--page-2);color:var(--fg);box-shadow:inset 0 0 0 2px var(--rule)}
+.btn-danger{background:transparent;color:var(--danger);box-shadow:inset 0 0 0 2px var(--danger)}
+.btn-danger.armed{background:var(--danger);color:#fff;animation:shake .35s}
+.icon-btn{border-radius:16px;background:var(--page);color:var(--soft);box-shadow:0 1px 0 var(--shadow-2),0 8px 16px -10px var(--shadow);transition:transform .25s var(--spring),color .2s}
+.icon-btn:active{transform:scale(.84) rotate(-10deg)}
+.icon-btn.on{color:var(--t-jade)}
+.theme-btn{color:var(--t-amber)}
+.close-btn{background:var(--page-2);box-shadow:none}
+
+.pill{padding:9px 14px;border-radius:14px;background:var(--page-2);box-shadow:inset 0 0 0 2px var(--rule);font-weight:700;font-size:14px;color:var(--fg);transition:transform .2s var(--spring)}
+.pill:active{transform:scale(.92)}
+.pill.on{background:var(--t-jade);color:var(--chip-ink);box-shadow:0 0 0 3px var(--die),0 6px 12px -6px var(--shadow);transform:rotate(-2deg);animation:pop .35s var(--spring)}
+.pill .chip{box-shadow:none}
+.input{width:100%;background:var(--page-2);border:2px solid var(--rule);border-radius:16px;padding:13px 14px;font-weight:700;font-size:16px;outline:none;color:var(--fg);transition:border-color .15s}
+.input:focus{border-color:var(--t-lav)}
+.input::placeholder,.score-in::placeholder{color:var(--faint)}
+.score-in{background:var(--page-2);border:2px solid var(--rule);border-radius:16px;font-family:var(--f-display);font-size:28px;color:var(--fg);transition:border-color .15s,transform .25s var(--spring)}
+.score-in:focus{border-color:var(--t-lav);transform:rotate(-2deg) scale(1.05)}
+.sign{border-radius:14px;background:var(--page-2);color:var(--soft);font-weight:800;font-size:18px}
+.seg{background:var(--page-2);border-radius:16px;padding:4px}
+.seg button{border-radius:12px;padding:10px 4px;font-weight:800;font-size:13.5px;color:var(--soft);text-align:center;transition:background .2s}
+.seg button.on{background:var(--page);color:var(--fg);box-shadow:0 3px 8px var(--shadow-2)}
+.field-name{font-weight:800;font-size:16px}
+.player-line{display:flex;align-items:center;gap:12px;background:var(--page-2);border-radius:16px;padding:8px 8px 8px 12px;animation:rise .35s var(--spring) both}
+.player-line .n{flex:1;font-weight:800}
+.x-btn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--danger);transition:transform .2s var(--spring)}
+.x-btn:active{transform:rotate(90deg) scale(.8)}
+.err{color:var(--danger);font-weight:800;font-size:14px}
+
+.chip{border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--die),0 4px 8px -2px var(--shadow)}
+.chip b{font-family:var(--f-display);font-weight:400;color:var(--chip-ink)}
+
+.sheet{background:var(--page);border-radius:30px 30px 0 0;box-shadow:0 -20px 60px var(--shadow)}
+.grab span{background:var(--rule)}
+.sheet-title h3{font-family:var(--f-display);font-weight:400;font-size:28px;line-height:1.05}
+.log{display:flex;flex-direction:column}
+.log-head{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+.log-row{border-radius:14px;transition:background .15s}
+.log-row:nth-child(even){background:var(--page-2)}
+.log-row .rn{font-family:var(--f-display);color:var(--faint);text-align:left}
+.log-row .sc{font-family:var(--f-display);font-size:19px}
+.log-row .sc.top{color:var(--c)}
+.log-row .sc.blank{color:var(--faint)}
+.log-row .ed{color:var(--faint);display:grid;place-items:center}
+.log-row.fresh .sc{animation:slapIn .5s var(--spring) both;animation-delay:calc(var(--j)*70ms)}
+.podium{width:100%;display:flex;flex-direction:column;gap:8px}
+.pod{display:flex;align-items:center;gap:12px;background:var(--page);border-radius:18px;padding:10px 14px;box-shadow:0 10px 20px -14px var(--shadow);animation:rise .5s var(--spring) both}
+.sheet .pod{background:var(--page-2);box-shadow:none}
+.pod.first{box-shadow:0 0 0 3px var(--t-amber),0 10px 20px -14px var(--shadow)}
+.pod .place{font-family:var(--f-display);color:var(--soft);width:38px}
+.pod .n{flex:1;font-weight:800}
+.pod .t{font-family:var(--f-display);font-size:24px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:28px 16px}
+.empty .fox{width:110px;height:110px}
+
+.nav-inner{background:var(--page);border-radius:26px;box-shadow:0 1px 0 var(--shadow-2),0 16px 32px -12px var(--shadow)}
+.nav-btn{color:var(--faint);font-weight:800;font-size:12px;transition:color .2s,transform .2s var(--spring)}
+.nav-btn:active{transform:scale(.9)}
+.nav-btn.on{color:var(--fg)}
+.nav-btn.on .ic{color:var(--main)}
+.fab{border-radius:50%}
+.fab .fox-stk{width:68px;height:68px;transform:rotate(-8deg);animation:none;transition:transform .25s var(--spring)}
+.fab:active .fox-stk{transform:rotate(8deg) scale(.88)}
+.fab .plus{position:absolute;right:0;bottom:4px;width:28px;height:28px;border-radius:50%;background:var(--t-jade);color:var(--chip-ink);display:grid;place-items:center;box-shadow:0 0 0 3px var(--die)}
+.fab.live .plus{background:var(--t-amber)}
+
+.toast{background:var(--fg);color:var(--page);font-weight:800;font-size:14.5px;padding:11px 18px;border-radius:18px;box-shadow:0 0 0 3px var(--die),0 14px 30px -8px var(--shadow);transform:translateX(-50%) rotate(-1.5deg)}
+.ribbon{font-family:var(--f-display);font-size:48px;color:var(--chip-ink);background:var(--t-jade);padding:8px 30px 12px;border-radius:24px;box-shadow:0 0 0 6px var(--die),0 24px 40px -12px var(--shadow);animation:slapBanner 1.45s var(--spring) forwards;white-space:nowrap}
+.ribbon.amber{background:var(--t-amber)}
+.ribbon.coral{background:var(--t-pink)}
+
+/* header */
+.a-top{display:flex;align-items:center;gap:10px;padding-top:6px}
+.fox-stk{width:58px;height:58px;flex:none;filter:drop-shadow(2.5px 0 0 var(--die)) drop-shadow(-2.5px 0 0 var(--die)) drop-shadow(0 2.5px 0 var(--die)) drop-shadow(0 -2.5px 0 var(--die)) drop-shadow(0 6px 6px var(--shadow));transform:rotate(-6deg);animation:peelIn .8s var(--spring) both}
+.fox-stk .fox{width:100%;height:100%;display:block}
+.wm{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center}
+.wl{display:inline-block;font-family:var(--f-display);font-size:clamp(25px,7.4vw,36px);line-height:1.1;color:var(--c);text-shadow:var(--ring3),0 6px 8px var(--shadow);transform:rotate(var(--r));animation:letterSlap .6s var(--spring) both;animation-delay:calc(var(--i)*60ms + 150ms)}
+.wl.sp{width:.28em}
+.a-tools{display:flex;gap:6px}
+
+.postit{background:var(--postit);color:var(--postit-ink);padding:14px 14px 14px 16px;border-radius:4px 4px 22px 4px;transform:rotate(-1.2deg);box-shadow:0 14px 22px -14px var(--shadow);display:flex;gap:12px;align-items:center;font-weight:700;font-size:14px;animation:rise .5s var(--spring) both}
+.postit p{margin:0;flex:1}
+.postit .btn{background:rgba(0,0,0,.08);color:var(--postit-ink);box-shadow:none}
+
+.resume{display:flex;align-items:center;gap:12px;width:100%;padding-top:24px;text-align:left;transition:transform .2s var(--spring)}
+.resume:active{transform:scale(.97) rotate(-.5deg)}
+.resume .gt{font-family:var(--f-display);font-size:26px;line-height:1.05}
+.go-stk{background:var(--t-jade);color:var(--chip-ink);font-weight:800;padding:9px 14px;border-radius:14px;box-shadow:0 0 0 3px var(--die),0 6px 12px -6px var(--shadow);transform:rotate(3deg);display:inline-flex;align-items:center;gap:4px;flex:none}
+
+.champ{padding-top:26px}
+.champ-row{display:flex;align-items:center;gap:18px}
+.champ .stk-text{font-size:clamp(38px,11vw,50px)}
+.badge-stk{display:inline-flex;gap:5px;align-items:center;margin-top:10px;background:var(--t-pink);color:var(--chip-ink);font-weight:800;font-size:13px;padding:5px 11px;border-radius:12px;box-shadow:0 0 0 3px var(--die),0 6px 10px -6px var(--shadow);transform:rotate(-2deg);animation:wiggle 3s ease-in-out infinite}
+
+.tally-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:4px 12px;align-items:center;width:100%;padding:12px 2px;border-top:2px dashed var(--rule);text-align:left;transition:transform .2s var(--spring)}
+.tally-row:first-of-type{border-top:0}
+.tally-row:active{transform:scale(.97)}
+.tally-row .who{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tally-row .who b{font-weight:800;font-size:16px}
+.tally-row .who small{font-size:12px;color:var(--soft);font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.wins-n{font-family:var(--f-display);font-size:32px;color:var(--c);line-height:1;text-shadow:var(--ring3)}
+.tally{display:block;height:28px;width:auto;max-width:100%;overflow:visible}
+.tally path{fill:none;stroke:var(--c);stroke-width:3.4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw .22s ease-out forwards;animation-delay:calc(var(--k)*70ms + 350ms)}
+.tally path.diag{stroke:var(--fg);stroke-width:3}
+
+.stickers{padding-top:12px}
+.fresh-stk{display:flex;flex-direction:column;align-items:center;gap:6px;width:92px;text-align:center;transition:transform .2s var(--spring)}
+.fresh-stk:active{transform:scale(.92) rotate(-4deg)}
+.fresh-stk b{font-size:12.5px;font-weight:800;line-height:1.15}
+.fresh-stk span{font-size:11.5px;color:var(--soft);font-weight:700}
+.labels{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:4px}
+.label{background:var(--c);color:var(--chip-ink);border-radius:20px;padding:14px;box-shadow:0 0 0 4px var(--die),0 14px 22px -14px var(--shadow);transform:rotate(var(--r));display:flex;flex-direction:column;gap:3px;min-width:0;animation:peelIn .6s var(--spring) both;animation-delay:calc(var(--i)*80ms + 200ms)}
+.label .v{font-family:var(--f-display);font-size:30px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.label .l{font-weight:700;font-size:12.5px;opacity:.88;line-height:1.25}
+
+.game-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;transition:transform .2s var(--spring)}
+.game-row:active{transform:scale(.97) rotate(.5deg)}
+.game-row .gname{font-family:var(--f-display);font-size:20px;line-height:1.1}
+.game-row>.ic{color:var(--faint);flex:none}
+.mini{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.mini span{font-size:12.5px;font-weight:800;background:var(--page-2);border-radius:9px;padding:2px 8px;color:var(--soft)}
+.mini span.w{background:var(--c);color:var(--chip-ink)}
+
+/* game */
+.g-top{display:flex;align-items:center;gap:8px}
+.g-title{flex:1;min-width:0}
+.g-title .gt{font-family:var(--f-display);font-size:28px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn.end{color:var(--danger)}
+.ruler{display:flex;flex-direction:column;gap:12px;padding:20px 16px 12px}
+.lane{position:relative;height:30px;margin-right:26px}
+.lane .base{position:absolute;left:0;right:0;top:50%;height:10px;margin-top:-5px;border-radius:5px;background:var(--page-2);box-shadow:inset 0 0 0 2px var(--rule)}
+.lane .fillt{position:absolute;left:0;top:50%;height:18px;margin-top:-9px;background-color:var(--c);background-image:repeating-linear-gradient(90deg,var(--tape-line) 0 2px,transparent 2px 9px);opacity:.85;clip-path:polygon(0 0,100% 0,97% 30%,100% 55%,97% 80%,100% 100%,0 100%);transform:rotate(-.8deg);transition:width .9s var(--spring)}
+.lane .runner{position:absolute;top:2px;transform:translateX(-50%);transition:left .9s var(--spring)}
+.lane .flagend{position:absolute;right:-28px;top:3px;color:var(--fg)}
+.ruler-foot{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--soft)}
+.slots{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.slot-r{width:30px;height:30px;border-radius:50%;border:2.5px dashed var(--rule);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--faint)}
+.slot-r.done{border:0;background:var(--c);color:var(--chip-ink);box-shadow:0 0 0 3px var(--die),0 4px 8px -4px var(--shadow);animation:slapIn .5s var(--spring) both}
+.slot-r.now{border-color:var(--main);color:var(--main);animation:pulse 1.2s ease-in-out infinite}
+.board{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:14px;padding-top:16px}
+.pcard{display:flex;flex-direction:column;align-items:center;gap:2px;padding:28px 8px 14px;text-align:center;border-radius:22px;transition:box-shadow .3s}
+.pcard>.chip{position:absolute;top:-18px;left:50%;margin-left:-20px}
+.pcard .pname{font-weight:800;font-size:14.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard .ptotal{font-size:44px;font-variant-numeric:tabular-nums}
+.pcard .psub{font-size:12px;color:var(--soft);font-weight:700}
+.pcard.bump{animation:wobbleIn .6s var(--spring)}
+.pcard.lead{box-shadow:0 0 0 3px var(--t-amber),0 18px 30px -16px var(--shadow)}
+.pcard.match{animation:matchPulse 1.4s ease-in-out infinite}
+.delta-stk{position:absolute;top:-8px;right:-6px;z-index:2;background:var(--c);color:var(--chip-ink);font-family:var(--f-display);font-size:17px;padding:2px 9px 4px;border-radius:12px;box-shadow:0 0 0 3px var(--die),0 6px 10px -4px var(--shadow);animation:deltaSlap 1.9s var(--spring) forwards}
+.gold-star{position:absolute;left:0;top:0;width:46px;height:46px;z-index:3;transition:transform .95s var(--spring),opacity .3s;pointer-events:none;filter:drop-shadow(2px 0 0 var(--die)) drop-shadow(-2px 0 0 var(--die)) drop-shadow(0 2px 0 var(--die)) drop-shadow(0 -2px 0 var(--die)) drop-shadow(0 6px 6px var(--shadow))}
+.gold-star path{fill:var(--t-amber);stroke:var(--fox-ink);stroke-width:1.2;stroke-linejoin:round}
+.entry{display:flex;flex-direction:column;gap:14px;padding-top:26px}
+.entry-foot{display:flex;justify-content:space-between;align-items:center}
+
+/* victory: sticker pack */
+.a-vic{background-color:var(--bg);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.7px);background-size:22px 22px}
+.a-vic .huge{font-size:clamp(44px,13vw,64px);text-align:center;animation:slapBig .7s var(--spring) .15s both;text-wrap:balance}
+.pack{position:relative;width:210px;height:280px;display:flex;flex-direction:column;filter:drop-shadow(0 22px 26px var(--shadow));animation:packIdle 2.4s ease-in-out infinite;transform-origin:50% 90%}
+.pack-body{flex:1;background:linear-gradient(115deg,var(--t-lav),var(--t-pink) 40%,var(--t-amber) 70%,var(--t-jade));background-size:220% 220%;animation:foil 5s linear infinite;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;position:relative;overflow:hidden}
+.pack-body::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.6) 48%,transparent 60%);background-size:260% 100%;animation:sheen 2.6s ease-in-out infinite}
+.crimp{height:20px;background:var(--t-lav);background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 3px,transparent 3px 7px)}
+.crimp.top{clip-path:polygon(0 100%,0 35%,5% 0,10% 35%,15% 0,20% 35%,25% 0,30% 35%,35% 0,40% 35%,45% 0,50% 35%,55% 0,60% 35%,65% 0,70% 35%,75% 0,80% 35%,85% 0,90% 35%,95% 0,100% 35%,100% 100%)}
+.crimp.bottom{background:var(--t-jade);background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 3px,transparent 3px 7px);clip-path:polygon(0 0,100% 0,100% 65%,95% 100%,90% 65%,85% 100%,80% 65%,75% 100%,70% 65%,65% 100%,60% 65%,55% 100%,50% 65%,45% 100%,40% 65%,35% 100%,30% 65%,25% 100%,20% 65%,15% 100%,10% 65%,5% 100%,0 65%)}
+.pack .fox-stk{width:96px;height:96px;animation:none}
+.pack-title{text-align:center;padding:0 12px;font-family:var(--f-display);font-size:26px;line-height:1;text-shadow:0 3px 0 rgba(0,0,0,.22);position:relative;z-index:1}
+.pack-sub{font-weight:800;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;position:relative;z-index:1}
+.strip{position:fixed;top:36%;left:50%;width:210px;height:24px;margin-left:-105px;z-index:85;pointer-events:none;animation:stripFly .8s cubic-bezier(.3,.6,.4,1) forwards}
+.haul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 10px;width:100%;min-height:130px;padding-top:6px}
+.haul-item{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;animation:peelOut .6s var(--spring) both}
+.haul-item>:first-child{transform:rotate(var(--r))}
+.hi-name{font-weight:800;font-size:13px;line-height:1.15}
+.hi-who{font-size:12px;color:var(--soft);font-weight:700}
+.hi-who em{font-style:normal;color:var(--t-pink)}
+.win-stk{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:6px}
+.win-stk b{background:var(--t-amber);color:var(--chip-ink);font-family:var(--f-display);font-weight:400;font-size:14px;padding:1px 10px 3px;border-radius:10px;box-shadow:0 0 0 3px var(--die)}
+.v-actions{display:flex;gap:10px;width:100%}
+.v-actions .btn{flex:1}
+.a-vic .pod:last-child:not(.first){animation:rise .5s var(--spring) both,sadWobble .9s ease-in-out 1.6s 2}
+
+/* awards + album */
+.award{position:relative;display:inline-grid;place-items:center;flex:none}
+.award svg{overflow:visible;filter:drop-shadow(0 5px 6px var(--shadow))}
+.aw-bg{fill:var(--tone);stroke:var(--die);stroke-width:6;stroke-linejoin:round}
+.aw-ic{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.award.locked svg{filter:none}
+.award.locked .aw-bg{fill:transparent;stroke:var(--faint);stroke-width:3;stroke-dasharray:7 6}
+.award.locked .aw-ic{stroke:var(--faint);opacity:.55}
+.aw-count{position:absolute;right:-6px;bottom:-2px;background:var(--fg);color:var(--page);font-weight:800;font-size:12px;padding:1px 7px;border-radius:9px;box-shadow:0 0 0 2px var(--die)}
+.album-meter{display:flex;align-items:center;gap:10px;font-weight:800;font-size:13.5px;color:var(--soft)}
+.album-meter .bar{flex:1;height:12px;border-radius:6px;background:var(--page-2);overflow:hidden}
+.album-meter i{display:block;height:100%;background:var(--t-jade);border-radius:6px;transition:width .6s var(--spring)}
+.album-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 10px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;animation:peelOut .5s var(--spring) both;animation-delay:calc(var(--i)*45ms)}
+.slot b{font-size:13px;font-weight:800;line-height:1.15;margin-top:4px}
+.slot span{font-size:11.5px;color:var(--soft);line-height:1.25}
+.slot:not(.got) b{color:var(--faint)}
+.earned-row{display:flex;flex-wrap:wrap;gap:14px}
+.earned-row .er{display:flex;flex-direction:column;align-items:center;gap:4px;width:76px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.15}
+.earned-row .er span{color:var(--soft);font-weight:700}
+
+@keyframes peelIn{0%{opacity:0;transform:rotate(-30deg) scale(.4) translateY(-20px)}60%{opacity:1;transform:rotate(4deg) scale(1.08)}100%{opacity:1}}
+@keyframes letterSlap{0%{opacity:0;transform:translateY(-36px) rotate(-28deg) scale(1.5)}60%{opacity:1;transform:rotate(var(--r)) scale(.92)}100%{transform:rotate(var(--r))}}
+@keyframes slapIn{0%{opacity:0;transform:scale(1.9) rotate(-12deg)}60%{opacity:1;transform:scale(.9) rotate(2deg)}100%{transform:none}}
+@keyframes slapBig{0%{opacity:0;transform:scale(2.4) rotate(-10deg)}60%{opacity:1;transform:scale(.92) rotate(-3deg)}100%{transform:rotate(-2deg)}}
+@keyframes slapBanner{0%{transform:scale(2.2) rotate(-14deg);opacity:0}18%{transform:scale(.92) rotate(-5deg);opacity:1}26%{transform:scale(1) rotate(-4deg)}78%{transform:scale(1) rotate(-4deg);opacity:1}100%{transform:translateY(-40px) scale(.9) rotate(4deg);opacity:0}}
+@keyframes wobbleIn{0%{transform:none}30%{transform:scale(1.07) rotate(-2.5deg)}60%{transform:scale(.97) rotate(1.5deg)}100%{transform:none}}
+@keyframes deltaSlap{0%{opacity:0;transform:scale(2) rotate(-20deg)}14%{opacity:1;transform:scale(.9) rotate(8deg)}22%{transform:scale(1) rotate(6deg)}75%{opacity:1;transform:rotate(6deg)}100%{opacity:0;transform:translateY(-26px) rotate(18deg) scale(.8)}}
+@keyframes matchPulse{0%,100%{box-shadow:0 0 0 3px var(--t-pink),0 18px 30px -16px var(--shadow)}50%{box-shadow:0 0 0 7px var(--t-pink),0 18px 30px -16px var(--shadow)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes wiggle{0%,90%,100%{transform:rotate(-2deg)}93%{transform:rotate(3deg)}96%{transform:rotate(-4deg)}}
+@keyframes packIdle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-6px)}}
+@keyframes foil{to{background-position:220% 0}}
+@keyframes sheen{0%{background-position:160% 0}60%,100%{background-position:-60% 0}}
+@keyframes stripFly{0%{transform:none;opacity:1}100%{transform:translate(170px,-280px) rotate(75deg);opacity:0}}
+@keyframes peelOut{0%{opacity:0;transform:translateY(70px) scale(.3) rotate(-30deg)}60%{opacity:1;transform:translateY(-8px) scale(1.08) rotate(4deg)}100%{opacity:1;transform:none}}
+@keyframes sadWobble{0%,100%{transform:none}25%{transform:rotate(-2deg) translateY(2px)}50%{transform:rotate(1.5deg)}75%{transform:rotate(-1deg) translateY(1px)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.tally path{stroke-dashoffset:0}}
+
+</style>
+<div id="app"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+window.TH=(function(){
+'use strict';
+const {useState,useEffect,useRef,useMemo,useLayoutEffect}=React;
+const html=htm.bind(React.createElement);
+
+/* ============ data ============ */
+const KEY='tallyho.v3';
+const DEFAULT_PLAYERS=['Kate','Blair','Alder'];
+const PRESETS=[
+  {name:'Flip 7',goal:'score',target:200},
+  {name:'Sushi Go',goal:'rounds',target:3},
+  {name:'Sushi Go Party',goal:'rounds',target:3},
+  {name:'Skull King',goal:'rounds',target:10},
+  {name:'Uno',goal:'score',target:500},
+  {name:'Cribbage',goal:'score',target:121},
+  {name:'Spades',goal:'score',target:500},
+  {name:'Rummy',goal:'score',target:500},
+];
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const load=()=>{try{const r=store.get(KEY);if(!r)return null;const d=JSON.parse(r);return d&&Array.isArray(d.games)?d:null}catch(e){return null}};
+const save=d=>store.set(KEY,JSON.stringify(d));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const hash=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)};
+const parseScore=s=>{s=String(s??'').trim();if(s===''||s==='-')return null;const n=parseInt(s,10);return isNaN(n)?null:n};
+const fmtDate=(iso,o={month:'short',day:'numeric'})=>new Date(iso).toLocaleDateString('en-US',o);
+const vibrate=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+const ordinal=n=>{const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+const after=(ms,fn)=>setTimeout(fn,ms);
+const reduceMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const midi=m=>440*Math.pow(2,(m-69)/12);
+const joinNames=a=>a.length<=1?(a[0]||''):a.slice(0,-1).join(', ')+' & '+a[a.length-1];
+
+function totalsAt(g,k){const t={};g.players.forEach(p=>t[p]=0);g.rounds.slice(0,k).forEach(r=>g.players.forEach(p=>{t[p]+=r.scores[p]||0}));return t}
+const totalsOf=g=>totalsAt(g,g.rounds.length);
+function topOf(t,players){const m=Math.max(...players.map(p=>t[p]));return players.filter(p=>t[p]===m)}
+const leadersOf=g=>topOf(totalsOf(g),g.players);
+const leaderOf=g=>{if(!g.rounds.length)return null;const l=leadersOf(g);return l.length===1?l[0]:null};
+function evaluate(g){
+  const t=totalsOf(g);
+  const reached=g.goal==='score'?g.players.some(p=>t[p]>=g.target):g.goal==='rounds'?g.rounds.length>=g.target:false;
+  if(!reached)return{done:false};
+  const l=leadersOf(g);
+  return l.length===1?{done:true,winner:l[0]}:{done:false,tie:true};
+}
+const goalLabel=g=>g.goal==='score'?`Race to ${g.target}`:g.goal==='rounds'?`${g.target} rounds`:'Open-ended';
+const ranked=g=>{const t=totalsOf(g);return [...g.players].sort((a,b)=>t[b]-t[a])};
+function leadTimeline(g){const out=[];for(let k=1;k<=g.rounds.length;k++){const l=topOf(totalsAt(g,k),g.players);out.push(l.length===1?l[0]:null)}return out}
+function roundTop(r,players){const vals=players.map(p=>r.scores[p]??0);const m=Math.max(...vals);if(m<=0)return[];return players.filter(p=>(r.scores[p]??0)===m)}
+function leadChanges(g){let c=0,prev=null;leadTimeline(g).forEach(l=>{if(l&&prev&&l!==prev)c++;if(l)prev=l});return c}
+function songOf(g){return g.rounds.map(r=>{const ps=roundTop(r,g.players);return{ps,v:ps.length?(r.scores[ps[0]]??0):0}})}
+
+function rng(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
+function makeSamples(){
+  const r=rng(11),P=DEFAULT_PLAYERS,now=new Date();
+  const plan=[['Flip 7','score',200],['Sushi Go','rounds',3],['Flip 7','score',200],['Skull King','rounds',10],['Flip 7','score',200],['Sushi Go','rounds',3],['Flip 7','score',200],['Flip 7','score',200],['Sushi Go','rounds',3],['Flip 7','score',200]];
+  return plan.map(([name,goal,target],i)=>{
+    const d=new Date(now);d.setDate(d.getDate()-(plan.length-i)*3-1);d.setHours(18+Math.floor(r()*5),Math.floor(r()*60),0,0);
+    const g={id:'s'+i,sample:true,name,goal,target,players:P.slice(),rounds:[],startedAt:d.toISOString(),completedAt:null,winner:null};
+    const skill={};P.forEach(p=>skill[p]=.75+r()*.5);
+    let res={done:false},guard=0;
+    while(!res.done&&guard++<40){
+      const sc={};
+      P.forEach(p=>{let v;
+        if(name==='Flip 7')v=r()<.16?0:Math.round((8+r()*48)*skill[p]);
+        else if(name==='Sushi Go')v=Math.round((14+r()*30)*skill[p]);
+        else v=Math.round((r()*10-3)*skill[p])*10;
+        sc[p]=v});
+      g.rounds.push({scores:sc});res=evaluate(g);
+    }
+    g.winner=res.winner||ranked(g)[0];
+    g.completedAt=new Date(d.getTime()+45*60e3).toISOString();
+    return g;
+  }).reverse();
+}
+function fresh(){return{games:makeSamples(),active:null,colors:{Kate:0,Blair:1,Alder:2},lastPlayers:DEFAULT_PLAYERS.slice(),muted:false,hasSamples:true}}
+
+/* ============ awards ============ */
+const AWARDS=[
+  {id:'crown',name:'First Crown',desc:'Win your first game',tone:'amber',icon:'crown'},
+  {id:'hat',name:'Hat Trick',desc:'Win three games in a row',tone:'fox',icon:'flame'},
+  {id:'comeback',name:'Comeback Kid',desc:'Win after trailing by 30 or more',tone:'jade',icon:'rocket'},
+  {id:'wire',name:'Wire to Wire',desc:'Lead after every round (3+)',tone:'lav',icon:'route'},
+  {id:'photo',name:'Photo Finish',desc:'Win by 5 points or fewer',tone:'pink',icon:'camera'},
+  {id:'steam',name:'Steamroller',desc:'Finish with 1.5× the runner-up',tone:'fox',icon:'weight'},
+  {id:'haymaker',name:'Haymaker',desc:'Score 60+ in a single round',tone:'sky',icon:'bolt'},
+  {id:'bust',name:'Big Fat Zero',desc:'Score nothing while others score',tone:'pink',icon:'zero'},
+  {id:'marathon',name:'Marathon',desc:'Play a game of 10+ rounds',tone:'jade',icon:'clock'},
+  {id:'polymath',name:'Polymath',desc:'Win three different games',tone:'lav',icon:'cards'},
+  {id:'ten',name:'Double Digits',desc:'Win 10 games',tone:'amber',icon:'trophy'},
+  {id:'owl',name:'Night Owl',desc:'Finish a game after 10 pm',tone:'sky',icon:'moon'},
+];
+const awardById=Object.fromEntries(AWARDS.map(a=>[a.id,a]));
+function computeAwards(games){
+  const asc=games.filter(g=>g.winner).sort((a,b)=>a.completedAt.localeCompare(b.completedAt));
+  const counts={},byGame={},wins={},types={};let sp=null,sn=0;
+  const give=(p,id,g)=>{counts[p]=counts[p]||{};const isNew=!counts[p][id];counts[p][id]=(counts[p][id]||0)+1;(byGame[g.id]=byGame[g.id]||[]).push({p,id,isNew})};
+  asc.forEach(g=>{
+    const w=g.winner,t=totalsOf(g),order=ranked(g),second=order[1];
+    wins[w]=(wins[w]||0)+1;
+    if(wins[w]===1)give(w,'crown',g);
+    if(wins[w]===10)give(w,'ten',g);
+    sn=w===sp?sn+1:1;sp=w;if(sn%3===0)give(w,'hat',g);
+    (types[w]=types[w]||new Set()).add(g.name);if(types[w].size===3&&!(counts[w]||{}).polymath)give(w,'polymath',g);
+    let deficit=0;for(let k=1;k<=g.rounds.length;k++){const tk=totalsAt(g,k);deficit=Math.max(deficit,Math.max(...g.players.map(p=>tk[p]))-tk[w])}
+    if(deficit>=30)give(w,'comeback',g);
+    const tl=leadTimeline(g);if(tl.length>=3&&tl.every(l=>l===w))give(w,'wire',g);
+    if(second&&t[w]-t[second]<=5)give(w,'photo',g);
+    if(second&&t[second]>0&&t[w]>=1.5*t[second]&&g.rounds.length>=2)give(w,'steam',g);
+    g.players.forEach(p=>{
+      if(g.rounds.some(r=>(r.scores[p]??0)>=60))give(p,'haymaker',g);
+      if(g.rounds.some(r=>(r.scores[p]??0)===0&&g.players.some(q=>(r.scores[q]??0)>0)))give(p,'bust',g);
+    });
+    if(g.rounds.length>=10)g.players.forEach(p=>give(p,'marathon',g));
+    const h=new Date(g.completedAt).getHours();if(h>=22||h<4)g.players.forEach(p=>give(p,'owl',g));
+  });
+  return{counts,byGame};
+}
+function rivalries(asc){
+  const m={};
+  asc.forEach(g=>{const t=totalsOf(g);for(let i=0;i<g.players.length;i++)for(let j=i+1;j<g.players.length;j++){
+    let a=g.players[i],b=g.players[j];if(a>b)[a,b]=[b,a];const k=a+'|'+b;const r=m[k]=m[k]||{a,b,aw:0,bw:0,n:0};
+    r.n++;if(t[a]>t[b])r.aw++;else if(t[b]>t[a])r.bw++}});
+  return Object.values(m).sort((x,y)=>y.n-x.n||Math.abs(x.aw-x.bw)-Math.abs(y.aw-y.bw));
+}
+function standingsOf(asc){
+  const players=[...new Set(asc.flatMap(g=>g.players))];const wins={},played={};
+  players.forEach(p=>{wins[p]=0;played[p]=0});
+  asc.forEach(g=>{g.players.forEach(p=>played[p]++);wins[g.winner]=(wins[g.winner]||0)+1});
+  return players.map(p=>({p,w:wins[p],n:played[p]})).sort((a,b)=>b.w-a.w||a.p.localeCompare(b.p));
+}
+function computeStats(games){
+  const asc=games.filter(g=>g.winner).sort((a,b)=>a.completedAt.localeCompare(b.completedAt));
+  let cur={p:null,n:0},best={p:null,n:0};
+  asc.forEach(g=>{cur=g.winner===cur.p?{p:cur.p,n:cur.n+1}:{p:g.winner,n:1};if(cur.n>best.n)best={...cur}});
+  let big={v:-Infinity,p:null,game:null};asc.forEach(g=>g.rounds.forEach(r=>g.players.forEach(p=>{const v=r.scores[p];if(v!=null&&v>big.v)big={v,p,game:g.name}})));
+  const counts={};asc.forEach(g=>counts[g.name]=(counts[g.name]||0)+1);
+  const fav=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]||null;
+  let swings=0,swingGame=null;asc.forEach(g=>{const c=leadChanges(g);if(c>swings){swings=c;swingGame=g}});
+  const standings=standingsOf(asc);
+  const prev=asc.length>1?standingsOf(asc.slice(0,-1)):[];
+  const prevRank={};prev.forEach((x,i)=>prevRank[x.p]=i);
+  return{asc,standings,prevRank,current:cur,best,big,fav,swings,swingGame,total:asc.length,rivals:rivalries(asc)};
+}
+function recapOf(g,aw){
+  const t=totalsOf(g),order=ranked(g);let mvp=null;
+  g.rounds.forEach((r,i)=>g.players.forEach(p=>{const v=r.scores[p]??0;if(!mvp||v>mvp.v)mvp={p,v,i}}));
+  return{order,t,margin:t[order[0]]-(order[1]?t[order[1]]:0),mvp,changes:leadChanges(g),earned:(aw.byGame[g.id]||[])};
+}
+
+/* ============ sound engine ============ */
+const SND=(()=>{
+  let ctx=null,out=null,muted=false,noiseBuf=null;const ks={};
+  function ac(){
+    if(!ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ctx=new A();
+      const comp=ctx.createDynamicsCompressor();comp.threshold.value=-12;comp.ratio.value=4;
+      out=ctx.createGain();out.gain.value=.85;out.connect(comp);comp.connect(ctx.destination)}
+    if(ctx.state==='suspended')ctx.resume();return ctx;
+  }
+  const T=at=>ctx.currentTime+.012+(at||0);
+  function env(g,t,vol,a,d){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(a+.01,d))}
+  function tone(f,d,o={}){
+    if(muted)return;const c=ac();if(!c)return;
+    const{type='sine',vol=.15,at=0,to=null,attack=.008,vib=0,vibDepth=.03,lp=0,lpTo=0}=o;const t=T(at);
+    const osc=c.createOscillator(),g=c.createGain();osc.type=type;osc.frequency.setValueAtTime(f,t);
+    if(to)osc.frequency.exponentialRampToValueAtTime(to,t+d);
+    if(vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=vib;lg.gain.value=f*vibDepth;l.connect(lg);lg.connect(osc.frequency);l.start(t);l.stop(t+d+.05)}
+    env(g,t,vol,attack,d);
+    if(lp){const fl=c.createBiquadFilter();fl.type='lowpass';fl.Q.value=6;fl.frequency.setValueAtTime(lp,t);if(lpTo)fl.frequency.exponentialRampToValueAtTime(lpTo,t+d);osc.connect(fl);fl.connect(g)}else osc.connect(g);
+    g.connect(out);osc.start(t);osc.stop(t+d+.05);
+  }
+  function noise(d,o={}){
+    if(muted)return;const c=ac();if(!c)return;
+    const{vol=.2,at=0,type='bandpass',freq=1200,to=null,q=1,attack=.003}=o;
+    if(!noiseBuf){noiseBuf=c.createBuffer(1,c.sampleRate*2,c.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1}
+    const t=T(at);const s=c.createBufferSource();s.buffer=noiseBuf;
+    const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(freq,t);if(to)f.frequency.exponentialRampToValueAtTime(to,t+d);f.Q.value=q;
+    const g=c.createGain();env(g,t,vol,attack,d);s.connect(f);f.connect(g);g.connect(out);s.start(t,Math.random());s.stop(t+d+.05);
+  }
+  function pluck(f,d=1.4,o={}){
+    if(muted)return;const c=ac();if(!c)return;
+    const{vol=.32,at=0,bright=.55}=o;const key=Math.round(f*10)+'|'+d+'|'+bright;let buf=ks[key];
+    if(!buf){const sr=c.sampleRate,P=Math.max(2,Math.round(sr/f)),len=Math.floor(sr*d);buf=c.createBuffer(1,len,sr);const y=buf.getChannelData(0);let last=0;
+      for(let i=0;i<P;i++){const r=Math.random()*2-1;last=bright*r+(1-bright)*last;y[i]=last}
+      for(let i=P;i<len;i++)y[i]=.996*.5*(y[i-P]+(i>P?y[i-P-1]:0));ks[key]=buf}
+    const t=T(at);const s=c.createBufferSource();s.buffer=buf;const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    s.connect(g);g.connect(out);s.start(t);
+  }
+  function bell(f,d=1.2,o={}){
+    if(muted)return;const c=ac();if(!c)return;
+    const{vol=.14,at=0,ratio=3.5,index=2}=o;const t=T(at);
+    const car=c.createOscillator(),mod=c.createOscillator(),mg=c.createGain(),g=c.createGain();
+    car.frequency.value=f;mod.frequency.value=f*ratio;mg.gain.setValueAtTime(f*index,t);mg.gain.exponentialRampToValueAtTime(1,t+d);
+    mod.connect(mg);mg.connect(car.frequency);env(g,t,vol,.004,d);car.connect(g);g.connect(out);
+    car.start(t);mod.start(t);car.stop(t+d+.05);mod.stop(t+d+.05);
+  }
+  return{unlock:()=>ac(),setMuted(m){muted=m},isMuted:()=>muted,tone,noise,pluck,bell};
+})();
+
+/* ============ particles ============ */
+const SUITS={
+  spade:'M12 2C9 6 3 9 3 14c0 3 2.5 5 5 5 1.5 0 2.7-.7 3.3-1.7L10 22h4l-1.3-4.7c.6 1 1.8 1.7 3.3 1.7 2.5 0 5-2 5-5 0-5-6-8-9-12z',
+  heart:'M12 21C5 15 2 11 2 7.5 2 4.5 4.5 2.5 7 2.5c2 0 4 1.5 5 3.5 1-2 3-3.5 5-3.5 2.5 0 5 2 5 5 0 3.5-3 7.5-10 13.5z',
+  diamond:'M12 2l9 10-9 10-9-10z',
+  club:'M12 2a4.6 4.6 0 0 0-4.2 6.5A4.6 4.6 0 1 0 10.6 16L9.5 22h5l-1.1-6a4.6 4.6 0 1 0 2.8-7.5A4.6 4.6 0 0 0 12 2z'
+};
+const FX=(()=>{
+  const cv=document.getElementById('fx'),c=cv.getContext('2d');let parts=[],raf=null,dpr=1;
+  let cfg={kinds:['suit'],colors:()=>['#FF6A1F','#00B894','#FFB400'],outline:null,flip:true,gravity:.32};
+  function size(){dpr=Math.min(2,window.devicePixelRatio||1);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr}
+  size();addEventListener('resize',size);
+  const circ=r=>{const p=new Path2D();p.arc(12,12,r,0,Math.PI*2);return p};
+  const P={
+    suit:Object.values(SUITS).map(d=>new Path2D(d)),
+    star:[new Path2D('M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z')],
+    circle:[circ(8)],dot:[circ(5)],
+    rect:[new Path2D('M3 8h18v8H3z')],
+    ticket:[new Path2D('M2 7h20v3a2 2 0 0 0 0 4v3H2v-3a2 2 0 0 0 0-4z')],
+    note:[new Path2D('M14 3h2.5v12.2A3.6 3.6 0 1 1 14 11.8zM16.5 3c1 2 3.5 2.6 4.5 4.8-1.8-1-3-1.2-4.5-1.3z'),new Path2D('M8 5l11-2v12.3A3.3 3.3 0 1 1 17 12.2V7.4L10 8.7v8.6A3.3 3.3 0 1 1 8 14.2z')],
+    splat:[new Path2D('M12 3c2 0 2.5 3 4.5 3.5S21 6 21 9s-2.5 3-2 5 1.5 4-1 5.5-4-1-6-1-4 2.5-6 1 0-4-1.5-5.5S3 11 4 8.5 7.5 7 8.5 5 10 3 12 3z')],
+  };
+  function configure(o){cfg={...cfg,...o}}
+  function burst(x,y,n,o={}){
+    if(reduceMotion())return;
+    const{angle=-Math.PI/2,spread=Math.PI*2,power=13}=o;const cols=cfg.colors();const kinds=cfg.kinds.flatMap(k=>P[k]||[]);
+    for(let i=0;i<n;i++){const a=angle+(Math.random()-.5)*spread,v=power*(.45+Math.random()*.75);
+      parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:Math.random()*6.3,vr:(Math.random()-.5)*.3,s:.55+Math.random()*.8,f:Math.random()*6,p:kinds[i%kinds.length],col:cols[i%cols.length],life:1})}
+    if(!raf)raf=requestAnimationFrame(loop);
+  }
+  function loop(){
+    c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);
+    parts=parts.filter(p=>p.life>0&&p.y<innerHeight+60);
+    const ol=cfg.outline?cfg.outline():null;
+    for(const p of parts){p.vy+=cfg.gravity;p.vx*=.985;p.vy*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.f+=.14;p.life-=.0062;
+      c.setTransform(dpr,0,0,dpr,0,0);c.translate(p.x,p.y);c.rotate(p.r);c.scale(p.s*(cfg.flip?Math.cos(p.f):1),p.s);c.translate(-12,-12);
+      c.globalAlpha=Math.max(0,Math.min(1,p.life*2.2));
+      if(ol){c.lineWidth=5;c.lineJoin='round';c.strokeStyle=ol;c.stroke(p.p)}
+      c.fillStyle=p.col;c.fill(p.p)}
+    c.globalAlpha=1;raf=parts.length?requestAnimationFrame(loop):null;
+    if(!raf){c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height)}
+  }
+  return{configure,burst,
+    fromEl(el,n=24,o={}){if(!el)return;const b=el.getBoundingClientRect();burst(b.left+b.width/2,b.top+b.height/2,n,o)},
+    celebrate(){const w=innerWidth,h=innerHeight;burst(w/2,h*.3,90,{power:15});after(350,()=>{burst(0,h,60,{angle:-Math.PI/3,spread:.8,power:22});burst(w,h,60,{angle:-Math.PI*2/3,spread:.8,power:22})});after(900,()=>burst(w/2,h*.3,60,{power:12}))}};
+})();
+
+/* ============ icons ============ */
+const ICONS={
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  right:'<path d="M9 5l7 7-7 7"/>',
+  home:'<path d="M4 11l8-7 8 7v8.5a.5.5 0 0 1-.5.5H15v-6H9v6H4.5a.5.5 0 0 1-.5-.5z"/>',
+  scroll:'<path d="M7 4h11a2 2 0 0 1 2 2v1h-4M7 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7M7 4a2 2 0 0 1 2 2v1M9 11h6M9 15h4"/>',
+  volume:'<path d="M4 9.5v5h3.5L12 19V5L7.5 9.5z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+  mute:'<path d="M4 9.5v5h3.5L12 19V5L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12H5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/>',
+  moon:'<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.3 6.3 0 0 0 10 10z"/>',
+  flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  trash:'<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/>',
+  pencil:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5.5a2.5 2.5 0 0 0 2.6 4M16 6h2.5a2.5 2.5 0 0 1-2.6 4M12 13v4M8.5 20h7M10 17h4v3h-4z"/>',
+  flame:'<path d="M12 3c.8 3.6 5.5 5.4 5.5 10.2A5.5 5.5 0 0 1 6.5 13c0-2.3 1.3-3.6 1.9-5.4.9 1.4 2.1 2.1 2.1 2.1S10 6.2 12 3z"/>',
+  bolt:'<path d="M13 3L5 13.5h6L10 21l8-11h-6z"/>',
+  cards:'<rect x="3" y="7" width="11" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/>',
+  repeat:'<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/>',
+  crown:'<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+  rocket:'<path d="M12 3c3 2 5 5.5 5 9.5L15 15H9l-2-2.5C7 8.5 9 5 12 3z"/><circle cx="12" cy="9.5" r="1.6"/><path d="M9 15l-2 4 3-1M15 15l2 4-3-1"/>',
+  camera:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7l1.5-3h4l1.5 3"/><circle cx="12" cy="13.5" r="3.5"/>',
+  weight:'<path d="M5.5 20h13L17 10H7z"/><path d="M9.5 10a2.5 2.5 0 1 1 5 0"/>',
+  route:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/>',
+  zero:'<ellipse cx="12" cy="12" rx="5.5" ry="8"/><path d="M8 19L16 5"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  star:'<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6l-5.4 2.9 1.2-6-4.5-4.2 6.1-.7z"/>',
+  play:'<path d="M7 4.5v15l12-7.5z"/>',
+  pause:'<path d="M7 4.5h3.5v15H7zM13.5 4.5H17v15h-3.5z"/>',
+  ticket:'<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',
+  swap:'<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>',
+  sparkle:'<path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7z"/>',
+  up:'<path d="M6 15l6-6 6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  dash:'<path d="M7 12h10"/>',
+  album:'<rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="11" r="3.5"/><path d="M8 18h8"/>',
+  music:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+};
+function Icon({name,size=22,stroke=2.4,cls=''}){
+  return html`<svg className=${'ic '+cls} width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth=${stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML=${{__html:ICONS[name]||''}}></svg>`;
+}
+
+/* ============ fox mascot ============ */
+function Fox({crown=false,wink=false,twitch=false,cls=''}){
+  return html`<svg viewBox="0 0 120 120" className=${['fox',wink&&'wink',twitch&&'twitch',cls].filter(Boolean).join(' ')} aria-hidden="true">
+    <g className="ear-l"><path className="f-fur" d="M12 66 L25 14 L54 42 Z"/><path className="f-cream" d="M22 56 L28 27 L46 44 Z"/></g>
+    <g className="ear-r"><path className="f-fur" d="M108 66 L95 14 L66 42 Z"/><path className="f-cream" d="M98 56 L92 27 L74 44 Z"/></g>
+    <path className="f-fur" d="M6 72 C12 47 35 37 60 37 C85 37 108 47 114 72 C101 76 93 83 86 92 L60 110 L34 92 C27 83 19 76 6 72 Z"/>
+    <path className="f-cream" d="M6 72 C21 71 33 77 44 85 C50 81 55 79 60 79 C65 79 70 81 76 85 C87 77 99 71 114 72 C106 82 97 90 85 98 L60 112 L35 98 C23 90 14 82 6 72 Z"/>
+    <path className="f-shade" d="M60 37 L52 50 L60 60 L68 50 Z" opacity=".75"/>
+    <g className="eyes"><path className="f-ink" d="M34 66 C38 56 49 55 54 64 C49 69 39 70 34 66 Z"/><circle cx="47" cy="62" r="2.1" fill="#fff"/></g>
+    <g className="eye-r"><path className="f-ink" d="M86 66 C82 56 71 55 66 64 C71 69 81 70 86 66 Z"/><circle cx="77" cy="62" r="2.1" fill="#fff"/></g>
+    <path className="f-ink" d="M52 87 Q60 83 68 87 Q64 95 60 96 Q56 95 52 87 Z"/>
+    <path className="f-line" d="M48 100 Q54 105 60 99 Q66 105 74 98" fill="none" strokeWidth="2.8" strokeLinecap="round"/>
+    ${crown&&html`<g className="crown-g"><path className="f-crown" strokeWidth="2.5" strokeLinejoin="round" d="M41 33 L45 13 L53 24 L60 7 L67 24 L75 13 L79 33 Z"/><circle className="f-crown" strokeWidth="2" cx="45" cy="12" r="3.4"/><circle className="f-crown" strokeWidth="2" cx="60" cy="6" r="3.4"/><circle className="f-crown" strokeWidth="2" cx="75" cy="12" r="3.4"/></g>`}
+  </svg>`;
+}
+
+function Chip({name,color,size=36,crown=false,crownKey,cls=''}){
+  return html`<span className=${'chip '+cls} style=${{'--c':color,'--s':size+'px'}} aria-hidden="true"><b>${(name||'?').trim().charAt(0).toUpperCase()}</b>${crown&&html`<svg key=${crownKey} className="crown" viewBox="0 0 24 24"><path className="crown-p" d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>`}</span>`;
+}
+
+function Roll({value,dur=18}){
+  const[d,setD]=useState(value);const prev=useRef(value);
+  useEffect(()=>{const from=prev.current;prev.current=value;if(from===value)return;let i=0;const iv=setInterval(()=>{i++;const e=1-Math.pow(1-i/dur,3);setD(Math.round(from+(value-from)*e));if(i>=dur){clearInterval(iv);setD(value)}},22);return()=>clearInterval(iv)},[value]);
+  return html`<span className="num">${d}</span>`;
+}
+
+function ThemeBtn({ctx,cls=''}){
+  const dark=ctx.theme==='dark';
+  return html`<button className=${'icon-btn theme-btn '+cls} onClick=${ctx.toggleTheme} aria-label=${dark?'Switch to light mode':'Switch to dark mode'} title=${dark?'Light mode':'Dark mode'}><${Icon} name=${dark?'sun':'moon'}/></button>`;
+}
+function MuteBtn({ctx,cls=''}){
+  const m=ctx.data.muted;
+  return html`<button className=${'icon-btn mute-btn '+(m?'':'on ')+cls} onClick=${ctx.actions.toggleMute} aria-label=${m?'Turn sound on':'Turn sound off'} title=${m?'Sound off':'Sound on'}><${Icon} name=${m?'mute':'volume'}/></button>`;
+}
+
+/* ============ sheet ============ */
+function Sheet({closing,onClose,label,children}){
+  const drag=useRef(null);const[dy,setDy]=useState(0);const dyRef=useRef(0);const[from,setFrom]=useState(0);
+  useEffect(()=>{const k=e=>{if(e.key==='Escape')onClose()};addEventListener('keydown',k);document.body.style.overflow='hidden';return()=>{removeEventListener('keydown',k);document.body.style.overflow=''}},[]);
+  const down=e=>{drag.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId)};
+  const move=e=>{if(drag.current==null)return;const v=Math.max(0,e.clientY-drag.current);dyRef.current=v;setDy(v)};
+  const up=()=>{if(drag.current==null)return;drag.current=null;if(dyRef.current>100){setFrom(dyRef.current);onClose()}else{dyRef.current=0;setDy(0)}};
+  const style={'--from':from+'px'};
+  if(dy&&!closing){style.transform=`translateY(${dy}px)`;style.transition=drag.current!=null?'none':'transform .4s var(--spring)'}
+  return html`<div className=${'sheet-wrap'+(closing?' closing':'')} role="dialog" aria-modal="true" aria-label=${label}>
+    <div className="backdrop" onClick=${onClose}></div>
+    <div className="sheet" style=${style}>
+      <div className="grab" onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}><span></span></div>
+      <div className="sheet-body">${children}</div>
+    </div>
+  </div>`;
+}
+function SheetTitle({ctx,title}){
+  return html`<div className="sheet-title"><h3>${title}</h3><button className="icon-btn close-btn" onClick=${()=>ctx.closeSheet()} aria-label="Close"><${Icon} name="x"/></button></div>`;
+}
+
+function ScoreFields({ctx,players,values,setValues,onDone,idp}){
+  const refs=useRef([]);const{colorOf,S}=ctx;
+  const set=(i,v)=>{const n=values.slice();n[i]=v;setValues(n)};
+  return html`<div className="fields">${players.map((p,i)=>html`<div className="field-row" key=${p}>
+    <${Chip} name=${p} color=${colorOf(p)} size=${36}/>
+    <label className="field-name" htmlFor=${idp+i}>${p}</label>
+    <button type="button" className="sign" aria-label=${'Toggle minus for '+p} onClick=${()=>{S.tap();const v=values[i]||'';set(i,v.startsWith('-')?v.slice(1):'-'+v)}}>±</button>
+    <input id=${idp+i} ref=${el=>refs.current[i]=el} className="score-in" inputMode="numeric" autoComplete="off" enterKeyHint=${i<players.length-1?'next':'done'} placeholder="0"
+      value=${values[i]} onFocus=${e=>{e.target.select();S.focus&&S.focus(i)}}
+      onChange=${e=>{set(i,e.target.value.replace(/[^0-9-]/g,'').replace(/(?!^)-/g,'').slice(0,6));S.key&&S.key(i)}}
+      onKeyDown=${e=>{if(e.key==='Enter'){e.preventDefault();if(i<players.length-1)refs.current[i+1]&&refs.current[i+1].focus();else{e.target.blur();onDone()}}}}/>
+  </div>`)}</div>`;
+}
+
+/* ============ shared sheets ============ */
+function NewGameSheet({ctx}){
+  const{data,colorOf,S,V}=ctx;
+  const pastNames=[...new Set(data.games.map(g=>g.name))].filter(n=>!PRESETS.some(p=>p.name===n));
+  const options=[...PRESETS,...pastNames.map(n=>{const g=data.games.find(x=>x.name===n);return{name:n,goal:g.goal||'open',target:g.target}})];
+  const[sel,setSel]=useState(null);const[other,setOther]=useState('');
+  const[goal,setGoal]=useState('score');const[target,setTarget]=useState('200');
+  const[players,setPlayers]=useState(data.lastPlayers&&data.lastPlayers.length?data.lastPlayers.slice():DEFAULT_PLAYERS.slice());
+  const[np,setNp]=useState('');const[err,setErr]=useState('');
+  const choose=o=>{S.pick();setErr('');if(o==='other'){setSel('other');setGoal('open');setTarget('');return}setSel(o.name);setGoal(o.goal);setTarget(o.target?String(o.target):'')};
+  const add=()=>{const n=np.trim();if(!n)return;if(players.some(p=>p.toLowerCase()===n.toLowerCase())){S.error();setErr(`${n} is already playing.`);return}ctx.assignColor(n);setPlayers([...players,n]);setNp('');setErr('');S.add()};
+  const remove=i=>{S.remove();setPlayers(players.filter((_,j)=>j!==i))};
+  const name=sel==='other'?other.trim():sel;
+  const start=()=>{
+    if(!name){S.error();setErr(sel==='other'?'Name the game to start.':'Pick a game to start.');return}
+    if(players.length<2){S.error();setErr('Add at least two players.');return}
+    const tg=parseInt(target,10);
+    if(goal!=='open'&&!(tg>0)){S.error();setErr(goal==='score'?'Set a score target, or choose open-ended.':'Set a round count, or choose open-ended.');return}
+    ctx.actions.startGame({name,goal,target:goal==='open'?null:tg,players});
+  };
+  return html`<${SheetTitle} ctx=${ctx} title=${V.copy.newTitle}/>
+    <div className="group">
+      <span className="eyebrow">What are we playing?</span>
+      <div className="pills">
+        ${options.map(o=>html`<button key=${o.name} className=${'pill'+(sel===o.name?' on':'')} onClick=${()=>choose(o)} aria-pressed=${sel===o.name}>${o.name}</button>`)}
+        <button className=${'pill'+(sel==='other'?' on':'')} onClick=${()=>choose('other')} aria-pressed=${sel==='other'}><${Icon} name="plus" size=${16}/>Other</button>
+      </div>
+      ${sel==='other'&&html`<input className="input" id="other-name" placeholder="Game name" value=${other} onChange=${e=>setOther(e.target.value.slice(0,24))} autoFocus/>`}
+    </div>
+    ${sel&&html`<div className="group rise">
+      <span className="eyebrow">How does it end?</span>
+      <div className="seg" role="radiogroup" aria-label="How the game ends">
+        ${[['score','Score target'],['rounds','Rounds'],['open','Open-ended']].map(([k,l])=>html`<button key=${k} role="radio" aria-checked=${goal===k} className=${goal===k?'on':''} onClick=${()=>{S.tap();setGoal(k);if(k==='score')setTarget(t=>goal==='score'&&t?t:'200');if(k==='rounds')setTarget(t=>goal==='rounds'&&t?t:'3')}}>${l}</button>`)}
+      </div>
+      ${goal!=='open'&&html`<div className="row2">
+        <input className="input num" id="goal-target" inputMode="numeric" value=${target} onChange=${e=>setTarget(e.target.value.replace(/\D/g,'').slice(0,5))} aria-label=${goal==='score'?'Points to win':'Number of rounds'}/>
+        <span className="hint" style=${{flex:1.4}}>${goal==='score'?'First past this ends it. Highest total wins.':'Highest total after the last round wins.'}</span>
+      </div>`}
+      ${goal==='open'&&html`<span className="hint">Play as long as you like, then tap the flag to crown the leader.</span>`}
+    </div>`}
+    <div className="group">
+      <span className="eyebrow">Players</span>
+      ${players.map((p,i)=>html`<div className="player-line" key=${p}>
+        <${Chip} name=${p} color=${colorOf(p)} size=${34}/><span className="n">${p}</span>
+        ${players.length>2&&html`<button className="x-btn" onClick=${()=>remove(i)} aria-label=${'Remove '+p}><${Icon} name="x" size=${18}/></button>`}
+      </div>`)}
+      <div className="row2">
+        <input className="input" id="new-player" placeholder="Add a player" value=${np} onChange=${e=>setNp(e.target.value.slice(0,16))} onKeyDown=${e=>{if(e.key==='Enter'){e.preventDefault();add()}}} enterKeyHint="done"/>
+        <button className="btn btn-quiet" style=${{flex:'none'}} onClick=${add}><${Icon} name="plus" size=${18}/> Add</button>
+      </div>
+    </div>
+    ${err&&html`<div className="err shake" key=${err} role="alert">${err}</div>`}
+    <button className="btn btn-main block" onClick=${start}>${name?V.copy.startBtn(name):'Start game'}</button>`;
+}
+
+function RoundSheet({ctx,idx}){
+  const g=ctx.data.active;const r=g.rounds[idx];const{S}=ctx;
+  const[vals,setVals]=useState(()=>g.players.map(p=>r.scores[p]==null?'':String(r.scores[p])));
+  const[armed,setArmed]=useState(false);
+  return html`<${SheetTitle} ctx=${ctx} title=${'Edit round '+(idx+1)}/>
+    <${ScoreFields} ctx=${ctx} players=${g.players} values=${vals} setValues=${setVals} onDone=${()=>ctx.actions.saveRound(idx,vals)} idp="edit-"/>
+    <span className="hint">Blank counts as 0. Totals update when you save.</span>
+    <button className="btn btn-main block" onClick=${()=>ctx.actions.saveRound(idx,vals)}><${Icon} name="check"/> Save round ${idx+1}</button>
+    <button className=${'btn btn-danger block'+(armed?' armed':'')} onClick=${()=>{if(armed)ctx.actions.deleteRound(idx);else{S.error();setArmed(true)}}}><${Icon} name="trash" size=${20}/>${armed?'Tap again to delete':`Delete round ${idx+1}`}</button>`;
+}
+
+function EndSheet({ctx}){
+  const g=ctx.data.active;const t=totalsOf(g);const l=leadersOf(g);const tie=l.length>1||!g.rounds.length;const{S,colorOf}=ctx;
+  const[armed,setArmed]=useState(false);
+  return html`<${SheetTitle} ctx=${ctx} title=${'End '+g.name+'?'}/>
+    ${tie?html`<p className="hint" style=${{margin:0}}>${g.rounds.length?`${joinNames(l)} are tied at ${t[l[0]]}. Play a tiebreak round, or discard this game.`:'No rounds scored yet.'}</p>`
+      :html`<div className="player-line"><${Chip} name=${l[0]} color=${colorOf(l[0])} size=${44} crown=${true}/><span className="n">${l[0]} leads with ${t[l[0]]}</span></div>`}
+    ${!tie&&html`<button className="btn btn-main block" onClick=${ctx.actions.endGame}><${Icon} name="trophy"/> End and crown ${l[0]}</button>`}
+    <button className="btn btn-quiet block" onClick=${()=>ctx.closeSheet()}>Keep playing</button>
+    <button className=${'btn btn-danger block'+(armed?' armed':'')} onClick=${()=>{if(armed)ctx.actions.discardGame();else{S.error();setArmed(true)}}}><${Icon} name="trash" size=${20}/>${armed?'Tap again to discard':'Discard this game'}</button>`;
+}
+
+function Podium({ctx,g,delay=0}){
+  const t=totalsOf(g);const{colorOf}=ctx;
+  return html`<div className="podium">${ranked(g).map((p,i)=>html`<div className=${'pod'+(i===0?' first':'')} key=${p} style=${{'--i':i,animationDelay:(delay+i*90)+'ms'}}>
+    <span className="place">${ordinal(i+1)}</span><${Chip} name=${p} color=${colorOf(p)} size=${32} crown=${i===0}/><span className="n">${p}</span><span className="t num">${t[p]}</span></div>`)}</div>`;
+}
+
+function DetailSheet({ctx,g}){
+  const{S,V,colorOf}=ctx;const[armed,setArmed]=useState(false);
+  return html`<${SheetTitle} ctx=${ctx} title=${g.name}/>
+    <div className="hint" style=${{marginTop:-10}}>${fmtDate(g.completedAt,{weekday:'short',month:'short',day:'numeric',year:'numeric'})} · ${g.rounds.length} rounds · ${goalLabel(g)}${g.sample?' · sample':''}</div>
+    ${V.detailExtra&&V.detailExtra(g,ctx)}
+    <${Podium} ctx=${ctx} g=${g}/>
+    <div className="log" style=${{'--n':g.players.length}}>
+      <div className="log-head"><span style=${{textAlign:'left'}}>Rd</span>${g.players.map(p=>html`<span key=${p} style=${{color:colorOf(p)}}>${p}</span>`)}<span></span></div>
+      ${g.rounds.map((r,i)=>{const top=roundTop(r,g.players);return html`<div className="log-row" key=${i}><span className="rn">${i+1}</span>${g.players.map(p=>{const v=r.scores[p];return html`<span key=${p} className=${'sc'+(v==null?' blank':'')+(top.includes(p)?' top':'')} style=${{'--c':colorOf(p)}}>${v==null?'–':v}</span>`})}<span></span></div>`})}
+    </div>
+    <button className="btn btn-main block" onClick=${()=>ctx.actions.rematch(g)}><${Icon} name="repeat"/> Rematch</button>
+    <button className=${'btn btn-danger block'+(armed?' armed':'')} onClick=${()=>{if(armed)ctx.actions.deleteGame(g.id);else{S.error();setArmed(true)}}}><${Icon} name="trash" size=${20}/>${armed?'Tap again to delete':'Delete this game'}</button>`;
+}
+
+/* ============ shared screens ============ */
+function History({ctx}){
+  const{data,V,S,colorOf}=ctx;
+  const[fg,setFg]=useState('all');const[fw,setFw]=useState('all');
+  const games=data.games;
+  const names=[...new Set(games.map(g=>g.name))];
+  const players=[...new Set(games.flatMap(g=>g.players))];
+  const list=games.filter(g=>(fg==='all'||g.name===fg)&&(fw==='all'||g.winner===fw));
+  const pick=(fn,v)=>{S.pick();fn(v)};
+  return html`<main className="app history">
+    <header className="hist-head">
+      <div className="grow"><div className="eyebrow">${V.copy.historyEyebrow}</div><h1 className="h-title">${V.copy.historyTitle}</h1></div>
+      <${ThemeBtn} ctx=${ctx}/><${MuteBtn} ctx=${ctx}/>
+    </header>
+    ${games.length>0&&html`<div className="group">
+      <span className="eyebrow">Game</span>
+      <div className="pills scroll">
+        <button className=${'pill'+(fg==='all'?' on':'')} onClick=${()=>pick(setFg,'all')}>All games</button>
+        ${names.map(n=>html`<button key=${n} className=${'pill'+(fg===n?' on':'')} onClick=${()=>pick(setFg,n)}>${n}</button>`)}
+      </div>
+      <span className="eyebrow">Winner</span>
+      <div className="pills scroll">
+        <button className=${'pill'+(fw==='all'?' on':'')} onClick=${()=>pick(setFw,'all')}>Anyone</button>
+        ${players.map(p=>html`<button key=${p} className=${'pill'+(fw===p?' on':'')} onClick=${()=>pick(setFw,p)}><${Chip} name=${p} color=${colorOf(p)} size=${20}/>${p}</button>`)}
+      </div>
+    </div>`}
+    <div className="hint">${list.length} ${list.length===1?'game':'games'}${fw!=='all'?` won by ${fw}`:''}${fg!=='all'?` of ${fg}`:''}</div>
+    ${list.length===0?html`<div className="empty"><${Fox}/><h2 className="sec">${games.length?'Nothing matches':'No games yet'}</h2><p className="hint">${games.length?'Try a different game or winner.':'Finished games land here.'}</p></div>`
+      :list.map((g,i)=>html`<div className="rise" style=${{'--i':Math.min(i,8)}} key=${g.id}><${V.GameRow} ctx=${ctx} g=${g}/></div>`)}
+  </main>`;
+}
+
+function Nav({ctx}){
+  const{screen,go,data,openSheet,S,V}=ctx;
+  return html`<nav className="nav" aria-label="Main"><div className="nav-inner">
+    <button className=${'nav-btn'+(screen==='home'?' on':'')} onClick=${()=>{S.tap();go('home')}} aria-current=${screen==='home'?'page':undefined}><${Icon} name=${V.navIcons?V.navIcons[0]:'home'}/><span>${V.copy.navHome}</span></button>
+    <button className=${'fab'+(data.active?' live':'')} onClick=${()=>{if(data.active){S.pick();go('game')}else openSheet({type:'new'})}} aria-label=${data.active?'Back to the game':'New game'}><${V.Fab} ctx=${ctx}/></button>
+    <button className=${'nav-btn'+(screen==='history'?' on':'')} onClick=${()=>{S.tap();go('history')}} aria-current=${screen==='history'?'page':undefined}><${Icon} name=${V.navIcons?V.navIcons[1]:'scroll'}/><span>${V.copy.navHistory}</span></button>
+  </div></nav>`;
+}
+
+function DefaultBanner({b}){return html`<div className="ribbon-wrap" aria-live="polite"><div className=${'ribbon '+b.tone}>${b.text}</div></div>`}
+
+/* ============ app ============ */
+function initialTheme(){
+  const t=store.get(KEY+'.theme');if(t==='light'||t==='dark')return t;
+  const h=document.documentElement.getAttribute('data-theme');if(h==='light'||h==='dark')return h;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+}
+
+function App({V}){
+  const[data,setData]=useState(()=>load()||fresh());
+  const[theme,setTheme]=useState(initialTheme);
+  const[screen,setScreen]=useState(()=>data.active?'game':'home');
+  const[sheet,setSheet]=useState(null);const[closing,setClosing]=useState(false);
+  const[toast,setToast]=useState(null);const[banner,setBanner]=useState(null);
+  const[flash,setFlash]=useState(null);const[moment,setMoment]=useState(null);
+  const[victory,setVictory]=useState(null);const[finished,setFinished]=useState(null);
+  const tRef=useRef(),bRef=useRef();
+  const S=V.sfx;
+  useEffect(()=>{save(data)},[data]);
+  useEffect(()=>{SND.setMuted(!!data.muted)},[data.muted]);
+  useLayoutEffect(()=>{document.documentElement.setAttribute('data-theme',theme);store.set(KEY+'.theme',theme)},[theme]);
+  useEffect(()=>{const u=()=>SND.unlock();addEventListener('pointerdown',u,{once:true});return()=>removeEventListener('pointerdown',u)},[]);
+
+  const colorIdx=n=>((data.colors&&data.colors[n])??hash(n))%8;
+  const colorOf=n=>`var(--p${colorIdx(n)})`;
+  const stats=useMemo(()=>computeStats(data.games),[data.games]);
+  const awards=useMemo(()=>computeAwards(data.games),[data.games]);
+
+  const showToast=(msg,icon)=>{clearTimeout(tRef.current);setToast({msg,icon,k:Date.now()});tRef.current=after(2700,()=>setToast(null))};
+  const showBanner=(text,tone='')=>{clearTimeout(bRef.current);setBanner({text,tone,k:Date.now()});bRef.current=after(V.bannerMs||1450,()=>setBanner(null))};
+  const openSheet=s=>{S.open();setClosing(false);setSheet(s)};
+  const closeSheet=silent=>{if(!sheet)return;if(!silent)S.close();setClosing(true);after(290,()=>{setSheet(null);setClosing(false)})};
+  const go=s=>{setScreen(s);window.scrollTo({top:0})};
+  const toggleMute=()=>{const m=!data.muted;SND.setMuted(m);if(!m)S.pick();setData(d=>({...d,muted:m}))};
+  const toggleTheme=e=>{
+    const next=theme==='dark'?'light':'dark';const root=document.documentElement;
+    const r=e&&e.currentTarget&&e.currentTarget.getBoundingClientRect?e.currentTarget.getBoundingClientRect():null;
+    root.style.setProperty('--vt-x',(r?r.left+r.width/2:innerWidth-40)+'px');root.style.setProperty('--vt-y',(r?r.top+r.height/2:40)+'px');
+    S.theme(next);
+    const apply=()=>{root.setAttribute('data-theme',next);ReactDOM.flushSync(()=>setTheme(next))};
+    if(document.startViewTransition&&!reduceMotion())document.startViewTransition(apply);else apply();
+  };
+  const assignColor=n=>setData(d=>{if(d.colors[n]!=null)return d;const used=new Set(Object.values(d.colors));let i=0;while(used.has(i)&&i<8)i++;if(i>=8)i=hash(n)%8;return{...d,colors:{...d.colors,[n]:i}}});
+
+  function startGame(cfg){
+    const g={id:'g'+Date.now(),name:cfg.name,goal:cfg.goal,target:cfg.target,players:cfg.players.slice(),rounds:[],startedAt:new Date().toISOString(),completedAt:null,winner:null};
+    const hadSamples=data.hasSamples;
+    setData(d=>{const colors={...d.colors};const used=new Set(Object.values(colors));cfg.players.forEach(p=>{if(colors[p]==null){let i=0;while(used.has(i)&&i<8)i++;colors[p]=i<8?i:hash(p)%8;used.add(colors[p])}});
+      return{...d,active:g,colors,lastPlayers:cfg.players.slice(),games:d.hasSamples?d.games.filter(x=>!x.sample):d.games,hasSamples:false}});
+    closeSheet(true);setVictory(null);setFinished(null);setFlash(null);setMoment(null);go('game');
+    S.start(g);after(250,()=>showBanner(V.copy.start(cfg.name),'amber'));
+    if(hadSamples)after(1600,()=>showToast(V.copy.samplesCleared));
+  }
+  function finish(g,winner){
+    g.winner=winner;g.completedAt=new Date().toISOString();
+    const games=[g,...data.games.filter(x=>x.id!==g.id)];
+    const rc=recapOf(g,computeAwards(games));
+    setData(d=>({...d,active:null,games}));setFinished(g);
+    after(500,()=>{setVictory({g,recap:rc,k:Date.now()});S.win(g);vibrate([30,60,30])});
+  }
+  function detectMoment(g,before,tb){
+    const lead=leaderOf(g),ta=totalsOf(g),k=g.rounds.length;
+    if(lead&&lead!==before&&k>1)return{type:'lead',p:lead,names:lead};
+    if(k>=3){const tops=g.rounds.slice(-3).map(r=>roundTop(r,g.players));const p=tops[0].length===1?tops[0][0]:null;
+      const prior=k>=4?roundTop(g.rounds[k-4],g.players):[];
+      if(p&&tops.every(t=>t.length===1&&t[0]===p)&&!(prior.length===1&&prior[0]===p))return{type:'hot',p,names:p}}
+    if(g.goal==='score'){const m=g.players.filter(p=>ta[p]>=g.target*.85&&tb[p]<g.target*.85&&ta[p]<g.target);if(m.length)return{type:'match',ps:m,names:joinNames(m)}}
+    const last=g.rounds[k-1];const busts=g.players.filter(p=>(last.scores[p]??0)===0);
+    if(busts.length&&busts.length<g.players.length)return{type:'bust',ps:busts,names:joinNames(busts)};
+    return null;
+  }
+  function submitRound(vals,btn){
+    const g=clone(data.active);const before=leaderOf(g);const tb=totalsOf(g);
+    const sc={};g.players.forEach((p,i)=>sc[p]=parseScore(vals[i]));
+    g.rounds.push({scores:sc,at:new Date().toISOString()});
+    S.submit(g,colorIdx);vibrate(12);FX.fromEl(btn,V.submitBurst||20,{power:9,spread:1.6});
+    setFlash({k:Date.now(),gid:g.id,scores:sc});
+    const res=evaluate(g);
+    if(res.done){finish(g,res.winner);return}
+    setData(d=>({...d,active:g}));
+    const n=g.rounds.length+1;
+    if(res.tie){after(250,()=>{S.tie(g);showBanner(V.copy.tie,'coral')});showToast(V.copy.tieToast);return}
+    if(g.goal==='rounds'&&n===g.target)after(250,()=>showBanner(V.copy.final,'amber'));
+    else after(250,()=>showBanner(V.copy.round(n),''));
+    const m=detectMoment(g,before,tb);
+    if(m)after(800,()=>{S[m.type]&&S[m.type](g,m,colorIdx);setMoment({...m,k:Date.now()});showToast(V.copy[m.type](m.names),m.type)});
+  }
+  function saveRound(idx,vals){
+    const g=clone(data.active);g.players.forEach((p,i)=>g.rounds[idx].scores[p]=parseScore(vals[i]));
+    closeSheet(true);S.submit(g,colorIdx);setFlash({k:Date.now(),gid:g.id,scores:g.rounds[idx].scores,edit:true});
+    const res=evaluate(g);if(res.done){finish(g,res.winner);return}
+    setData(d=>({...d,active:g}));showToast(`Round ${idx+1} saved`);
+  }
+  function deleteRound(idx){const g=clone(data.active);g.rounds.splice(idx,1);closeSheet(true);S.del();setData(d=>({...d,active:g}));showToast(`Round ${idx+1} deleted`)}
+  function endGame(){const g=clone(data.active);const l=leadersOf(g);closeSheet(true);if(l.length===1&&g.rounds.length)finish(g,l[0])}
+  function discardGame(){closeSheet(true);S.del();setData(d=>({...d,active:null}));go('home');showToast('Game discarded')}
+  function deleteGame(id){closeSheet(true);S.del();setData(d=>({...d,games:d.games.filter(g=>g.id!==id)}));showToast('Game deleted')}
+  function clearSamples(){S.del();setData(d=>({...d,games:d.games.filter(g=>!g.sample),hasSamples:false}));showToast('Samples cleared')}
+  const rematch=g=>startGame({name:g.name,goal:g.goal,target:g.target,players:g.players});
+  const closeVictory=()=>{S.tap();setVictory(null);setFinished(null);go('home')};
+
+  const shown=data.active||finished;
+  const inGame=screen==='game'&&!!shown;
+  const ctx={data,setData,theme,toggleTheme,colorOf,colorIdx,stats,awards,screen,go,openSheet,closeSheet,assignColor,flash,moment,S,V,
+    actions:{startGame,submitRound,saveRound,deleteRound,endGame,discardGame,deleteGame,clearSamples,rematch,toggleMute,closeVictory,showToast}};
+
+  const sheetEl=()=>{if(!sheet)return null;const t=sheet.type;
+    if(t==='new')return html`<${NewGameSheet} ctx=${ctx}/>`;
+    if(t==='round'&&data.active&&data.active.rounds[sheet.idx])return html`<${RoundSheet} ctx=${ctx} idx=${sheet.idx}/>`;
+    if(t==='end'&&data.active)return html`<${EndSheet} ctx=${ctx}/>`;
+    if(t==='detail'){const g=data.games.find(x=>x.id===sheet.id);return g?html`<${DetailSheet} ctx=${ctx} g=${g}/>`:null}
+    const X=V.sheets&&V.sheets[t];return X?html`<${X} ctx=${ctx} sheet=${sheet}/>`:null};
+  const Banner=V.Banner||DefaultBanner;
+
+  return html`<${React.Fragment}>
+    ${inGame?html`<${V.Game} ctx=${ctx} g=${shown}/>`:screen==='history'?html`<${History} ctx=${ctx}/>`:html`<${V.Home} ctx=${ctx}/>`}
+    ${!inGame&&html`<${Nav} ctx=${ctx}/>`}
+    ${sheet&&html`<${Sheet} closing=${closing} onClose=${()=>closeSheet()} label=${sheet.type}>${sheetEl()}<//>`}
+    ${banner&&html`<${Banner} key=${banner.k} b=${banner}/>`}
+    ${toast&&html`<div className=${'toast'+(inGame?' low':'')} key=${toast.k} role="status"><${Icon} name=${V.toastIcon(toast.icon)} size=${18}/><span>${toast.msg}</span></div>`}
+    ${victory&&html`<${V.Victory} key=${victory.k} ctx=${ctx} v=${victory}/>`}
+  <//>`;
+}
+
+function mount(V){FX.configure(V.fx||{});ReactDOM.createRoot(document.getElementById('app')).render(html`<${App} V=${V}/>`)}
+
+return{html,React,useState,useEffect,useRef,useMemo,useLayoutEffect,
+  DEFAULT_PLAYERS,PRESETS,AWARDS,awardById,SUITS,
+  totalsOf,totalsAt,leaderOf,leadersOf,ranked,goalLabel,evaluate,leadTimeline,leadChanges,roundTop,songOf,
+  fmtDate,ordinal,joinNames,hash,midi,after,cssVar,reduceMotion,vibrate,
+  SND,FX,ICONS,Icon,Fox,Chip,Roll,ThemeBtn,MuteBtn,Podium,ScoreFields,SheetTitle,mount};
+})();
+
+</script>
+<script>
+(function(){
+const T=TH,{html,useState,useEffect,useRef,useLayoutEffect,Icon,Fox,Chip,Roll,ThemeBtn,MuteBtn,Podium,ScoreFields,SheetTitle,SND,FX,ICONS,AWARDS,awardById}=T;
+const{totalsOf,leaderOf,ranked,goalLabel,roundTop,fmtDate,hash,after,cssVar,vibrate}=T;
+
+/* ---------- sound: toy-box foley ---------- */
+const C=[523.25,587.33,659.25,783.99,880,1046.5,1174.66,1318.5];
+const mar=(f,at=0,vol=.16)=>{SND.tone(f,.34,{vol,at});SND.tone(f*4,.07,{vol:vol*.32,at});SND.tone(f*10,.02,{vol:vol*.12,at})};
+const slap=(at=0,v=1)=>{SND.noise(.07,{type:'lowpass',freq:1800,vol:.45*v,at});SND.tone(150,.13,{to:55,vol:.42*v,at})};
+const peel=(at=0)=>SND.noise(.22,{type:'bandpass',freq:700,to:5200,q:2.5,vol:.24,at,attack:.04});
+const whistle=(f1,f2,d,at=0)=>SND.tone(f1,d,{to:f2,vol:.13,at,vib:6,vibDepth:.015,attack:.03});
+const wood=(f=1600,at=0)=>{SND.tone(f,.05,{type:'triangle',vol:.2,at});SND.noise(.02,{type:'highpass',freq:3000,vol:.08,at})};
+const sfx={
+  tap:()=>wood(1800),
+  pick:()=>{mar(784);mar(1175,.06)},
+  focus:i=>mar(C[i%8],0,.05),
+  open:()=>peel(),
+  close:()=>{SND.noise(.14,{type:'bandpass',freq:4000,to:700,q:2,vol:.16});slap(.12,.5)},
+  add:()=>{mar(659);mar(988,.07)},
+  remove:()=>{mar(659);mar(440,.07)},
+  submit:()=>{slap(0);mar(C[0],.06);mar(C[2],.11);mar(C[4],.16)},
+  start:()=>{[0,2,4,5].forEach((n,i)=>mar(C[n],i*.08));slap(.36)},
+  lead:()=>{peel();slap(.3);mar(C[5],.34);mar(C[7],.42)},
+  hot:()=>whistle(500,1900,.45),
+  match:()=>{wood(1500);wood(1100,.18);wood(1500,.36)},
+  bust:()=>{whistle(1500,260,.55);SND.tone(180,.32,{vib:14,vibDepth:.2,vol:.14,at:.52})},
+  tie:()=>{wood(1400);wood(1000,.14);wood(1400,.28);wood(1000,.42)},
+  error:()=>SND.tone(220,.22,{vib:18,vibDepth:.15,vol:.14}),
+  del:()=>{for(let i=0;i<5;i++)SND.noise(.05,{type:'bandpass',freq:1500+Math.random()*2500,q:1.5,vol:.18,at:i*.045})},
+  win:()=>{SND.tone(440,.9,{type:'sawtooth',vol:.06,vib:7,vibDepth:.02,lp:600,lpTo:3500,attack:.05});[0,2,4,7].forEach((n,i)=>mar(C[n],.15+i*.1,.18))},
+  lose:()=>whistle(700,170,1.1),
+  rip:()=>{SND.noise(.4,{type:'bandpass',freq:1800,to:6500,q:1.2,vol:.4});slap(.32,.6)},
+  sticker:i=>{peel(0);slap(.15,.7);mar(C[(i*2)%8],.2,.1)},
+  theme:next=>{SND.noise(.025,{type:'highpass',freq:2500,vol:.25});SND.tone(next==='dark'?600:1400,.04,{type:'triangle',vol:.15,at:.012})},
+};
+
+/* ---------- pieces ---------- */
+const SHAPES=(()=>{let d='';const n=14;for(let i=0;i<n*2;i++){const r=i%2?39:46,a=Math.PI*i/n-Math.PI/2;d+=(i?'L':'M')+(50+r*Math.cos(a)).toFixed(1)+' '+(50+r*Math.sin(a)).toFixed(1)}
+  return['circle',d+'Z','M50 6 L88 28 V72 L50 94 L12 72 V28 Z','M24 10 H76 A14 14 0 0 1 90 24 V76 A14 14 0 0 1 76 90 H24 A14 14 0 0 1 10 76 V24 A14 14 0 0 1 24 10 Z']})();
+function AwardSticker({a,size=72,locked=false,count=0,tilt=0}){
+  const shape=SHAPES[AWARDS.indexOf(a)%4];
+  return html`<span className=${'award'+(locked?' locked':'')} style=${{'--tone':`var(--t-${a.tone})`,width:size,height:size,transform:`rotate(${tilt}deg)`}} role="img" aria-label=${a.name+(locked?' (locked)':'')}>
+    <svg viewBox="0 0 100 100" width=${size} height=${size}>
+      ${shape==='circle'?html`<circle cx="50" cy="50" r="43" className="aw-bg"/>`:html`<path d=${shape} className="aw-bg"/>`}
+      <g transform="translate(29 29) scale(1.75)" className="aw-ic" dangerouslySetInnerHTML=${{__html:ICONS[a.icon]}}></g>
+    </svg>
+    ${count>1&&html`<span className="aw-count">×${count}</span>`}
+  </span>`;
+}
+function Tally({n,color}){
+  const groups=Math.ceil(n/5);const strokes=[];let k=0;
+  for(let gi=0;gi<groups;gi++){const inG=Math.min(5,n-gi*5),x0=gi*36;
+    for(let s=0;s<Math.min(4,inG);s++){const x=x0+4+s*7,j=(hash(gi+'.'+s)%5)-2;strokes.push({d:`M${x} ${4+j*.5} Q${x+j*.4} 17 ${x+j*.7} 30`,k:k++})}
+    if(inG===5)strokes.push({d:`M${x0} 25 L${x0+30} 8`,k:k++,diag:true})}
+  if(!n)return html`<span className="hint" style=${{fontSize:12}}>No wins yet</span>`;
+  const w=groups*36;
+  return html`<svg className="tally" viewBox=${`-2 0 ${w+2} 34`} style=${{'--c':color,width:w*28/34}} role="img" aria-label=${n+' wins'}>${strokes.map(s=>html`<path key=${s.k} d=${s.d} pathLength="1" style=${{'--k':s.k}} className=${s.diag?'diag':''}/>`)}</svg>`;
+}
+const WM_COLORS=['var(--t-fox)','var(--t-amber)','var(--t-jade)','var(--t-lav)','var(--t-pink)'];
+function Wordmark(){
+  const letters=[...'TALLY HO!'];
+  return html`<div className="wm" role="img" aria-label="Tally Ho!">${letters.map((ch,i)=>ch===' '?html`<span key=${i} className="wl sp"></span>`:html`<span key=${i} className="wl" style=${{'--i':i,'--c':WM_COLORS[i%5],'--r':((hash('w'+i)%9)-4)+'deg'}}>${ch}</span>`)}</div>`;
+}
+const FoxSticker=({crown,wink,twitch})=>html`<span className="fox-stk"><${Fox} crown=${crown} wink=${wink} twitch=${twitch}/></span>`;
+const stickerCount=(awards,p)=>Object.keys(awards.counts[p]||{}).length;
+
+/* ---------- home ---------- */
+function Home({ctx}){
+  const{data,stats:s,awards,colorOf,openSheet,S,go,actions}=ctx;const done=data.games;const top=s.standings[0];
+  const tied=top&&s.standings[1]&&s.standings[1].w===top.w;
+  const recent=[];for(const g of done){(awards.byGame[g.id]||[]).forEach(e=>recent.push({...e,g}));if(recent.length>=10)break}
+  const labels=[
+    {c:'var(--t-jade)',v:s.total,l:'Games played',ic:'cards'},
+    {c:'var(--t-pink)',v:s.best.n,l:`Longest streak · ${s.best.p||'–'}`,ic:'flame'},
+    {c:'var(--t-sky)',v:s.big.v>-Infinity?s.big.v:'–',l:s.big.p?`Biggest round · ${s.big.p}`:'Biggest round',ic:'bolt'},
+    {c:'var(--t-amber)',v:s.fav?s.fav[0]:'–',l:s.fav?`Most played · ${s.fav[1]} games`:'Most played',ic:'trophy'},
+  ];
+  return html`<main className="app">
+    <header className="a-top"><${FoxSticker}/><${Wordmark}/><div className="a-tools"><${ThemeBtn} ctx=${ctx}/><${MuteBtn} ctx=${ctx}/></div></header>
+    ${data.hasSamples&&html`<div className="postit"><p>These are sample games so you can see how it works. They clear when you start your first real game.</p><button className="btn small" onClick=${actions.clearSamples}>Clear</button></div>`}
+    ${data.active&&html`<button className="page resume rise" onClick=${()=>{S.pick();go('game')}}>
+      <span className="tape">In progress</span>
+      <div className="grow"><div className="gt">${data.active.name}</div><div className="hint">Round ${data.active.rounds.length+1} · ${goalLabel(data.active)}</div></div>
+      <span className="go-stk">Resume <${Icon} name="right" size=${18}/></span>
+    </button>`}
+    ${done.length===0?html`<div className="page empty"><${FoxSticker} crown=${true}/><h2 className="sec">Your sticker book is empty</h2><p className="hint">Finish a game to put the first marks on the tally.</p><button className="btn btn-main" onClick=${()=>openSheet({type:'new'})}><${Icon} name="plus"/> New game</button></div>`:html`
+      <section className="page champ rise" style=${{'--i':1}}>
+        <span className="tape">${tied?'Dead heat':'Champ of the house'}</span>
+        <div className="champ-row">
+          <${Chip} name=${tied?'=':top.p} color=${tied?'var(--faint)':colorOf(top.p)} size=${72} crown=${!tied} crownKey=${top.p}/>
+          <div className="grow">
+            <div className="stk-text" style=${{'--c':tied?'var(--fg)':colorOf(top.p)}}>${tied?s.standings.filter(x=>x.w===top.w).map(x=>x.p).join(' & '):top.p}</div>
+            <p className="hint">${top.w} wins out of ${s.total} games</p>
+            ${s.current.n>=2&&html`<span className="badge-stk"><${Icon} name="flame" size=${15}/>${s.current.p} has won ${s.current.n} in a row</span>`}
+          </div>
+        </div>
+      </section>
+      <section className="page rise" style=${{'--i':2}}>
+        <div className="sec-head"><h2 className="sec">The tally</h2><span className="hint" style=${{fontSize:12}}>Tap a name for their album</span></div>
+        ${s.standings.map(x=>html`<button className="tally-row" key=${x.p} style=${{'--c':colorOf(x.p)}} onClick=${()=>openSheet({type:'album',p:x.p})}>
+          <${Chip} name=${x.p} color=${colorOf(x.p)} size=${40}/>
+          <div className="who"><b>${x.p}</b><${Tally} n=${x.w} color=${colorOf(x.p)}/><small><${Icon} name="album" size=${13}/>${stickerCount(awards,x.p)} of ${AWARDS.length} stickers</small></div>
+          <span className="wins-n num">${x.w}</span>
+        </button>`)}
+      </section>
+      ${recent.length>0&&html`<section className="page rise" style=${{'--i':3}}>
+        <div className="sec-head"><h2 className="sec">Fresh stickers</h2></div>
+        <div className="hscroll stickers">${recent.map((e,i)=>{const a=awardById[e.id];return html`<button className="fresh-stk" key=${e.g.id+e.p+e.id} onClick=${()=>openSheet({type:'album',p:e.p})}>
+          <${AwardSticker} a=${a} size=${66} tilt=${i%2?5:-5}/><b>${a.name}</b><span>${e.p} · ${e.g.name}</span></button>`})}</div>
+      </section>`}
+      <section className="labels">${labels.map((l,i)=>html`<div className="label" key=${i} style=${{'--c':l.c,'--r':(i%2?1.5:-1.5)+'deg','--i':i}}><${Icon} name=${l.ic} size=${20}/><span className="v">${l.v}</span><span className="l">${l.l}</span></div>`)}</section>
+      <section className="group rise" style=${{'--i':5}}>
+        <div className="sec-head"><h2 className="sec">Recent games</h2><button className="link" onClick=${()=>{S.tap();go('history')}}>See all <${Icon} name="right" size=${16}/></button></div>
+        ${done.slice(0,3).map(g=>html`<${GameRow} key=${g.id} ctx=${ctx} g=${g}/>`)}
+      </section>`}
+  </main>`;
+}
+function GameRow({ctx,g}){
+  const t=totalsOf(g);const{colorOf,openSheet}=ctx;
+  return html`<button className="page game-row" onClick=${()=>openSheet({type:'detail',id:g.id})}>
+    <${Chip} name=${g.winner} color=${colorOf(g.winner)} size=${44} crown=${true}/>
+    <div className="grow"><div className="gname">${g.name}</div><p className="hint">${g.winner} won · ${fmtDate(g.completedAt)} · ${g.rounds.length} rounds</p>
+      <div className="mini">${ranked(g).map(p=>html`<span key=${p} className=${p===g.winner?'w':''} style=${{'--c':colorOf(p)}}>${p} ${t[p]}</span>`)}</div></div>
+    <${Icon} name="right" size=${18}/>
+  </button>`;
+}
+
+/* ---------- game ---------- */
+function Progress({ctx,g}){
+  const t=totalsOf(g);const{colorOf}=ctx;
+  if(g.goal==='score')return html`<div className="page ruler">
+    <span className="tape">${goalLabel(g)}</span>
+    ${g.players.map(p=>{const pct=Math.max(0,Math.min(1,t[p]/g.target));return html`<div className="lane" key=${p} style=${{'--c':colorOf(p)}}>
+      <div className="base"></div><div className="fillt" style=${{width:pct*100+'%'}}></div>
+      <span className="flagend"><${Icon} name="flag" size=${20}/></span>
+      <div className="runner" style=${{left:pct*100+'%'}}><${Chip} name=${p} color=${colorOf(p)} size=${26}/></div></div>`})}
+    <div className="ruler-foot"><span>0</span><span>${g.target}</span></div>
+  </div>`;
+  if(g.goal==='rounds'){const n=g.rounds.length;return html`<div className="page" style=${{paddingTop:22}}>
+    <span className="tape">${n} of ${g.target} rounds</span>
+    <div className="slots">${Array.from({length:g.target},(_,i)=>{const r=g.rounds[i];const top=r?roundTop(r,g.players):[];
+      return html`<span key=${i} className=${'slot-r'+(r?' done':i===n?' now':'')} style=${{'--c':top.length===1?colorOf(top[0]):'var(--t-amber)'}} title=${r?(top.length===1?top[0]+' won round '+(i+1):'Round '+(i+1)):''}>${r&&top.length===1?top[0][0]:i+1}</span>`})}</div>
+  </div>`}
+  return null;
+}
+function Game({ctx,g}){
+  const{colorOf,flash,moment,openSheet,S,actions}=ctx;
+  const t=totalsOf(g);const lead=leaderOf(g);const finished=!!g.winner;
+  const[vals,setVals]=useState(()=>g.players.map(()=>''));
+  useEffect(()=>setVals(g.players.map(()=>'')),[g.id]);
+  const btnRef=useRef(null);const cards=useRef({});const[star,setStar]=useState(null);const turns=useRef(0);const prevLead=useRef(lead);
+  if(prevLead.current!==lead){if(prevLead.current&&lead)turns.current++;prevLead.current=lead}
+  useLayoutEffect(()=>{const m=()=>{const el=lead&&cards.current[lead];setStar(el?{x:el.offsetLeft+el.offsetWidth-34,y:el.offsetTop-20}:null)};m();addEventListener('resize',m);return()=>removeEventListener('resize',m)},[lead,g.players.length]);
+  const n=g.rounds.length+1;const fresh=flash&&flash.gid===g.id;
+  const submit=()=>{actions.submitRound(vals,btnRef.current);setVals(g.players.map(()=>''))};
+  return html`<main className="app in-game">
+    <header className="g-top">
+      <button className="icon-btn" onClick=${()=>{S.tap();ctx.go('home')}} aria-label="Back to home"><${Icon} name="back"/></button>
+      <div className="g-title"><div className="gt">${g.name}</div><p className="hint">${finished?`${g.winner} won · ${g.rounds.length} rounds`:`Round ${n} · ${goalLabel(g)}`}</p></div>
+      <${ThemeBtn} ctx=${ctx}/><${MuteBtn} ctx=${ctx}/>
+      ${!finished&&html`<button className="icon-btn end" onClick=${()=>openSheet({type:'end'})} aria-label="End game"><${Icon} name="flag"/></button>`}
+    </header>
+    <${Progress} ctx=${ctx} g=${g}/>
+    <div className="board">
+      ${g.players.map(p=>{
+        const d=fresh?flash.scores[p]:undefined;const match=!finished&&g.goal==='score'&&t[p]>=g.target*.85&&t[p]<g.target;
+        const last=g.rounds[g.rounds.length-1];const lv=last?last.scores[p]:null;
+        return html`<div key=${p+(fresh?flash.k:'')} ref=${el=>cards.current[p]=el} className=${['page','pcard',lead===p&&'lead',match&&'match',d!=null&&'bump'].filter(Boolean).join(' ')} style=${{'--c':colorOf(p)}}>
+          <${Chip} name=${p} color=${colorOf(p)} size=${40}/>
+          ${d!=null&&d!==0&&html`<span className="delta-stk">${d>0?'+':''}${d}</span>`}
+          <span className="pname">${p}</span>
+          <span className="stk-text ptotal"><${Roll} value=${t[p]}/></span>
+          <span className="psub">${g.goal==='score'&&!finished?(t[p]>=g.target?'Past the flag':`${g.target-t[p]} to go`):(lv!=null?`${lv>0?'+':''}${lv} last round`:'No rounds yet')}</span>
+        </div>`})}
+      <svg className="gold-star" viewBox="0 0 24 24" aria-hidden="true" style=${{opacity:star?1:0,transform:star?`translate(${star.x}px,${star.y}px) rotate(${turns.current*360-12}deg)`:'translate(50%,0) scale(0)'}}><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>
+    </div>
+    ${!finished&&html`<section className="page entry">
+      <span className="tape">Score round ${n}</span>
+      <${ScoreFields} ctx=${ctx} players=${g.players} values=${vals} setValues=${setVals} onDone=${submit} idp="entry-"/>
+      <div className="entry-foot"><span className="hint">Blank counts as 0</span></div>
+      <button ref=${btnRef} className="btn btn-main block" onClick=${submit}><${Icon} name="check"/> Score round ${n}</button>
+    </section>`}
+    ${g.rounds.length>0&&html`<section className="page log" style=${{'--n':g.players.length,padding:8}}>
+      <div className="log-head"><span style=${{textAlign:'left'}}>Rd</span>${g.players.map(p=>html`<span key=${p} style=${{color:colorOf(p)}}>${p}</span>`)}<span></span></div>
+      ${g.rounds.map((r,i)=>({r,i})).reverse().map(({r,i},k)=>{const top=roundTop(r,g.players);
+        return html`<button key=${i+'-'+(fresh?flash.k:'')} className=${'log-row'+(k===0&&fresh&&!flash.edit?' fresh':'')} onClick=${()=>{if(!finished)openSheet({type:'round',idx:i})}} disabled=${finished} aria-label=${finished?`Round ${i+1}`:`Edit round ${i+1}`}>
+          <span className="rn">${i+1}</span>
+          ${g.players.map((p,j)=>{const v=r.scores[p];return html`<span key=${p} className=${'sc'+(v==null?' blank':'')+(top.includes(p)?' top':'')} style=${{'--c':colorOf(p),'--j':j}}>${v==null?'–':v}</span>`})}
+          <span className="ed">${!finished&&html`<${Icon} name="pencil" size=${15}/>`}</span>
+        </button>`})}
+    </section>`}
+  </main>`;
+}
+
+/* ---------- victory: tear open a sticker pack ---------- */
+function Victory({ctx,v}){
+  const{g,recap}=v;const{colorOf,S,actions}=ctx;
+  const[open,setOpen]=useState(false);const[shown,setShown]=useState(0);
+  const items=[{kind:'win',p:g.winner},...recap.earned.slice().sort((a,b)=>b.isNew-a.isNew).slice(0,5).map(e=>({kind:'award',...e}))];
+  const timers=useRef([]);useEffect(()=>()=>timers.current.forEach(clearTimeout),[]);
+  const tear=()=>{if(open)return;setOpen(true);S.rip();vibrate(20);timers.current.push(after(200,()=>FX.celebrate()));
+    items.forEach((_,i)=>timers.current.push(after(500+i*280,()=>{setShown(i+1);S.sticker(i)})));
+    timers.current.push(after(900+items.length*280+900,()=>S.lose()))};
+  return html`<div className="victory a-vic" role="dialog" aria-modal="true" aria-label=${g.winner+' wins'}>
+    <div className="v-inner">
+      <div className="eyebrow">${g.name} · ${g.rounds.length} rounds</div>
+      <div className="stk-text huge" style=${{'--c':colorOf(g.winner)}}>${g.winner} wins!</div>
+      ${!open?html`<button className="pack" onClick=${tear} aria-label="Tear open the sticker pack">
+          <span className="crimp top"></span>
+          <span className="pack-body"><${FoxSticker} crown=${true} wink=${true}/><span className="pack-title">Game night pack</span><span className="pack-sub">${items.length} sticker${items.length>1?'s':''} inside</span></span>
+          <span className="crimp bottom"></span>
+        </button>
+        <p className="hint">Tap the pack to tear it open</p>`
+      :html`<span className="strip crimp top" aria-hidden="true"></span>
+        <div className="haul">${items.slice(0,shown).map((it,i)=>{const a=it.kind==='award'?awardById[it.id]:null;return html`<div className="haul-item" key=${i} style=${{'--r':((i%2?1:-1)*(3+i*2))+'deg'}}>
+          ${a?html`<${AwardSticker} a=${a} size=${74}/>`:html`<span className="win-stk"><${Chip} name=${it.p} color=${colorOf(it.p)} size=${60} crown=${true}/><b>Winner</b></span>`}
+          <span className="hi-name">${a?a.name:g.name}</span>
+          <span className="hi-who">${it.p}${it.isNew?html` · <em>new</em>`:''}</span></div>`})}</div>
+        ${shown>=items.length&&html`<${Podium} ctx=${ctx} g=${g}/>`}`}
+      <div className="v-actions">
+        <button className="btn btn-quiet" onClick=${actions.closeVictory}>Done</button>
+        <button className="btn btn-main" onClick=${()=>actions.rematch(g)}><${Icon} name="repeat"/> Rematch</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- album sheet ---------- */
+function AlbumSheet({ctx,sheet}){
+  const{awards,colorOf,S,stats,data}=ctx;
+  const players=[...new Set([...stats.standings.map(x=>x.p),...(data.active?data.active.players:[])])];
+  const[p,setP]=useState(sheet.p||players[0]);
+  const counts=awards.counts[p]||{};const got=AWARDS.filter(a=>counts[a.id]).length;
+  return html`<${SheetTitle} ctx=${ctx} title=${p+"'s album"}/>
+    <div className="pills scroll">${players.map(q=>html`<button key=${q} className=${'pill'+(q===p?' on':'')} onClick=${()=>{S.sticker(0);setP(q)}}><${Chip} name=${q} color=${colorOf(q)} size=${20}/>${q}</button>`)}</div>
+    <div className="album-meter"><div className="bar"><i style=${{width:got/AWARDS.length*100+'%'}}></i></div><span>${got} of ${AWARDS.length}</span></div>
+    <div className="album-grid">${AWARDS.map((a,i)=>html`<div className=${'slot'+(counts[a.id]?' got':'')} key=${a.id+p} style=${{'--i':i}}>
+      <${AwardSticker} a=${a} locked=${!counts[a.id]} count=${counts[a.id]||0} tilt=${((i*37)%11)-5} size=${70}/>
+      <b>${a.name}</b><span>${a.desc}</span></div>`)}</div>`;
+}
+function detailExtra(g,ctx){
+  const list=ctx.awards.byGame[g.id]||[];if(!list.length)return null;
+  return html`<div className="group"><span className="eyebrow">Stickers from this game</span><div className="earned-row">${list.map((e,i)=>html`<div className="er" key=${i}><${AwardSticker} a=${awardById[e.id]} size=${54} tilt=${i%2?4:-4}/>${awardById[e.id].name}<span>${e.p}</span></div>`)}</div></div>`;
+}
+
+TH.mount({
+  Home,Game,Victory,GameRow,detailExtra,
+  Fab:()=>html`<${FoxSticker} twitch=${true}/><span className="plus"><${Icon} name="plus" size=${17} stroke=${3}/></span>`,
+  navIcons:['home','album'],
+  sheets:{album:AlbumSheet},
+  sfx,
+  fx:{kinds:['star','circle','suit'],colors:()=>['--t-jade','--t-amber','--t-fox','--t-lav','--t-pink','--t-sky'].map(cssVar),outline:()=>cssVar('--die'),flip:true},
+  toastIcon:t=>t==='lead'?'star':t==='hot'?'flame':t==='bust'?'zero':'sparkle',
+  copy:{navHome:'Home',navHistory:'Book',newTitle:'New game',startBtn:n=>`Deal in · ${n}`,start:n=>`${n}!`,round:n=>`Round ${n}`,final:'Last round!',tie:'Tiebreak!',
+    tieToast:'Tied at the top. One more round decides it.',lead:p=>`The gold star moves to ${p}`,hot:p=>`${p} won three rounds running`,
+    match:s=>`${s} can almost taste it`,bust:s=>`${s} went bust. Ouch.`,samplesCleared:'Samples cleared. This one counts.',historyEyebrow:'History',historyTitle:'The sticker book'},
+});
+})();
+
+</script>
+
+</body></html>

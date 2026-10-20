@@ -108,6 +108,20 @@ export const EndGameTied: Story = {
   },
 }
 
+/** Kate's sticker book from the sample history: who to look at, how many of twelve, the album. */
+export const StickerBook: Story = {
+  args: {
+    store: SCENARIOS.firstRun,
+    ui: { sheet: { type: 'stickers', playerId: 'kate' }, sheetKey: 1 },
+  },
+}
+/** Alder's book: the family champion's stickers. */
+export const StickerBookAlder: Story = {
+  args: {
+    store: SCENARIOS.firstRun,
+    ui: { sheet: { type: 'stickers', playerId: 'alder' }, sheetKey: 1 },
+  },
+}
 /** A finished game from History: its standings and rounds, and delete. */
 export const GameDetail: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'detail', id: 's0' }, sheetKey: 1 } },

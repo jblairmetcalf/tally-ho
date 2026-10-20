@@ -2,7 +2,7 @@
 
 The design language: tokens, type, shape, motion, sound, haptics, native feel, sheets, components and copy. Read this before building or restyling any UI.
 
-The reference is the original prototype, `docs/imports/Tally Ho!.html` (open it in a browser). Port its look, timings, sounds and copy faithfully; deviate only where listed under [Deliberate deviations](#deliberate-deviations).
+The reference is the original prototype, `docs/imports/Tally Ho!.html` (open it in a browser); the Sticker Club comes from `docs/imports/Tally Ho Sticker Club.html` (decision 24). Port its look, timings, sounds and copy faithfully; deviate only where listed under [Deliberate deviations](#deliberate-deviations).
 
 ## Tokens
 
@@ -23,7 +23,8 @@ The user picks Dark, Daylight or System in Settings (`prefs.theme`). `ThemeRoot`
 | Accents | `--jade`, `--amber`, `--fox`, `--coral`, `--lav`, `--cream` (+ `-deep` pressed edge; `--jade-rgb`, `--amber-rgb`, `--lav-rgb` for alpha) | Fills, buttons, glows |
 | Small coloured text | `--jade-text`, `--amber-text`, `--coral-text` | Any coloured text under ~18px. In Daylight these are darker shades so they pass AA; fills keep the plain token |
 | On accent | `--on-accent`, `--ink` | Text on jewel fills |
-| Tab bar | `--bar-bg`, `--bar-line`, `--bar-ink`, `--bar-on` | The bottom tabs wear the **opposite theme** so they stand out from the page: a cream bar on Dark, an ink bar on Daylight (each the other theme's surface, muted/faint and jade text, so the AA pairs carry over). The fox button keeps its page-coloured halo |
+| Tab bar | `--bar-bg`, `--bar-line`, `--bar-ink`, `--bar-on` | The bottom tabs wear the **opposite theme** so they stand out from the page: a cream bar on Dark, an ink bar on Daylight (each the other theme's surface, muted/faint and jade text, so the AA pairs carry over). The fox button keeps its page-coloured halo The selected tab's icon fills in (`homeFill`, `scrollFill`) with a pop. |
+| Stickers | `--die` | The die-cut border and the shine under a sticker (white-ish in both themes); glyphs are `--on-accent` ink |
 | Players | `--p0`…`--p7` | The prototype's eight chip colours. Players store a palette index; use `paletteVar(i)` (`packages/ui/src/brand/palette.ts`). `PLAYER_COLORS` is only for canvas/SVG |
 
 ## Type
@@ -43,9 +44,12 @@ Fonts load via `next/font` in `apps/web/app/layout.tsx`. Numbers use `.num` (tab
 
 ## Motion
 
-- Keyframes live in `packages/ui/src/styles/motion.css`: every prototype keyframe verbatim (`rise`, `pop`, `crownDrop`, `bump`, `deltaUp`, `ribbon`, `sheetIn`, `toastIn`, `matchGlow`…) plus `dangerGlow` for lowest-wins games. Add new ones there.
+- Keyframes live in `packages/ui/src/styles/motion.css`, all shown on Foundations › Motion: every prototype keyframe verbatim, the Sticker Club's (`peelIn`, `slapIn`, `foil`, `packIdle`), and our own (`themeReveal`, `navInPush`…) (`rise`, `pop`, `crownDrop`, `bump`, `deltaUp`, `ribbon`, `sheetIn`, `toastIn`, `matchGlow`…) plus `dangerGlow` for lowest-wins games. Add new ones there.
 - The spring curve is `--spring: cubic-bezier(0.25, 1.45, 0.45, 1)`.
 - **Segmented controls** slide: the raised background is one thumb (`.seg-thumb`) that springs to the chosen segment on `--spring`, measured from the button (columns may differ in width), inside a clipped track so the overshoot never leaves the well.
+- **The victory sticker pack** sits in `VictoryOverlay`'s children slot (between the name and the podium); with a pack the badge shrinks so it stays one screen on most phones, and the overlay scrolls from the top (`safe center`) when it can't.
+- **A view transition (the theme reveal) isn't a backdrop tap:** while one runs its overlay takes every tap, so `Sheet` ignores outside interactions on `<html>` or during `.theme-reveal` (LESSONS).
+- **Stickers** (decision 24) are die-cut: a coloured shape (circle, burst, hex, rounded square) with a `--die` border and a soft shadow, the glyph in ink (`--on-accent`, AA on every fill), never quite straight (`tilt`). Locked ones are a dashed `--faint` outline of the same shape. They peel onto the sticker book (`peelIn`, staggered), slap down out of the victory pack (`slapIn`, with the `sticker` sound a note higher each time) and the pack's foil shines (`foil`) while it sways gently (`packIdle`) to invite the tap. Standings rows open sticker books, said under the heading ("Tap a name for their stickers"); a row's spoken name keeps its place and wins. A sticker inside a named control has no label of its own (decorative).
 - **Changing the theme** (Settings › Appearance) reveals the next one as a circle growing from the tapped segment (`revealFrom` in `packages/ui/src/feel/reveal.ts`, `themeReveal` in `motion.css`, 0.7 s ease-in-out). It's a View Transition: the old page is a still snapshot, the new one is clipped to the circle, and the theme switches synchronously inside it (`flushSync`). From the keyboard it grows from the focused segment. Without View Transitions (older browsers) or under reduced motion it switches instantly.
 - A page pushed inside a sheet glides on `--glide: cubic-bezier(0.32, 0.72, 0, 1)` (no overshoot, so no gap opens at the sheet's edge; [decision 18](DECISIONS.md)).
 - **Reduced motion:** the `prefers-reduced-motion: reduce` block at the bottom of `motion.css` is the single kill switch (durations → 0.001ms). Never bypass it with JS timing; confetti (`FX`) skips itself.
@@ -61,6 +65,7 @@ A Web Audio synth with no audio files: `SFX` in `packages/ui/src/feel/sfx.ts` (t
 | `pick` | Choosing a pill, resuming, a win reported from another phone |
 | `open` / `close` | A sheet slides up / away |
 | `deal` | New game opens: the Tally Ho! tune (about a second; decision 23) |
+| `sticker` / `rip` | A sticker peels and slaps down (each in a run a note higher) / the victory sticker pack tears open |
 | `add` / `remove` | A player joins / leaves the line-up |
 | `start` | Deal in: a new game |
 | `submit` | A round is scored or saved |
@@ -76,7 +81,7 @@ iOS rules (why it's built this way: [DECISIONS.md](DECISIONS.md#10-ios-audio-pla
 
 ## Haptics
 
-`Haptics` (`packages/ui/src/feel/haptics.ts`): named patterns (`tap`, `pick`, `submit`, `add`, `lead`, `match`, `error`, `del`, `win`). Vibration API on Android; on iOS 18+ a hidden `<input type="checkbox" switch>` click plays the system tick, one per pulse. `effects.ts` buzzes on `submit`, `win`, `lead`, `match`, `error`, `del`. Off when `prefs.haptics` is false.
+`Haptics` (`packages/ui/src/feel/haptics.ts`): named patterns (`tap`, `pick`, `submit`, `add`, `deal`, `sticker`, `rip`, `lead`, `match`, `error`, `del`, `win`). Vibration API on Android; on iOS 18+ a hidden `<input type="checkbox" switch>` click plays the system tick, one per pulse. `effects.ts` buzzes on `submit`, `deal`, `sticker`, `rip`, `win`, `lead`, `match`, `error`, `del`. Off when `prefs.haptics` is false.
 
 ## Confetti
 
@@ -101,23 +106,23 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 - `.sheet-cta` pins the sheet's main action to the bottom, always one tap away; its label stays on one line.
 - **A main action that can't run yet is disabled, never a tap that fails.** The line above it says why (New game: "Pick a game to start.", "Add at least two players.", "…is for exactly 2 players.", a missing target), linked with `aria-describedby`, and keeps its space when empty so the button doesn't jump. Errors from other controls ("Kate is already playing.") still shake in as an alert.
 - **One sheet, one navigation stack.** Somewhere deeper to go inside a sheet (Settings › Players › Edit Kate) is a page pushed with `SheetNav` (`packages/ui/src/primitives/SheetNav.tsx`) inside `<Sheet nav>`, never a sheet on top of a sheet. Its header never scrolls away: a back chevron top left on any page past the root, the page's title (also the dialog's accessible name), and close **always top right**, closing the whole sheet. Pushing slides the new page in from the right while the one beneath steps 30% left (`navInPush` / `navOutPush`, 0.42 s on `--glide`, no overshoot); back plays it in reverse; reduced motion swaps instantly. Each page scrolls on its own and stays mounted (inert, hidden) while it's beneath, so its scroll and state are there on the way back. Focus goes to the new page's title on a push and back to the control that pushed on a pop. Escape goes back a page (closes at the root); a drag on the handle or a backdrop tap closes the sheet. A nav sheet stands at full height (`<Sheet nav>` adds `.paged`), and a page's `.sheet-cta` sits at its bottom. Content that needs Escape for itself claims it through the `SheetEscape` context in `Sheet.tsx`, never its own key listener.
-- Single-page sheets (New game, Game detail, the install pop-up) keep `SheetTitle`: title left, close top right, no back. Family sign in is a page in Settings, not a sheet.
+- Single-page sheets (New game, the install pop-up, the sticker book from Standings or Home) keep `SheetTitle`: title left, close top right, no back. Game detail is a page stack: the game, then a sticker from it pushes that player's sticker book. Family sign in is a page in Settings, not a sheet.
 - **The game is a sheet** (decision 20): the scoreboard is its root page (titled with the game's name, the round and goal beneath with sound and End game), Edit round and End game push inside it. Dealing in closes New game, then the game rises; Resume raises it; closing it keeps the game live. Victory takes over full screen as the sheet slides away.
 - **Player counts** (decision 22): the game editor and Add a game end with Fewest / Most players (`PlayerFields`, `packages/app/src/sheets/PlayerFields.tsx`): typed freely, settled on leaving the field (2–12, Most never below Fewest, blank Most = no limit). The Games list adds "· 2 players" / "· 3+ players" to a limited game's line.
 - **Edge-to-edge rows:** a horizontally scrolling row (`PillRow scroll`, `.pills.scroll`, the History filters) bleeds through its container's side gutter and pads back in, so chips slide off the screen's edge instead of being cut at the gutter, with room for the press shadow and pop. The gutters are `--gutter-l` / `--gutter-r`, set on `.app` and on `.sheet-body`: a new scroll container with side padding sets them too.
 - **QR codes** (decision 21): ink dots on a cream plate in a jade ring, rounded deep-jade eyes with deep-fox centres, the fox in the middle; the same in both themes.
 - **Settings is a landing of entry rows**, so it never scrolls on and on: the fox, then `LinkRow`s for install / share / the maker, then Players, Games and Appearance (each hinting what's inside: names, a count, "Dark · Sound on"), then Family (sign-in) inline at the bottom, then the build line. Each row (install, share, the maker, Players, Games, Appearance, Family sign in) **pushes a page**, and the editors (Edit Kate, Add a game, Edit Uno) push a third; archiving, deleting or adding goes back to the list by itself. Back is one tap top left; Close (top right) leaves from any depth.
 - **Stable layout:** a sheet is laid out at full height from the start. Controls that aren't ready yet show skeletons (`.skeleton`, `.skeleton-stack` in `components.css`; see `NewGameSheet.tsx`) in the same slot, so nothing jumps when they appear. No progressive-disclosure jumps.
-- Opening plays `open` (New game plays `deal`, its tune), closing `close`. Drag down past 100px, backdrop tap or Escape closes.
+- Opening plays `open` (New game plays `deal`, its tune; the sticker book `sticker`), closing `close`. Drag down past 100px, backdrop tap or Escape closes.
 
 ## Components and stories
 
 | Group | Path | Examples |
 |---|---|---|
-| Brand | `packages/ui/src/brand/` | `Fox`, `Icon`, `Wordmark`, `Chip`, `Badge`, `FoxNote` (the fox's badge with a headline and a line) |
+| Brand | `packages/ui/src/brand/` | `Fox`, `Icon`, `Wordmark`, `Chip`, `Badge`, `FoxNote` (the fox's badge with a headline and a line), `Sticker` (die-cut, locked, ×N) |
 | Theme | `packages/ui/src/theme/` | `ThemeRoot` (sets `data-theme`, `THEME_COLOR`); no story of its own: every story renders inside it |
 | Primitives | `packages/ui/src/primitives/` | `Button` (+ `ButtonLink`), `IconButton`, `ConfirmButton`, `Sheet`, `SheetNav` (pages pushed inside one sheet), `Segmented`, `Switch`, `TextInput`, `Toast`, `SyncBadge`, `LinkRow` (menu row: tile, title, hint, chevron), `StepList` (numbered how-to steps), `QrCode` (branded: ink dots on a cream plate in a jade ring, deep-jade/deep-fox eyes, the same in both themes; optional fox badge; encoder `uqr` loaded on demand; decision 21), `BottomNav`, `EmptyState`, `Pill` / `PillRow`, `Ribbon`, `Swatches`, and the small text pieces in `Card.tsx` (`Card`, `Eyebrow`, `SectionTitle`, `Notice`) |
-| Scoreboard | `packages/ui/src/scoreboard/` | `PlayerCard`, `RaceTrack`, `RoundPips`, `RoundLog` (scores or wins), `WinnerPicker` ("Who won?"), `Standings` (▲ / ▼ under a rank only when the last game really changed the standings: a player passed someone they weren't ahead of, by wins. Drawing level, the name-order tiebreak, and winning or losing alone show nothing), `StatList`, `Podium`, `WinsChart`, `VictoryOverlay`, `ChampionCard`, `GameRow`, `ResumeCard`, `RollNumber`, `ScoreFields`, `FxCanvas` (from `feel/`, the confetti layer) |
+| Scoreboard | `packages/ui/src/scoreboard/` | `PlayerCard`, `RaceTrack`, `RoundPips`, `RoundLog` (scores or wins), `WinnerPicker` ("Who won?"), `Standings` (▲ / ▼ under a rank only when the last game really changed the standings: a player passed someone they weren't ahead of, by wins. Drawing level, the name-order tiebreak, and winning or losing alone show nothing), `StatList`, `Podium`, `WinsChart`, `VictoryOverlay`, `ChampionCard`, `StickerPack` (the victory pack), `StickerShelf` (a row of earned stickers), `GameRow`, `ResumeCard`, `RollNumber`, `ScoreFields`, `FxCanvas` (from `feel/`, the confetti layer) |
 | App sheets and screens | `packages/app/src/*.stories.tsx` | `Sheets.stories.tsx` (Sheets/App sheets), `Install.stories.tsx` (Sheets/Install and share: install pop-up, Settings landing, Share, Contact), `Family.stories.tsx`, `TallyApp.stories.tsx` |
 | Foundations | `apps/storybook/src/foundations/` | Start here, Colour, Type, Shape, Motion, Sound, Haptics, Icons |
 

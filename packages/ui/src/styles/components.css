@@ -294,6 +294,7 @@
      so chips slide off the screen's edge instead of being cut at the gutter, and the first and last
      chip still line up with the content. Room above and below for the press shadow and the pop. */
   .pills.scroll {
+    flex: none; /* in a sheet's column it must keep its height, not shrink to the scroll */
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
@@ -666,6 +667,28 @@
   }
   .stand + .stand {
     border-top: 1px solid var(--line);
+  }
+  /* a row that opens the player's sticker book */
+  .stand-btn {
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    border-radius: 0; /* square, so the divider between rows stays straight */
+    transition: transform 0.15s var(--spring);
+  }
+  .stand-btn:active {
+    transform: scale(0.98);
+  }
+  .stand-hint {
+    margin: -4px 0 4px;
+    color: var(--muted);
+  }
+  .stand-sub {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--muted);
+    margin-top: 1px;
   }
   .stand .rank {
     font-family: var(--f-display);
@@ -1128,6 +1151,10 @@
   .nav-btn.on {
     color: var(--bar-on);
   }
+  /* the selected tab's icon fills in, with a little pop */
+  .nav-btn.on svg {
+    animation: pop 0.35s var(--spring);
+  }
   .nav-btn:active {
     transform: scale(0.9);
   }
@@ -1388,12 +1415,26 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 24px max(20px, env(safe-area-inset-right, 0px)) 24px max(20px, env(safe-area-inset-left, 0px));
+    padding: calc(24px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
+      calc(24px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
     background: var(--veil);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     animation: fadeIn 0.3s ease both;
     overflow-y: auto;
+    /* the sunburst is wider than the screen: never let the overlay pan sideways */
+    overflow-x: clip;
+    /* safe: when the pack makes it taller than the screen, scroll from the top, never cut it off */
+    justify-content: safe center;
+  }
+  .victory.has-pack .v-badge {
+    width: 112px;
+    height: 112px;
+  }
+  .victory.has-pack .v-badge .fox {
+    width: 98px;
+    height: 98px;
+    margin-top: 10px;
   }
   .sunburst {
     position: absolute;
@@ -2336,3 +2377,282 @@
     box-shadow: -1px 0 0 var(--line);
   }
 }
+
+/* ---------- stickers (the Sticker Club) ---------- */
+@layer components {
+  .sticker {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    color: var(--die);
+  }
+  .sticker svg {
+    overflow: visible;
+    filter: drop-shadow(0 5px 6px var(--drop));
+  }
+  .sticker .bg {
+    fill: var(--tone);
+    stroke: var(--die);
+    stroke-width: 6;
+    stroke-linejoin: round;
+  }
+  .sticker .ic {
+    fill: none;
+    stroke: currentColor;
+    color: var(--on-accent); /* ink on the jewel fills, as on every accent button (AA) */
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sticker.locked {
+    color: var(--faint);
+  }
+  .sticker.locked svg {
+    filter: none;
+  }
+  .sticker.locked .bg {
+    fill: transparent;
+    stroke: var(--faint);
+    stroke-width: 3;
+    stroke-dasharray: 7 6;
+  }
+  .sticker.locked .ic {
+    color: var(--faint);
+    opacity: 0.55;
+  }
+  /* the sticker book: a meter, then a 3-up album of all twelve */
+  .sticker-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .sticker-meter .bar {
+    flex: 1;
+    margin-top: 0;
+    height: 12px;
+    background: var(--line); /* the sheet is --sunk in Dark: the usual track would vanish */
+  }
+  .sticker-meter .bar i {
+    display: block;
+    height: 100%;
+    background: var(--jade);
+    border-radius: 6px;
+    transition: width 0.6s var(--spring);
+  }
+  .sticker-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+  .sticker-grid li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    animation: peelIn 0.5s var(--spring) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  .sticker-grid .name {
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.15;
+    margin-top: 6px;
+  }
+  .sticker-grid .rule {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1.25;
+  }
+  .sticker-grid li:not(.got) .name {
+    color: var(--muted);
+  }
+  .sticker .count {
+    position: absolute;
+    right: -6px;
+    bottom: -2px;
+    background: var(--text);
+    color: var(--page);
+    font-weight: 900;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 0 7px;
+    border-radius: 9px;
+    box-shadow: 0 0 0 2px var(--die);
+  }
+}
+
+/* ---------- the victory sticker pack ---------- */
+@layer components {
+  .pack-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: peelIn 0.7s var(--spring) 0.6s both;
+  }
+  .pack {
+    display: flex;
+    flex-direction: column;
+    width: 170px;
+    animation: packIdle 3.2s ease-in-out 1.4s infinite;
+    border-radius: 14px;
+    overflow: hidden;
+    color: var(--on-accent);
+    box-shadow:
+      0 0 0 4px var(--die),
+      0 16px 30px var(--drop);
+    transform: rotate(-3deg);
+    transition: transform 0.2s var(--spring);
+  }
+  .pack:active {
+    transform: rotate(-3deg) scale(0.94);
+  }
+  .pack .crimp {
+    height: 12px;
+    background: repeating-linear-gradient(90deg, var(--die) 0 6px, var(--sunk) 6px 12px);
+  }
+  .pack-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 10px 14px;
+    /* foil: the accents sliding past */
+    background: linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade));
+    background-size: 220% 220%;
+    animation: foil 5s linear infinite;
+  }
+  .pack-fox {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+  }
+  .pack-fox .fox {
+    width: 64px;
+    height: 64px;
+  }
+  .pack-title {
+    font-family: var(--f-display);
+    font-size: 19px;
+    line-height: 1.05;
+  }
+  .pack-sub {
+    font-weight: 900;
+    font-size: 12.5px;
+  }
+  .haul {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 4px 0 0;
+    width: 100%;
+    max-width: 360px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 8px;
+  }
+  .haul li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-align: center;
+  }
+  .haul li > :first-child {
+    animation: slapIn 0.5s var(--spring) both;
+  }
+  .haul .hi-name {
+    font-weight: 900;
+    font-size: 13px;
+    line-height: 1.15;
+    margin-top: 4px;
+  }
+  .haul .hi-who {
+    font-weight: 800;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .haul .hi-who em {
+    font-style: normal;
+    color: var(--coral-text);
+  }
+  .win-stk {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding-top: 6px;
+  }
+  .win-stk b {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--on-accent);
+    background: var(--amber);
+    padding: 0 9px 2px;
+    border-radius: 9px;
+    box-shadow: 0 0 0 3px var(--die);
+  }
+}
+
+/* ---------- a shelf of earned stickers (Home's fresh stickers, a game's details) ---------- */
+@layer components {
+  .shelf {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+  .shelf.scroll {
+    flex-wrap: nowrap;
+    scroll-snap-type: x mandatory;
+  }
+  .shelf li {
+    flex: none;
+    scroll-snap-align: start;
+  }
+  .haul:focus {
+    outline: none;
+  }
+  .shelf-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 92px;
+    min-height: 44px;
+    padding: 4px 0;
+    text-align: center;
+    color: inherit;
+    transition: transform 0.2s var(--spring);
+  }
+  .shelf-item:active {
+    transform: scale(0.92) rotate(-4deg);
+  }
+  .shelf-item b {
+    font-size: 12.5px;
+    font-weight: 900;
+    line-height: 1.15;
+    margin-top: 2px;
+  }
+  .shelf-item > span:last-child {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1.2;
+  }
+}
+

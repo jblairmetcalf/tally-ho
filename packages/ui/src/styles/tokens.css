@@ -88,6 +88,9 @@
   --bar-line: #e6d3b3;
   --bar-ink: #696292;
   --bar-on: #007660;
+
+  /* a sticker's die-cut border and the ink on it */
+  --die: #f7f5ff;
 }
 
 [data-theme="light"] {
@@ -154,6 +157,8 @@
   --bar-line: #3e3878;
   --bar-ink: #a29bd0;
   --bar-on: #00d4aa;
+
+  --die: #ffffff;
 }
 
 :root {

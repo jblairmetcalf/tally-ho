@@ -123,6 +123,65 @@ function tone(f: number, d: number, o: ToneOpts = {}): void {
   holdUntil(t + d + 0.03)
 }
 
+interface NoiseOpts {
+  vol?: number
+  at?: number
+  /** The filter's shape and where it starts (and sweeps to). */
+  type?: BiquadFilterType
+  freq?: number
+  to?: number | null
+  q?: number
+  attack?: number
+}
+
+/** Two seconds of white noise per context (a context is rebuilt after it's released). */
+const noiseOf = new WeakMap<AudioContext, AudioBuffer>()
+
+/** Filtered noise: a sticker's peel, its slap on the page, a pack tearing open. */
+function noise(d: number, o: NoiseOpts = {}): void {
+  if (muted) return
+  const c = live()
+  if (!c) return
+  const { vol = 0.2, at = 0, type = 'bandpass', freq = 1200, to = null, q = 1, attack = 0.003 } = o
+  let buf = noiseOf.get(c)
+  if (!buf) {
+    buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate)
+    const ch = buf.getChannelData(0)
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1
+    noiseOf.set(c, buf)
+  }
+  const t = c.currentTime + at + 0.01
+  const src = c.createBufferSource()
+  src.buffer = buf
+  const f = c.createBiquadFilter()
+  f.type = type
+  f.frequency.setValueAtTime(freq, t)
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + d)
+  f.Q.value = q
+  const g = c.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(vol, t + attack)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(attack + 0.01, d))
+  src.connect(f)
+  f.connect(g)
+  g.connect(c.destination)
+  src.start(t, Math.random())
+  src.stop(t + d + 0.05)
+  holdUntil(t + d + 0.05)
+}
+
+/** A sticker pressed onto the page: a low thump under a short burst. */
+const slap = (at = 0, v = 1) => {
+  noise(0.07, { type: 'lowpass', freq: 1800, vol: 0.45 * v, at })
+  tone(150, 0.13, { type: 'sine', to: 55, vol: 0.42 * v, at })
+}
+/** Backing paper peeling away: noise sweeping up. */
+const peel = (at = 0) =>
+  noise(0.22, { type: 'bandpass', freq: 700, to: 5200, q: 2.5, vol: 0.24, at, attack: 0.04 })
+/** Each sticker in a run lands a step higher up the scale. */
+const STICKER_NOTES = [523, 587, 659, 784, 880, 1047, 1175, 1319]
+let stickerStep = 0
+
 /** A run of notes; 0 is a rest. */
 function seq(notes: number[], step: number, o: ToneOpts = {}): void {
   notes.forEach((f, i) => {
@@ -200,6 +259,19 @@ export const SFX = {
     seq([523, 659, 784, 1047, 0, 784, 1047, 1319, 1319, 1319], 0.1, { vol: 0.13 })
     seq([262, 330, 392, 523, 0, 392, 523, 659, 659, 659], 0.1, { type: 'triangle', vol: 0.12 })
   },
+  /** A sticker peels off and slaps down, with a note that climbs through a run of them. */
+  sticker: () => {
+    peel()
+    slap(0.15, 0.7)
+    const f = STICKER_NOTES[stickerStep++ % STICKER_NOTES.length] ?? 523
+    tone(f, 0.3, { type: 'triangle', vol: 0.1, at: 0.2 })
+  },
+  /** The sticker pack tears open. Resets the sticker run so the reveal climbs from the bottom. */
+  rip: () => {
+    stickerStep = 0
+    noise(0.4, { type: 'bandpass', freq: 1800, to: 6500, q: 1.2, vol: 0.4 })
+    slap(0.32, 0.6)
+  },
   /** The sad trombone, for whoever came last. */
   lose: () => seq([392, 370, 349, 311], 0.26, { type: 'triangle', vol: 0.12 }),
 }
@@ -222,4 +294,6 @@ export const SFX_CUES: SfxCue[] = [
   'del',
   'win',
   'lose',
+  'sticker',
+  'rip',
 ]

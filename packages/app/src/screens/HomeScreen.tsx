@@ -1,4 +1,13 @@
-import { computeStats, goalLabel, isCompleted, winSeries } from '@tally/core'
+import {
+  computeStats,
+  computeStickers,
+  goalLabel,
+  isCompleted,
+  ordinal,
+  STICKERS,
+  stickersOf,
+  winSeries,
+} from '@tally/core'
 import {
   Badge,
   Button,
@@ -11,6 +20,7 @@ import {
   SectionTitle,
   Standings,
   StatList,
+  StickerShelf,
   SyncBadge,
   WinsChart,
   Wordmark,
@@ -19,6 +29,7 @@ import { type CSSProperties, useEffect, useMemo } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
 import { takeWelcome } from '../sheets/SignInSheet'
+import { playerOfShelf, shelfItems } from '../stickerShelf'
 import { useSession } from '../sync/session'
 import { GameRowFor } from './GameRowFor'
 
@@ -45,6 +56,7 @@ export function HomeScreen() {
 
   const done = useMemo(() => games.filter(isCompleted), [games])
   const stats = useMemo(() => computeStats(done, nameOf), [done, nameOf])
+  const stickers = useMemo(() => computeStickers(done), [done])
   const series = useMemo(
     () => winSeries(done).map((s) => ({ ...s, name: nameOf(s.id), color: colorOf(s.id) })),
     [done, nameOf, colorOf],
@@ -156,6 +168,19 @@ export function HomeScreen() {
                 move: x.move,
               }))}
               moveLabel={COPY.home.moved}
+              subOf={(id) => COPY.stickers.tally(stickersOf(stickers, id), STICKERS.length)}
+              onPick={(id) => a.openSheet({ type: 'stickers', playerId: id })}
+              hint={COPY.stickers.tapHint}
+              pickLabel={(id) => {
+                const i = stats.standings.findIndex((x) => x.id === id)
+                return COPY.stickers.open(
+                  nameOf(id),
+                  ordinal(i + 1),
+                  stats.standings[i]?.wins ?? 0,
+                  stickersOf(stickers, id),
+                  STICKERS.length,
+                )
+              }}
             />
           </div>
 
@@ -163,6 +188,18 @@ export function HomeScreen() {
             <Card as="section" className="rise" style={rise(3)}>
               <SectionTitle style={{ marginBottom: 10 }}>{COPY.home.overTime}</SectionTitle>
               <WinsChart series={series} />
+            </Card>
+          )}
+
+          {stickers.recent.length > 0 && (
+            <Card as="section" className="rise" style={rise(3)}>
+              <SectionTitle style={{ marginBottom: 6 }}>{COPY.stickers.fresh}</SectionTitle>
+              <StickerShelf
+                scroll
+                label={COPY.stickers.fresh}
+                items={shelfItems(stickers.recent.slice(0, 8), nameOf, (e, i) => `${e.id}-${i}`)}
+                onPick={(key) => a.openSheet({ type: 'stickers', playerId: playerOfShelf(key) })}
+              />
             </Card>
           )}
 

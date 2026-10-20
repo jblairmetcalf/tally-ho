@@ -1,16 +1,27 @@
-import { type Clock, isCompleted, ranked, systemClock, totalsOf } from '@tally/core'
+import {
+  type Clock,
+  computeStickers,
+  isCompleted,
+  ranked,
+  STICKERS,
+  systemClock,
+  totalsOf,
+} from '@tally/core'
 import {
   BottomNav,
   FxCanvas,
   Haptics,
+  type IconName,
+  type PackItem,
   Ribbon,
   SFX,
   Sheet,
+  StickerPack,
   ThemeRoot,
   Toast,
   VictoryOverlay,
 } from '@tally/ui'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { TallyContext, useActions, useRoster, useTally, useTallyStore } from './context'
 import { COPY } from './copy'
 import { createEffects } from './effects'
@@ -24,6 +35,7 @@ import { GameSheet } from './sheets/GameSheet'
 import { InstallSheet } from './sheets/InstallSheet'
 import { NewGameSheet } from './sheets/NewGameSheet'
 import { SettingsSheet } from './sheets/SettingsSheet'
+import { StickerBookSheet } from './sheets/StickerBookSheet'
 import {
   createTallyStore,
   reactToRejection,
@@ -239,6 +251,8 @@ function labelOf(spec: SheetSpec | null, gameName: (id: string) => string, live:
       return COPY.sheetLabel.settings
     case 'install':
       return COPY.sheetLabel.install
+    case 'stickers':
+      return COPY.sheetLabel.stickers
   }
 }
 
@@ -264,13 +278,14 @@ function SheetHost() {
   else if (detail && isCompleted(detail)) content = <GameDetailSheet game={detail} />
   else if (spec?.type === 'settings') content = <SettingsSheet />
   else if (spec?.type === 'install') content = <InstallSheet />
+  else if (spec?.type === 'stickers') content = <StickerBookSheet playerId={spec.playerId} />
 
   return (
     <Sheet
       open={!!sheet}
       onClose={() => a.closeSheet()}
-      // Settings and the game are stacks of pages (SheetNav): full height, named by the page on top.
-      nav={spec?.type === 'settings' || spec?.type === 'game'}
+      // Settings, the game and game detail are stacks of pages (SheetNav): full height, named by the page on top.
+      nav={spec?.type === 'settings' || spec?.type === 'game' || spec?.type === 'detail'}
       label={labelOf(spec, (id) => games.find((g) => g.id === id)?.name ?? '', live?.name ?? '')}
     >
       <div key={sheetKey} style={{ display: 'contents' }}>
@@ -282,8 +297,45 @@ function SheetHost() {
 
 function Victory() {
   const victory = useTally((s) => s.victory)
+  const games = useTally((s) => s.data.games)
+  const pack = useTally((s) => s.pack)
   const a = useActions()
   const roster = useRoster()
+  // The pack: the winner's own crowned chip, then the stickers this game gave out (firsts first).
+  const items = useMemo((): PackItem[] => {
+    if (!victory?.winnerId) return []
+    const S = COPY.stickers
+    const earned = [...(computeStickers(games.filter(isCompleted)).byGame[victory.id] ?? [])]
+      .sort((x, y) => Number(y.isNew) - Number(x.isNew))
+      .slice(0, 5)
+    return [
+      {
+        key: 'winner',
+        name: victory.name,
+        who: roster.nameOf(victory.winnerId),
+        color: roster.colorOf(victory.winnerId),
+      },
+      ...earned.flatMap((e, i) => {
+        const k = STICKERS.find((s) => s.id === e.id)
+        if (!k) return []
+        const label = S.names[e.id]
+        return [
+          {
+            key: `${e.playerId}-${e.id}-${i}`,
+            name: label,
+            who: roster.nameOf(e.playerId),
+            isNew: e.isNew,
+            sticker: {
+              label: S.earnedBy(label, roster.nameOf(e.playerId)),
+              tone: k.tone,
+              icon: k.icon as IconName,
+              shape: k.shape,
+            },
+          },
+        ]
+      }),
+    ]
+  }, [victory, games, roster])
   if (!victory?.winnerId) return null
   const t = totalsOf(victory)
   // The winner tops the podium even when crowned from a tie (level with someone ranked first).
@@ -297,6 +349,8 @@ function Victory() {
       : (victory.target ?? 1) <= 1
         ? COPY.victory.winsSingle(victory.name)
         : COPY.victory.winsMatch(victory.name, won, next)
+  const S = COPY.stickers
+  const stickers = items.length - 1
   return (
     <VictoryOverlay
       winner={roster.nameOf(victory.winnerId)}
@@ -311,6 +365,26 @@ function Victory() {
       }))}
       onDone={a.victoryDone}
       onRematch={() => a.rematch(victory)}
-    />
+    >
+      {pack && (
+        <StickerPack
+          items={items}
+          open={pack.open}
+          shown={pack.shown}
+          onOpen={() =>
+            a.openPack(
+              items.length,
+              window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+            )
+          }
+          title={S.packTitle}
+          sub={S.packSub(Math.max(1, stickers + 1))}
+          hint={S.packHint}
+          openLabel={S.pack}
+          winnerLabel={S.winner}
+          newLabel={S.isNew}
+        />
+      )}
+    </VictoryOverlay>
   )
 }

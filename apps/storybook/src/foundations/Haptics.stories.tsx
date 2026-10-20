@@ -12,6 +12,8 @@ const WHEN: Record<HapticCue, string> = {
   pick: 'Choosing an option',
   submit: 'A round is scored',
   add: 'A player joins',
+  sticker: 'A sticker slaps down',
+  rip: 'The sticker pack tears open',
   deal: 'New game opens (on the tune)',
   lead: 'A new leader',
   match: 'Match point',

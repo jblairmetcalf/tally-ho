@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Badge, Chip, Fox, Icon, IconButton, Wordmark } from '@tally/ui'
+import { Badge, Chip, Fox, Icon, IconButton, Sticker, Wordmark } from '@tally/ui'
 import { type CSSProperties, type ReactNode, useState } from 'react'
 import motionCss from '../../../../packages/ui/src/styles/motion.css?raw'
 import { BARE, Mono, Page, pageTheme, Section, Tag } from './chrome'
@@ -334,6 +334,67 @@ const TILES: Tile[] = [
     demo: <Fox twitch className="h-[80px] w-[80px]" />,
   },
   {
+    name: 'peelIn',
+    timing: '0.5s spring, staggered',
+    use: 'Stickers peeling onto the sticker book page',
+    demo: (
+      <Sticker
+        tone="fox"
+        icon="flame"
+        shape="burst"
+        size={64}
+        style={anim('peelIn', '1.2s var(--spring) infinite')}
+      />
+    ),
+  },
+  {
+    name: 'slapIn',
+    timing: '0.5s spring',
+    use: 'Each sticker slapping down out of the victory pack',
+    demo: (
+      <Sticker
+        tone="coral"
+        icon="camera"
+        shape="circle"
+        size={64}
+        style={anim('slapIn', '1.2s var(--spring) infinite')}
+      />
+    ),
+  },
+  {
+    name: 'packIdle',
+    timing: '3.2s ease-in-out, forever',
+    use: 'The sealed sticker pack swaying, to invite the tap',
+    loop: true,
+    demo: (
+      <div
+        className="h-[80px] w-[64px] rounded-[10px]"
+        style={{
+          background:
+            'linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade))',
+          ...anim('packIdle', '3.2s ease-in-out infinite'),
+        }}
+      />
+    ),
+  },
+  {
+    name: 'foil',
+    timing: '5s linear, forever',
+    use: 'The shine sliding across the sticker pack',
+    loop: true,
+    demo: (
+      <div
+        className="h-[80px] w-[120px] rounded-[14px]"
+        style={{
+          background:
+            'linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade))',
+          backgroundSize: '220% 220%',
+          ...anim('foil', '5s linear infinite'),
+        }}
+      />
+    ),
+  },
+  {
     name: 'themeReveal',
     timing: '0.7s ease-in-out',
     use: 'Changing the theme: the next one grows out of the button you tapped',
@@ -599,7 +660,8 @@ export const Motion: Story = {
       lede={
         <>
           Things in Tally Ho! <b>land</b>: they drop, bump, stamp and settle on one springy curve.
-          Every keyframe below is the prototype's, verbatim, from <Mono>motion.css</Mono>. Hit{' '}
+          Every keyframe in <Mono>motion.css</Mono> is below: the prototypes' verbatim, plus a few
+          of our own (the theme reveal, pages pushing in a sheet). Hit{' '}
           <Icon name="repeat" size={16} className="inline align-[-3px]" /> on any tile to play it
           again. With <Mono>prefers-reduced-motion</Mono> on, one block in that file stills them all
           — that is the only kill switch, so never animate around it.

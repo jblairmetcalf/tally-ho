@@ -12,7 +12,7 @@ which Claude Code loads automatically when you touch that area.
 - Two modes behind one seam: **demo** (signed out, this phone) and **family** (signed in, Firestore). Screens never ask which.
 
 ## The original
-`docs/imports/Tally Ho!.html` is the reference. Port its behaviour, copy, timings, sounds and animations
+`docs/imports/Tally Ho!.html` is the reference (and `docs/imports/Tally Ho Sticker Club.html` for the Sticker Club, decision 24). Port its behaviour, copy, timings, sounds and animations
 faithfully. Deviate only on purpose (accessibility, native feel, sheet stability) and record why in
 `docs/DECISIONS.md`.
 

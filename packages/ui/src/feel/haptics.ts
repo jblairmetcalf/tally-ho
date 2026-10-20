@@ -9,6 +9,10 @@ export const HAPTICS = {
   pick: 10,
   submit: 12,
   add: [8, 30, 8],
+  /** A sticker slaps onto the page. */
+  sticker: [6, 40, 16],
+  /** The sticker pack tears open. */
+  rip: [12, 20, 12, 20, 24],
   /** New game's tune: three light taps on the hook. */
   deal: [8, 60, 8, 60, 14],
   lead: [10, 40, 10],

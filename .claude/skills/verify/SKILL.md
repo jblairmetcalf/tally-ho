@@ -34,7 +34,7 @@ Run from the repo root, in order:
    ```sh
    CI=true pnpm e2e
    ```
-   This builds Storybook, builds the app, then runs the **web** project (gameplay, settings, PWA/offline, migration, theme flash, link preview, axe) and the **storybook** project (every story in both themes + axe, and every story/Docs page inside the manager UI).
+   This builds Storybook, builds the app, then runs the **web** project (gameplay, settings, stickers, theme reveal, Standings marks, PWA/offline, migration, theme flash, link preview, sound, axe) and the **storybook** project (every story in both themes + axe, and every story/Docs page inside the manager UI).
    With `CI=true` Playwright retries a failure once: a test that passed on retry is **flaky**. Report it as flaky, not green.
 
 ## Quick inner loop (while iterating, not instead of the full run)

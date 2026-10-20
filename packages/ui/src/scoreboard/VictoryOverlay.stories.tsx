@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { FxCanvas } from '../feel/FxCanvas'
 import { podiumRows, SAMPLES } from './fixtures'
+import { StickerPack } from './StickerPack'
 import { VictoryOverlay } from './VictoryOverlay'
 
 const g = SAMPLES[0]!
@@ -66,4 +67,23 @@ export const WhoWon: Story = {
       { id: 'blair', name: 'Blair', color: 1, total: 1 },
     ],
   },
+}
+/** With the sticker pack (the Sticker Club): the badge shrinks and the sealed pack sits above the podium. */
+export const WithPack: Story = {
+  render: (args) => (
+    <VictoryOverlay {...args}>
+      <StickerPack
+        items={[{ key: 'w', name: 'Flip 7', who: 'Cleo', color: 2 }]}
+        open={false}
+        shown={0}
+        onOpen={() => {}}
+        title="Game night pack"
+        sub="3 stickers inside"
+        hint="Tap the pack to tear it open"
+        openLabel="Tear open the sticker pack"
+        winnerLabel="Winner"
+        newLabel="new"
+      />
+    </VictoryOverlay>
+  ),
 }

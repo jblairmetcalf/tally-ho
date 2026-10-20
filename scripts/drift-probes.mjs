@@ -157,6 +157,9 @@ const deadCopy = []
     const leaf = !line.trimEnd().endsWith('{')
     if (!leaf || /^(weekday|month|day|year)$/.test(m[2])) continue
     const key = m[2]
+    // A map read by key (`S.names[k.id]`) uses every entry in it.
+    const parent = path.at(-2)
+    if (parent && appUi.some((f) => text[f].includes(`.${parent}[`))) continue
     // A top-level string is read as COPY.<key> (a bare `.key` would match any property).
     const read = path.length < 2 ? new RegExp(`COPY\\.${key}\\b`) : new RegExp(`\\.${key}\\b`)
     if (!appUi.some((f) => read.test(text[f])))
@@ -296,6 +299,49 @@ probe(
         .filter((m) => tokens.has(m[1]) && !mapped.has(m[1]))
         .map((m) => `${f} — ${m[0]} has no --color-${m[1]} in @theme`),
     ),
+  )
+}
+
+{
+  // Foundations › Motion promises every keyframe; DESIGN.md and the soundboards promise every cue.
+  const motion = read(join(ROOT, 'packages/ui/src/styles/motion.css'))
+  const motionPage = read(join(ROOT, 'apps/storybook/src/foundations/Motion.stories.tsx'))
+  probe(
+    'motion-tiles',
+    'Every keyframe in motion.css has a tile on Foundations › Motion (storybook-review skill)',
+    [...motion.matchAll(/@keyframes\s+(\w+)/g)]
+      .map((m) => m[1])
+      .filter((k) => !motionPage.includes(`name: '${k}'`))
+      .map((k) => `motion.css — @keyframes ${k} has no tile on the Motion page`),
+  )
+  const design = read(join(ROOT, 'docs/DESIGN.md'))
+  const sfx = read(join(ROOT, 'packages/ui/src/feel/sfx.ts'))
+  const cues = [
+    ...(sfx.match(/SFX_CUES[^=]*=\s*\[([\s\S]*?)\]/)?.[1] ?? '').matchAll(/'(\w+)'/g),
+  ].map((m) => m[1])
+  const soundPage = read(join(ROOT, 'apps/storybook/src/foundations/Sound.stories.tsx'))
+  const haptics = read(join(ROOT, 'packages/ui/src/feel/haptics.ts'))
+  const patterns = [
+    ...(haptics.match(/HAPTICS[^=]*=\s*\{([\s\S]*?)\n\}/)?.[1] ?? '').matchAll(/^\s+(\w+):/gm),
+  ].map((m) => m[1])
+  const hapticPage = read(join(ROOT, 'apps/storybook/src/foundations/Haptics.stories.tsx'))
+  probe(
+    'feel-docs',
+    'Every sound cue and haptic pattern is in DESIGN.md and on its Foundations page (rules/ui.md)',
+    [
+      ...cues.flatMap((c) => [
+        ...(design.includes(`\`${c}\``) ? [] : [`DESIGN.md — sound \`${c}\` is missing`]),
+        ...(new RegExp(`^\\s+${c}:`, 'm').test(soundPage)
+          ? []
+          : [`Sound.stories.tsx — no pad for \`${c}\``]),
+      ]),
+      ...patterns.flatMap((h) => [
+        ...(design.includes(`\`${h}\``) ? [] : [`DESIGN.md — haptic \`${h}\` is missing`]),
+        ...(new RegExp(`^\\s+${h}:`, 'm').test(hapticPage)
+          ? []
+          : [`Haptics.stories.tsx — no row for \`${h}\``]),
+      ]),
+    ],
   )
 }
 

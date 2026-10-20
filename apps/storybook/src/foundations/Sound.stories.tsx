@@ -86,6 +86,18 @@ const CUES: Record<SfxCue, { when: string; icon: IconName; tone: Tone; synth: st
     tone: 'lav',
     synth: 'four falling notes',
   },
+  sticker: {
+    when: 'A sticker slaps onto the page (each in a run a note higher).',
+    icon: 'sticker',
+    tone: 'coral',
+    synth: 'noise peel, a thump, a climbing triangle note',
+  },
+  rip: {
+    when: 'The victory sticker pack tears open.',
+    icon: 'cards',
+    tone: 'amber',
+    synth: 'a noise tear sweeping up, then a slap',
+  },
 }
 
 function Pad({ cue }: { cue: SfxCue }) {

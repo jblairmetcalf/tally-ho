@@ -36,6 +36,10 @@
 @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 @keyframes wink{0%,100%{transform:scaleY(1)}40%,60%{transform:scaleY(.08)}}
 @keyframes earTwitch{0%,100%{transform:none}40%{transform:rotate(-10deg)}70%{transform:rotate(6deg)}}
+@keyframes peelIn{from{opacity:0;transform:scale(.4) rotate(-28deg)}60%{opacity:1;transform:scale(1.12) rotate(6deg)}to{opacity:1;transform:none}}
+@keyframes slapIn{0%{opacity:0;transform:scale(1.9) rotate(var(--r,0deg))}55%{opacity:1;transform:scale(.88) rotate(var(--r,0deg))}to{opacity:1;transform:scale(1) rotate(var(--r,0deg))}}
+@keyframes foil{from{background-position:0% 50%}to{background-position:220% 50%}}
+@keyframes packIdle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-3px)}}
 @keyframes themeReveal{from{clip-path:circle(0 at var(--reveal-x,50%) var(--reveal-y,50%))}to{clip-path:circle(var(--reveal-r,150%) at var(--reveal-x,50%) var(--reveal-y,50%))}}
 
 /* A theme change (revealFrom in feel/reveal.ts): the new page grows out of the tapped button as a
@@ -53,7 +57,7 @@
 /** The names, for the Motion foundations story. */
 /* rise pop badgeIn letterDrop crownDrop bump deltaUp ribbon sheetIn sheetOut navInPush navOutPush navInPop navOutPop fadeIn fadeOut toastIn
    livePulse matchGlow dangerGlow grow draw rowIn bob spin stamp wobble shake flicker blink wink earTwitch
-   themeReveal */
+   themeReveal peelIn slapIn foil packIdle */
 
 @media (prefers-reduced-motion: reduce) {
   *,

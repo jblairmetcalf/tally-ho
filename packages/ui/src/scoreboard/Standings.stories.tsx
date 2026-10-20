@@ -34,6 +34,20 @@ export const Movement: Story = {
     moveLabel: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)} since the last game`,
   },
 }
+/** With the Sticker Club: each name has its tally underneath, and every row opens a sticker book. */
+export const WithStickers: Story = {
+  args: {
+    subOf: (id: string) =>
+      ({
+        kate: '5 stickers · 7 to go',
+        blair: '2 stickers · 10 to go',
+        alder: '9 stickers · 3 to go',
+      })[id],
+    onPick: () => {},
+    pickLabel: (id: string) => `${id}: open sticker book`,
+    hint: 'Tap a name for their stickers',
+  },
+}
 /** Nobody has a win yet: empty bars, 0%. */
 export const NoWins: Story = {
   args: {

@@ -17,7 +17,7 @@ When goals conflict, the higher one wins. Every time.
 |---|---|---|---|
 | 1 | **Family data is never lost** | Writes persist on the phone first (`tallyho.v3` / `tallyho.outbox` + `tallyho.family` mirror), sync later; no hard deletes; finished games frozen | Never ship a sync or migration change without a test that proves old data survives; never drop an unconfirmed write to simplify the outbox |
 | 2 | **Game-night speed** | Scoring is instant, works offline, one-handed, few taps | Never add a confirm step to scoring a round (confirm only destructive actions, via `ConfirmButton`); never block a save on the network |
-| 3 | **Delight** | Sound, motion, haptics and confetti faithful to the prototype `docs/imports/Tally Ho!.html` | Never trade an offline save for an animation; an animation may not delay the next tap |
+| 3 | **Delight** | Sound, motion, haptics and confetti faithful to the prototypes `docs/imports/Tally Ho!.html` (and `Tally Ho Sticker Club.html` for stickers) | Never trade an offline save for an animation; an animation may not delay the next tap |
 | 4 | **Portfolio polish** | The demo, Storybook, docs, CI | Never let demo-only polish (samples, Storybook) pull Firebase or extra weight into the family's first paint |
 
 ## Quality bar (every change)

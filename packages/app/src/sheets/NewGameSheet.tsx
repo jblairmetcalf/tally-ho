@@ -1,4 +1,4 @@
-import { type Goal, isCompleted, targetFor } from '@tally/core'
+import { fitsRange, type Goal, isCompleted, isLimited, rangeForGame, targetFor } from '@tally/core'
 import { Button, cx, Eyebrow, Icon, Notice, Pill, PillRow, SheetTitle, TextInput } from '@tally/ui'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
@@ -119,30 +119,31 @@ export function NewGameSheet() {
   }
 
   const name = sel === 'other' ? other.trim() : sel
+  // Only games that set a limit beyond the floor of two say anything about it.
+  const range = name ? rangeForGame(presets, name) : null
+  const limit = range && isLimited(range) ? range : null
+  const fits = !range || fitsRange(range, players.length)
+  const tg = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
+  const counted = goal === 'rounds' && perPlayer
+  /**
+   * Why this game can't be dealt yet, or null when it can. Deal in stays disabled until then,
+   * and this line says why, so a disabled button never leaves anyone guessing.
+   */
+  const blocker = ((): string | null => {
+    if (!name) return sel === 'other' ? COPY.newGame.nameGame : COPY.newGame.pickGame
+    if (players.length < 2) return COPY.newGame.twoPlayers
+    if (range && !fitsRange(range, players.length))
+      return COPY.newGame.lineupWhy(name, range.min, range.max, players.length)
+    if (goal !== 'open' && !counted && !(tg && tg > 0))
+      return goal === 'score'
+        ? COPY.newGame.setTarget
+        : goal === 'wins'
+          ? COPY.newGame.setWins
+          : COPY.newGame.setRounds
+    return null
+  })()
   const start = () => {
-    if (!name) {
-      a.play('error')
-      setErr(sel === 'other' ? COPY.newGame.nameGame : COPY.newGame.pickGame)
-      return
-    }
-    if (players.length < 2) {
-      a.play('error')
-      setErr(COPY.newGame.twoPlayers)
-      return
-    }
-    const tg = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
-    const counted = goal === 'rounds' && perPlayer
-    if (goal !== 'open' && !counted && !(tg && tg > 0)) {
-      a.play('error')
-      setErr(
-        goal === 'score'
-          ? COPY.newGame.setTarget
-          : goal === 'wins'
-            ? COPY.newGame.setWins
-            : COPY.newGame.setRounds,
-      )
-      return
-    }
+    if (blocker || !name) return
     a.startGame({
       name,
       goal,
@@ -250,9 +251,13 @@ export function NewGameSheet() {
             maxLength={32}
             onChange={(e) => setOther(e.target.value)}
           />
-          <span className={cx('hint slot', sel === 'other' && 'off')}>
+          <span
+            className={cx('hint slot', sel === 'other' && 'off')}
+            // A game with a player limit says so, in coral while the line-up doesn't fit.
+            style={limit && !fits ? { color: 'var(--coral-text)' } : undefined}
+          >
             {sel && sel !== 'other'
-              ? COPY.newGame.timesPlayed(played.get(sel) ?? 0)
+              ? `${limit ? `${COPY.newGame.lineupRule(limit.min, limit.max ?? undefined)} ` : ''}${COPY.newGame.timesPlayed(played.get(sel) ?? 0)}`
               : COPY.newGame.pickHint}
           </span>
         </div>
@@ -296,7 +301,7 @@ export function NewGameSheet() {
       </div>
 
       <div className="sheet-cta">
-        {err && (
+        {err ? (
           <div
             className="hint shake"
             key={err}
@@ -305,8 +310,29 @@ export function NewGameSheet() {
           >
             {err}
           </div>
+        ) : (
+          // Why Deal in is disabled. Kept in the layout when there's nothing to say, so the
+          // button doesn't jump as the last piece falls into place.
+          <div
+            id="deal-why"
+            className="hint"
+            aria-live="polite"
+            style={{
+              fontSize: 14,
+              color: 'var(--muted)',
+              visibility: blocker ? 'visible' : 'hidden',
+            }}
+          >
+            {blocker ?? COPY.newGame.pickGame}
+          </div>
         )}
-        <Button variant="amber" block onClick={start}>
+        <Button
+          variant="amber"
+          block
+          onClick={start}
+          disabled={!!blocker}
+          aria-describedby={blocker && !err ? 'deal-why' : undefined}
+        >
           <span className="label">{name ? COPY.newGame.dealIn(name) : COPY.newGame.start}</span>
         </Button>
       </div>

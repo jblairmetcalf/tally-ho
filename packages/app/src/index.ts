@@ -16,11 +16,11 @@ export {
   memoryProvider,
   STORAGE_KEY,
 } from './provider'
-export { GameScreen } from './screens/GameScreen'
 export { HistoryScreen } from './screens/HistoryScreen'
 export { HomeScreen } from './screens/HomeScreen'
 export { EditRoundSheet } from './sheets/EditRoundSheet'
 export { EndGameSheet } from './sheets/EndGameSheet'
+export { GameBoard } from './sheets/GameBoard'
 export { GameDetailSheet } from './sheets/GameDetailSheet'
 export { NewGameSheet } from './sheets/NewGameSheet'
 export { SettingsSheet } from './sheets/SettingsSheet'

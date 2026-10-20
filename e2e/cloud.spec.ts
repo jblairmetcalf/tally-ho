@@ -17,7 +17,7 @@ import {
   syncBadge,
   waitForOfflineShell,
 } from './cloud-helpers'
-import { card, scoreRound, startPreset } from './helpers'
+import { card, gameSheet, scoreRound, startPreset } from './helpers'
 
 // Each test starts from a clean family in the emulators (tests in this file run in order).
 test.beforeEach(async () => {
@@ -51,7 +51,7 @@ test('a game started on one phone shows up live on another', async ({ browser, b
   await expect(resume).toContainText('Flip 7', { timeout: 20_000 })
   await expect(resume).toContainText('Round 2')
   await resume.click()
-  await expect(b.page.getByRole('heading', { level: 1, name: 'Flip 7' })).toBeVisible()
+  await expect(gameSheet(b.page, 'Flip 7')).toBeVisible()
   await expect(card(b.page, 'Blair').locator('.total')).toHaveText('20')
 
   // And keeps following it.
@@ -87,13 +87,13 @@ test('a round scored offline survives a reload and syncs when back online', asyn
   // Reload while offline: the round is still there (two rounds in, so "Round 3"), and the
   // Home badge says it's waiting.
   await a.page.reload()
-  const gameHeading = a.page.getByRole('heading', { level: 1, name: 'Flip 7' })
+  // A game in progress opens straight into its sheet; put it away to see Home.
+  const gameA = gameSheet(a.page, 'Flip 7')
+  await expect(gameA).toBeVisible({ timeout: 20_000 })
+  await expect(card(a.page, 'Blair').locator('.total')).toHaveText('35')
+  await gameA.getByRole('button', { name: 'Close' }).click()
+  await expect(gameA).toBeHidden()
   const resumeA = a.page.locator('button.resume')
-  await expect(gameHeading.or(resumeA)).toBeVisible({ timeout: 20_000 })
-  if (await gameHeading.isVisible()) {
-    await expect(card(a.page, 'Blair').locator('.total')).toHaveText('35')
-    await a.page.getByRole('button', { name: 'Back to home' }).click()
-  }
   await expect(resumeA).toContainText('Round 3')
   await expect(syncBadge(a.page, OFFLINE_OR_PENDING)).toBeVisible({ timeout: 20_000 })
 

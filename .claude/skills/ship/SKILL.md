@@ -16,7 +16,7 @@ You prepare; the user releases. Never `git push`, `pnpm deploy`, `pnpm deploy:st
    git diff --stat
    git log --oneline -5
    ```
-   Summarise by package (core / ui / app / web / sync / docs / tooling). Flag anything unexpected: files `pnpm format` touched, build output, `.env*`, `apps/web/public` images not made by `pnpm icons`.
+   Summarise by package (core / ui / app / web / sync / docs / tooling). Flag anything unexpected: files `pnpm format` touched, build output, `.env*`, `apps/web/public` images not made by `pnpm icons` (icons, splash) or `pnpm og` (the link preview).
 3. **Decide what else the release needs** (each is a line in the hand-off):
    - `firestore.rules` changed → the user must run `pnpm firebase:rules`. Rules and app ship together: deploy rules **first** if the new app writes a field the old rules refuse; app first if the new rules refuse something old apps still write.
    - `packages/core/src/presets.ts` or samples changed → existing phones keep their data: demo users need **Settings › Reset demo**; the family record only seeds when empty, so new presets reach the family via Settings › Games.

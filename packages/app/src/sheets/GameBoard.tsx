@@ -23,8 +23,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
 
-/** The live scoreboard (or a just-finished game behind the victory overlay). */
-export function GameScreen({ game: g }: { game: Game }) {
+/**
+ * The live scoreboard (or a just-finished game behind the victory overlay): the root page of the
+ * game sheet (`GameSheet`), whose header carries the game's name and the close button.
+ */
+export function GameBoard({ game: g }: { game: Game }) {
   const flash = useTally((s) => s.flash)
   const muted = useTally((s) => s.data.prefs.muted)
   const a = useActions()
@@ -71,18 +74,12 @@ export function GameScreen({ game: g }: { game: Game }) {
   }
 
   return (
-    <main className="app no-nav">
-      <header className="game-top">
-        <IconButton icon="back" label={COPY.back} onClick={a.backFromGame} />
-        <div className="game-title">
-          <h1 className="display" style={{ margin: 0 }}>
-            {g.name}
-          </h1>
-          <div className="hint" style={{ color: 'var(--muted)' }}>
-            {finished && g.winnerId
-              ? COPY.game.subDone(roster.nameOf(g.winnerId), g.rounds.length)
-              : COPY.game.subLive(nextRound, goalLabel(g))}
-          </div>
+    <>
+      <div className="game-top">
+        <div className="game-title hint">
+          {finished && g.winnerId
+            ? COPY.game.subDone(roster.nameOf(g.winnerId), g.rounds.length)
+            : COPY.game.subLive(nextRound, goalLabel(g))}
         </div>
         <IconButton
           icon={muted ? 'mute' : 'volume'}
@@ -95,10 +92,10 @@ export function GameScreen({ game: g }: { game: Game }) {
             icon="flag"
             label={COPY.endGameLabel}
             danger
-            onClick={() => a.openSheet({ type: 'end' })}
+            onClick={() => a.gamePage({ type: 'end' })}
           />
         )}
-      </header>
+      </div>
 
       {g.goal === 'score' && g.target != null && (
         <RaceTrack
@@ -196,10 +193,10 @@ export function GameScreen({ game: g }: { game: Game }) {
           wonLabel={COPY.game.wonRound}
           editable={!finished}
           freshKey={mine && !mine.edit ? mine.k : null}
-          onEdit={(idx) => a.openSheet({ type: 'round', idx })}
+          onEdit={(idx) => a.gamePage({ type: 'round', idx })}
           nameOf={roster.nameOf}
         />
       )}
-    </main>
+    </>
   )
 }

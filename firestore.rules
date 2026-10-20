@@ -65,6 +65,19 @@ service cloud.firestore {
       return d.goal != 'wins' || d.target is int;
     }
 
+    // How many can play: optional (older docs and clients don't send it), 2–12; maxPlayers may be
+    // null ("no limit") and is never below minPlayers when both are there.
+    function playerCount(n) {
+      return n is int && n >= 2 && n <= 12;
+    }
+
+    function playerLimits(d) {
+      return (!('minPlayers' in d) || playerCount(d.minPlayers))
+        && (!('maxPlayers' in d) || d.maxPlayers == null || playerCount(d.maxPlayers))
+        && (!('minPlayers' in d) || !('maxPlayers' in d) || d.maxPlayers == null
+            || d.maxPlayers >= d.minPlayers);
+    }
+
     function nullableStr(v) {
       return v == null || str(v, 1, 64);
     }
@@ -82,7 +95,8 @@ service cloud.firestore {
     function validPreset(d, id) {
       return d.keys().hasAll(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
         && d.keys().hasOnly([
-          'id', 'name', 'goal', 'target', 'lowWins', 'updatedAt', 'roundsPerPlayer'
+          'id', 'name', 'goal', 'target', 'lowWins', 'updatedAt', 'roundsPerPlayer',
+          'minPlayers', 'maxPlayers'
         ])
         && d.id == id
         && str(d.name, 1, 32)
@@ -91,6 +105,7 @@ service cloud.firestore {
         && goalTarget(d)
         && d.lowWins is bool
         && optBool(d, 'roundsPerPlayer')
+        && playerLimits(d)
         && stamp(d.updatedAt);
     }
 
@@ -103,7 +118,7 @@ service cloud.firestore {
         ])
         && d.keys().hasOnly([
           'id', 'name', 'goal', 'target', 'lowWins', 'playerIds', 'startedAt',
-          'completedAt', 'winnerId', 'updatedAt', 'rounds', 'startedBy', 'deletedAt', 'sample'
+          'completedAt', 'winnerId', 'updatedAt', 'rounds', 'startedBy', 'deletedAt'
         ])
         && d.id == id
         && str(d.name, 1, 40)
@@ -118,8 +133,7 @@ service cloud.firestore {
         && stamp(d.updatedAt)
         && d.rounds is map && d.rounds.size() <= 1000
         && optStr(d, 'startedBy')
-        && (!('deletedAt' in d) || stamp(d.deletedAt))
-        && optBool(d, 'sample');
+        && (!('deletedAt' in d) || stamp(d.deletedAt));
     }
 
     // A crowned game only takes a soft delete (or an undo of one).

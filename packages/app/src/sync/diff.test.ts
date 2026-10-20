@@ -174,6 +174,40 @@ describe('diff', () => {
     expect('roundsPerPlayer' in presetDoc(custom)).toBe(false)
   })
 
+  it('presets carry player limits: set, changed, "no limit" as null, and read back', () => {
+    const a = base()
+    const fox = a.presets.find((p) => p.id === 'the-fox-in-the-forest')!
+    expect(presetDoc(fox)).toMatchObject({ minPlayers: 2, maxPlayers: 2 })
+    const opened = {
+      ...a,
+      presets: a.presets.map((p) => (p.id === fox.id ? { ...p, maxPlayers: null } : p)),
+    }
+    // "No limit" is a value (null), not a missing key: the family's choice must stick. The pair
+    // always travels together, so the rules' max ≥ min check never meets another phone's half.
+    expect(diff(a, opened, 'kate')).toEqual([
+      { type: 'update', col: 'presets', id: fox.id, data: { minPlayers: 2, maxPlayers: null } },
+    ])
+    const flip = a.presets.find((p) => p.id === 'flip-7')!
+    const fewest = {
+      ...a,
+      presets: a.presets.map((p) => (p.id === flip.id ? { ...p, minPlayers: 3 } : p)),
+    }
+    expect(diff(a, fewest, 'kate')).toEqual([
+      { type: 'update', col: 'presets', id: flip.id, data: { minPlayers: 3, maxPlayers: DELETE } },
+    ])
+    const back = presetFrom(fox.id, {
+      ...presetDoc({ ...fox, maxPlayers: null }),
+      updatedAt: at(9),
+    })
+    expect(back).toMatchObject({ minPlayers: 2, maxPlayers: null })
+    // An old doc without either key still reads (the app falls back to the built-in default).
+    const { minPlayers: _a, maxPlayers: _b, ...old } = presetDoc(fox)
+    expect(presetFrom(fox.id, old)).not.toBeNull()
+    expect(presetFrom(fox.id, old)?.maxPlayers).toBeUndefined()
+    // A preset without limits writes no keys.
+    expect('minPlayers' in presetDoc(flip) || 'maxPlayers' in presetDoc(flip)).toBe(false)
+  })
+
   it('a "Who won?" game syncs its goal, and a winner round is one map field', () => {
     const g = game({ name: 'Uno', goal: 'wins', target: 1 })
     const [set] = diff(base(), base({ active: g }), 'kate')

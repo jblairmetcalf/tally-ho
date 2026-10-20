@@ -6,11 +6,11 @@
 import { type Browser, devices, expect, type Page } from '@playwright/test'
 import { freshStore, systemClock } from '../packages/core/src'
 
-export const PROJECT = 'demo-tally'
+const PROJECT = 'demo-tally'
 const AUTH = 'http://127.0.0.1:9099'
 const FIRESTORE = 'http://127.0.0.1:8080'
 
-export const PASSWORD = 'tally-ho-e2e'
+const PASSWORD = 'tally-ho-e2e'
 export const BLAIR = { email: 'blair@example.com', name: 'Blair', playerId: 'blair' }
 export const ALDER = { email: 'alder@example.com', name: 'Alder', playerId: 'alder' }
 export const STRANGER = { email: 'stranger@example.com' }
@@ -26,7 +26,7 @@ async function call(method: string, url: string, body?: unknown, headers = {}) {
 }
 
 /** Wipe every Firestore document and Auth account in the emulators. */
-export async function clearEmulators() {
+async function clearEmulators() {
   await call('DELETE', `${FIRESTORE}/emulator/v1/projects/${PROJECT}/databases/(default)/documents`)
   await call('DELETE', `${AUTH}/emulator/v1/projects/${PROJECT}/accounts`)
 }

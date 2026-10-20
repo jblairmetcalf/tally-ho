@@ -24,6 +24,7 @@ Tests prove a story renders and passes axe; only looking proves it looks right. 
    node scripts/shoot.mjs --theme light --width 390 screens-tallyapp--history
    ```
    It prints one PNG path per id × theme × width (`<id>-<theme>-<width>.png`, in the gitignored test-results folder unless `--out` says otherwise) and exits non-zero on a missing build, an unknown id, or page errors.
+   **App stories (Screens/*, Sheets/*) don't narrow:** they draw a fixed 390×844 phone frame (`packages/app/src/StoryFrames.tsx`), so their 320 PNGs are the 390 ones again. For a real 320 check, narrow the frame (inject a style setting the frame to 320 wide in a Playwright page) or say plainly that 320 wasn't checked for them.
 4. **Read every PNG** with the Read tool. Check:
    - both themes legible; small coloured text uses `-text` tokens (Daylight amber/jade/coral text dark enough);
    - nothing clipped, overlapping or wrapping badly at 320; long names ellipsize or wrap deliberately;

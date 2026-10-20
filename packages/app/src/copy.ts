@@ -7,13 +7,10 @@ const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 const signed = (n: number) => `${n > 0 ? '+' : ''}${n}`
 
 export const COPY = {
-  app: { name: 'Tally Ho!' },
-
   // Header controls (prototype + gear)
   soundOn: 'Turn sound on',
   soundOff: 'Turn sound off',
   settingsLabel: 'Settings',
-  back: 'Back to home',
   endGameLabel: 'End game',
   close: 'Close',
   /** New: top left on any page of a sheet past its first (Settings › Players › Edit Kate). */
@@ -152,6 +149,27 @@ export const COPY = {
     nameGame: 'Name the game to start.',
     pickGame: 'Pick a game to start.',
     twoPlayers: 'Add at least two players.',
+    /** New: games with a player limit (The Fox in the Forest, High Society). */
+    lineupRule: (min: number, max?: number) =>
+      max === min
+        ? `${min} players only.`
+        : max
+          ? `${min} to ${max} players.`
+          : `${min} or more players.`,
+    /** New: the player count in the game editors and the Games list. */
+    fewestPlayers: 'Fewest players',
+    mostPlayers: 'Most players',
+    anyNumber: 'Any',
+    playersHint: 'Leave Most blank for no limit. New game holds the deal until the line-up fits.',
+    playersShort: (min: number, max: number | null) =>
+      max === min ? `${min} players` : max ? `${min}–${max} players` : `${min}+ players`,
+    /** Why `count` players can't play `game` (New game's line, and Rematch's toast). */
+    lineupWhy: (game: string, min: number, max: number | null, count: number) =>
+      max === min
+        ? `${game} is for exactly ${min} players.`
+        : count < min
+          ? `${game} needs at least ${min} players.`
+          : `${game} is for up to ${max ?? min} players.`,
     setTarget: 'Set a score target, or choose open-ended.',
     setRounds: 'Set a round count, or choose open-ended.',
     setWins: 'Set how many wins it takes, or choose open-ended.',
@@ -364,11 +382,10 @@ export const COPY = {
 
   sheetLabel: {
     new: 'New game',
-    round: (n: number) => `Edit round ${n}`,
-    end: 'End game',
+    /** The game sheet is named by its page: the game's name, Edit round N, End game. */
+    game: (name: string) => name,
     detail: (name: string) => name,
     settings: 'Settings',
-    signin: 'Family sign in',
     install: 'Add to Home Screen',
   },
 } as const

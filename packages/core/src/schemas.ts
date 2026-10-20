@@ -31,6 +31,13 @@ export const PresetSchema = z.object({
   lowWins: z.boolean(),
   /** `rounds` games with one round per dealer (no default uses it now): the target follows the line-up. */
   roundsPerPlayer: z.boolean().optional(),
+  /**
+   * How many can play (2–12). Absent: the built-in default for this id, else 2. The editor
+   * always writes it, so a family's choice sticks.
+   */
+  minPlayers: z.number().int().min(2).max(12).optional(),
+  /** At most this many; `null` = no limit. Absent: the built-in default for this id, else none. */
+  maxPlayers: z.number().int().min(2).max(12).nullable().optional(),
 })
 export type Preset = z.infer<typeof PresetSchema>
 

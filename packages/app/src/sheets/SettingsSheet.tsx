@@ -1,4 +1,12 @@
-import { goalLabel, type Player, type Preset, type ThemePref } from '@tally/core'
+import {
+  goalLabel,
+  isLimited,
+  type Player,
+  type PlayerRange,
+  type Preset,
+  playerRangeOf,
+  type ThemePref,
+} from '@tally/core'
 import {
   Button,
   Chip,
@@ -30,6 +38,7 @@ import { useSession } from '../sync/session'
 import { ContactContent } from './ContactSheet'
 import { GoalFields, refill, type Targets, targetsFor } from './GoalFields'
 import { InstallGuide } from './InstallSheet'
+import { PlayerFields } from './PlayerFields'
 import { ShareContent } from './ShareSheet'
 import { SignInContent } from './SignInSheet'
 
@@ -257,6 +266,10 @@ function PresetEditor({ preset, onDeleted }: { preset: Preset; onDeleted: () => 
             save({ roundsPerPlayer: v })
           }}
         />
+        <PlayerFields
+          range={playerRangeOf(preset)}
+          onChange={(r) => save({ minPlayers: r.min, maxPlayers: r.max })}
+        />
       </div>
       <ConfirmButton
         label={C.deleteGame}
@@ -291,6 +304,7 @@ function GameCreator({ onDone }: { onDone: () => void }) {
   const [targets, setTargets] = useState<Targets>(() => targetsFor('score', 100))
   const [lowWins, setLowWins] = useState(false)
   const [perPlayer, setPerPlayer] = useState(false)
+  const [range, setRange] = useState<PlayerRange>({ min: 2, max: null })
   const trimmed = name.trim()
   const taken = presets.some((p) => p.name.trim().toLowerCase() === trimmed.toLowerCase())
   const target = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
@@ -308,6 +322,8 @@ function GameCreator({ onDone }: { onDone: () => void }) {
       target,
       lowWins: goal === 'wins' ? false : lowWins,
       ...(goal === 'rounds' && perPlayer ? { roundsPerPlayer: true } : {}),
+      minPlayers: range.min,
+      maxPlayers: range.max,
     })
     a.play('add')
     a.showToast(COPY.toast.gameAdded(trimmed))
@@ -363,6 +379,7 @@ function GameCreator({ onDone }: { onDone: () => void }) {
             setPerPlayer(v)
           }}
         />
+        <PlayerFields range={range} onChange={setRange} />
       </div>
       <div className="sheet-cta">
         <Button block icon="plus" iconSize={20} disabled={!ready} onClick={add}>
@@ -374,8 +391,11 @@ function GameCreator({ onDone }: { onDone: () => void }) {
 }
 
 /** The line under a game in Settings: its goal, or "One round per player". */
-const presetLabel = (p: Preset) =>
-  p.goal === 'rounds' && p.roundsPerPlayer ? COPY.newGame.perPlayer : goalLabel(p)
+const presetLabel = (p: Preset) => {
+  const ends = p.goal === 'rounds' && p.roundsPerPlayer ? COPY.newGame.perPlayer : goalLabel(p)
+  const range = playerRangeOf(p)
+  return isLimited(range) ? `${ends} · ${COPY.newGame.playersShort(range.min, range.max)}` : ends
+}
 
 /** Settings › Games: every game and how it ends; Add a game and each editor are pages pushed over it. */
 function GamesContent({ onEdit, onAdd }: { onEdit: (id: string) => void; onAdd: () => void }) {

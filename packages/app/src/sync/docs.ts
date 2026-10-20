@@ -54,6 +54,10 @@ export const presetDoc = (p: Preset): DocData =>
     lowWins: p.lowWins,
     // Optional: absent on older docs and on every preset that isn't one round per dealer.
     roundsPerPlayer: p.roundsPerPlayer,
+    // Optional: absent on older docs (the app falls back to the built-in default for the id).
+    // `maxPlayers: null` is a real value: "no limit", chosen in the editor.
+    minPlayers: p.minPlayers,
+    maxPlayers: p.maxPlayers,
   })
 
 export const roundDoc = (r: Round, by?: string): DocData =>
@@ -123,7 +127,7 @@ export function gameFrom(id: string, data: DocData): Game | null {
     const at = cmp(a.at ?? '', b.at ?? '')
     return at || naturalCompare(a.id ?? '', b.id ?? '')
   })
-  const { deletedAt: _d, updatedAt: _u, sample: _s, ...rest } = data
+  const { deletedAt: _d, updatedAt: _u, ...rest } = data
   const r = GameSchema.safeParse({ ...rest, id, rounds })
   return r.success ? r.data : null
 }

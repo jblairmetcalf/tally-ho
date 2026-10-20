@@ -194,6 +194,41 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('firestore.rules', () => {
       await assertFails(ref.set(preset({ goal: 'wins', target: 1.5 })))
     })
 
+    it('presets: player limits are optional, 2–12, max may be "no limit"; old docs still pass', async () => {
+      const fox = db(blair).doc('presets/the-fox-in-the-forest')
+      const base = {
+        id: 'the-fox-in-the-forest',
+        name: 'The Fox in the Forest',
+        goal: 'wins',
+        target: 1,
+      }
+      await assertSucceeds(fox.set(preset({ ...base, minPlayers: 2, maxPlayers: 2 })))
+      await assertSucceeds(fox.update({ maxPlayers: null, updatedAt: NOW })) // no limit
+      await assertSucceeds(fox.update({ minPlayers: 3, maxPlayers: 5, updatedAt: NOW }))
+      // An older client's doc without either key, and its edits, keep validating.
+      const hs = db(blair).doc('presets/high-society')
+      await assertSucceeds(hs.set(preset({ id: 'high-society', name: 'High Society' })))
+      await assertSucceeds(hs.update({ name: 'High Society!', updatedAt: NOW }))
+    })
+
+    it('presets: bad player limits are rejected', async () => {
+      const ref = db(blair).doc('presets/flip-7')
+      await assertFails(ref.set(preset({ minPlayers: 1 })))
+      await assertFails(ref.set(preset({ minPlayers: 13 })))
+      await assertFails(ref.set(preset({ minPlayers: 2.5 })))
+      await assertFails(ref.set(preset({ minPlayers: '2' })))
+      await assertFails(ref.set(preset({ maxPlayers: 1 })))
+      await assertFails(ref.set(preset({ maxPlayers: 13 })))
+      await assertFails(ref.set(preset({ minPlayers: 4, maxPlayers: 3 })))
+      await assertFails(ref.set(preset({ minPlayers: null })))
+      await assertFails(ref.set(preset({ maxPlayers: 2.5 })))
+      await assertFails(ref.set(preset({ maxPlayers: '3' })))
+      await assertFails(ref.set(preset({ maxPlayers: true })))
+      // Checked on the merged doc: a lone Most below a stored Fewest is refused.
+      await assertSucceeds(ref.set(preset({ minPlayers: 3 })))
+      await assertFails(ref.update({ maxPlayers: 2, updatedAt: NOW }))
+    })
+
     it('presets: malformed docs are rejected', async () => {
       const ref = db(blair).doc('presets/flip-7')
       await assertFails(ref.set(preset({ goal: 'fastest' })))
@@ -262,6 +297,8 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('firestore.rules', () => {
       await assertFails(ref.set(game({ id: 'nope' })))
       await assertFails(ref.set(game({ name: '' })))
       await assertFails(ref.set(game({ name: 'x'.repeat(41) })))
+      // Sample games never sync, so `sample` isn't a field the family record takes.
+      await assertFails(ref.set(game({ sample: true })))
       await assertFails(ref.set(game({ goal: 'fastest' })))
       await assertFails(ref.set(game({ target: 0 })))
       await assertFails(ref.set(game({ playerIds: ['kate'] })))

@@ -1,4 +1,4 @@
-import { Button, Icon, SheetTitle, TextInput } from '@tally/ui'
+import { Button, Icon, TextInput } from '@tally/ui'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useActions } from '../context'
 import { COPY } from '../copy'
@@ -26,19 +26,18 @@ export function takeWelcome(session: Session): string | null {
   return match && session.mode === 'family' ? session.member.name : null
 }
 
-export interface SignInSheetProps {
+export interface SignInPreviewProps {
   /** Stories only: start mid-flow (filled in, spinning, or showing an error). */
   preview?: { email?: string; password?: string; busy?: boolean; error?: SignInErrorCode }
 }
 
-export interface SignInContentProps extends SignInSheetProps {
+export interface SignInContentProps extends SignInPreviewProps {
   /** Signed in but the app hasn't re-keyed yet: leave this page or sheet (then it says welcome). */
   onDone: () => void
 }
 
 /**
- * Family sign in, the form: a page in Settings (the nav header titles it) or the body of the
- * standalone sign-in sheet. A real `<form>` so password managers and iOS autofill recognise it;
+ * Family sign in, the form: a page in Settings (the nav header titles it). A real `<form>` so password managers and iOS autofill recognise it;
  * Enter submits. While signing in the button spins and the fields hold still; a failure shakes
  * in a `role="alert"` line; success re-keys the app, whose new Home says welcome.
  */
@@ -176,17 +175,6 @@ export function SignInContent({ preview, onDone }: SignInContentProps) {
       >
         {C.forgot}
       </button>
-    </>
-  )
-}
-
-/** The standalone sign-in sheet (routed in SheetHost): its title row with close, then the form. */
-export function SignInSheet({ preview }: SignInSheetProps = {}) {
-  const a = useActions()
-  return (
-    <>
-      <SheetTitle title={C.title} onClose={() => a.closeSheet()} />
-      <SignInContent preview={preview} onDone={() => a.closeSheet(true)} />
     </>
   )
 }

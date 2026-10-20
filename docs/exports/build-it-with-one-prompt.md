@@ -67,6 +67,9 @@ Before writing any code:
 - Default games and how each ends: {{GAMES}}. Research each game's official rulebook (current
   edition) and pick its ending honestly (see "How a game ends"), then let my answers override the
   rulebook where the family plays differently. Record both in docs/DECISIONS.md.
+- Some games only work with certain numbers of players (a two-player game, three or more): each game
+  carries optional fewest / most players (2–12, most may be "no limit"), editable in Settings and
+  enforced in New game. A game with no limit set falls back to its built-in default.
 - Maker credit: {{MAKER_NAME}} at {{MAKER_URL}} (a "Say hi" page links there; no email).
 
 ## Priorities, in order (they break every tie)
@@ -99,6 +102,8 @@ A turbo monorepo (pnpm-workspace.yaml), packages consumed as TypeScript source (
   special.
 - open: ends when you say so; the leader is crowned.
 Every goal keeps its own target in the editor, so switching never turns 200 points into 200 rounds.
+New game's main button stays disabled, with a line above it saying why, until the game can be dealt
+(no game picked, too few or too many players for it, a missing target). Never a tap that fails.
 
 ## Design and feel
 - Tokens only (both themes, WCAG AA; small coloured text gets darker "-text" tokens in Daylight).
@@ -117,6 +122,14 @@ Every goal keeps its own target in the editor, so switching never turns 200 poin
   top; "Make it yours" (Players, Games, Appearance) in the middle; Family sign-in at the bottom; and
   a build line last ("{{APP_NAME}} · <commit> · <date> · Family sync on/off", from git at build time).
   It's the fastest way to tell which version a phone is running.
+- The game itself is a sheet over Home, not a screen: dealing in closes New game, then the game's
+  sheet rises (titled with the game's name, close top right); Edit round and End game are pages
+  pushed inside it. Close it and the game stays live; Resume and the nav button bring it back. An
+  open sheet is modal, so close it before raising anything that must be tappable over it (the
+  victory overlay).
+- Share and install QR codes in the brand's dress (dots, rounded corner eyes, the logo in the
+  middle, error correction H), but always dark on light in both themes, and decoded from a
+  screenshot to prove they still scan before shipping a change to them.
 - An install guide that pops up once, per platform (iPhone Safari's Share steps, Chromium's install
   prompt, a QR code on desktop).
 - Sound on iOS: Web Audio, unlocked on the first tap, with the audio session set to `playback` only
@@ -152,6 +165,9 @@ Every goal keeps its own target in the editor, so switching never turns 200 poin
   `vercel deploy --prebuilt --prod`. Firebase config is NEXT_PUBLIC_* in apps/web/.env.local, baked
   in at build time. Vercel dashboard env vars are NOT used (Vercel builds nothing); a build without
   .env.local is demo-only. Document this in the README.
+- A link preview that makes people want to tap: a 1200×630 card (rendered from HTML with the brand
+  fonts by a script, under ~300 KB so WhatsApp shows it) plus Open Graph and Twitter tags with
+  absolute URLs (a NEXT_PUBLIC_SITE_URL, defaulting to the production address). Not precached.
 - README: setup, the dev commands, push/deploy/update steps, Firebase setup step by step (Spark plan,
   members docs, rules deploy), install-on-iPhone steps, troubleshooting.
 
@@ -176,8 +192,8 @@ For every UI change, look at screenshots in both themes at 390 and 320 px wide.
   push / deploy / vercel / firebase deploy / reset --hard (judge commands, not text that mentions them).
 - scripts/check-harness.mjs (every path and script the docs mention exists) in CI, and
   scripts/drift-probes.mjs (mechanical rule checks: stories exist, no raw colours, no clock in core,
-  lazy Firebase, no hard deletes, dead copy/CSS/exports, deterministic stories, every test file
-  documented).
+  lazy Firebase, no hard deletes, dead copy/CSS/exports, no Daylight-only patches in component
+  CSS, deterministic stories, every test file documented).
 
 ## Autonomy
 Commit only when I ask. Never push, deploy or deploy Firestore rules: print the exact commands for me.
@@ -206,6 +222,11 @@ Each of these cost at least one round of fixes in the original build. Leave them
 - **Vercel env vars** look like the place for the Firebase config, but prebuilt deploys ignore them.
 - **Nested sheets** felt fragile on a phone; one sheet with a page stack is calmer and keeps a single close button.
 - **The build line in Settings** settles "is my phone on the new version?" in one glance.
+- **An open sheet is modal:** the victory overlay's buttons couldn't be tapped while the game's
+  sheet was open behind it. Hence: close the sheet as the overlay rises.
+- **Two phones editing the same game's player limits** could each send one half and merge into a
+  record the rules refuse. Fields the rules compare travel together.
+- **Branded QR codes** look scannable and sometimes aren't; decode a screenshot every time.
 - **A harness from the start** (rules, skills, reviewers, drift probes) keeps later sessions from undoing earlier decisions.
 
 ---

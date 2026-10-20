@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { fitsRange, playerRangeOf, rangeForGame } from './lineup'
 import { migrate } from './migrate'
+import { DEFAULT_PRESETS } from './presets'
 import { freshStore, makeSamples } from './samples'
 import type { Game } from './schemas'
 import {
@@ -153,6 +155,42 @@ describe('samples', () => {
       expect(g.completedAt).not.toBeNull()
     }
     expect(a[0]!.completedAt! > a[9]!.completedAt!).toBe(true)
+  })
+
+  it('seat only as many as a game allows (The Fox in the Forest: a rotating pair)', () => {
+    const fox = makeSamples(clock).filter((g) => g.name === 'The Fox in the Forest')
+    expect(fox.length).toBeGreaterThan(0)
+    for (const g of fox) expect(g.playerIds).toHaveLength(2)
+    expect(new Set(fox.flatMap((g) => g.playerIds)).size).toBe(3) // everyone gets a turn
+    for (const g of makeSamples(clock))
+      expect(fitsRange(rangeForGame(DEFAULT_PRESETS, g.name), g.playerIds.length)).toBe(true)
+  })
+})
+
+describe('player counts', () => {
+  const fox = { id: 'the-fox-in-the-forest' }
+  it('come from the preset, field by field falling back to the built-in default, then 2+', () => {
+    expect(playerRangeOf({ ...fox, minPlayers: 2, maxPlayers: 2 })).toEqual({ min: 2, max: 2 })
+    // A family record seeded before the fields existed still knows the Fox is for two.
+    expect(playerRangeOf(fox)).toEqual({ min: 2, max: 2 })
+    expect(playerRangeOf({ id: 'high-society' })).toEqual({ min: 3, max: null })
+    // The family's choice wins, including "no limit".
+    expect(playerRangeOf({ ...fox, maxPlayers: null })).toEqual({ min: 2, max: null })
+    expect(playerRangeOf({ id: 'yahtzee', minPlayers: 4 })).toEqual({ min: 4, max: null })
+    expect(playerRangeOf({ id: 'yahtzee' })).toEqual({ min: 2, max: null })
+    expect(playerRangeOf(null)).toEqual({ min: 2, max: null })
+    // A max below the min never makes a game unplayable.
+    expect(playerRangeOf({ id: 'x', minPlayers: 4, maxPlayers: 3 })).toEqual({ min: 4, max: 4 })
+  })
+
+  it('look a game up by name: the family preset, else a built-in, else 2+', () => {
+    const presets = [{ ...DEFAULT_PRESETS[0]!, id: 'own', name: 'Hearts', minPlayers: 3 }]
+    expect(rangeForGame(presets, ' hearts ')).toEqual({ min: 3, max: null })
+    expect(rangeForGame([], 'The Fox in the Forest')).toEqual({ min: 2, max: 2 })
+    expect(rangeForGame([], 'Flip 7')).toEqual({ min: 2, max: null })
+    expect(fitsRange({ min: 2, max: 2 }, 3)).toBe(false)
+    expect(fitsRange({ min: 3, max: null }, 2)).toBe(false)
+    expect(fitsRange({ min: 3, max: null }, 12)).toBe(true)
   })
 })
 

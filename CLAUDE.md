@@ -45,7 +45,7 @@ touching data. Use them; they encode how this repo checks its own work.
   `pnpm firebase:rules`): print the commands for the user. The guard hook enforces this.
 - Ports belong to the user (app :3100, Storybook :6116; other repos use others). Never leave a server
   running; tests use :3101/:3103/:3105 and stop their own.
-- Generated files (icons, splash screens, build output, the lockfile) and `.env*` are off limits:
+- Generated files (icons, splash screens, the link preview, build output, the lockfile) and `.env*` are off limits:
   regenerate or ask. Hooks format every edited file and block the protected ones.
 - No new dependencies without saying so.
 

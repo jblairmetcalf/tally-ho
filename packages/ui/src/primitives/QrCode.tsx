@@ -42,24 +42,37 @@ function useQrMatrix(value: string | null): QrMatrix | 'failed' | null {
   return done && done.value === value ? done.matrix : null
 }
 
-/** One SVG path for every dark module, a horizontal run at a time (crisp at any size). */
-export function qrPath({ data }: QrMatrix): string {
+/** True inside one of the three 7×7 finder patterns (the corner "eyes"), drawn on their own. */
+export function inEye(size: number, x: number, y: number): boolean {
+  const near = (v: number) => v < 7
+  const far = (v: number) => v >= size - 7
+  return (near(x) && near(y)) || (far(x) && near(y)) || (near(x) && far(y))
+}
+
+/** The dot radius, in modules: round, with a hair of space between neighbours. */
+const DOT = 0.43
+
+/**
+ * One SVG path with a round dot for every dark module outside the eyes. Each dot is a circle
+ * of two arcs, so the whole code is a single element however many modules it has.
+ */
+export function qrDots({ size, data }: QrMatrix): string {
   let d = ''
   data.forEach((row, y) => {
-    let x = 0
-    while (x < row.length) {
-      if (!row[x]) {
-        x++
-        continue
-      }
-      let run = 1
-      while (row[x + run]) run++
-      d += `M${x} ${y}h${run}v1h-${run}z`
-      x += run
-    }
+    row.forEach((dark, x) => {
+      if (!dark || inEye(size, x, y)) return
+      d += `M${x + 0.5 - DOT} ${y + 0.5}a${DOT} ${DOT} 0 1 0 ${DOT * 2} 0a${DOT} ${DOT} 0 1 0 -${DOT * 2} 0`
+    })
   })
   return d
 }
+
+/** The top-left corner of each eye: top left, top right, bottom left. */
+export const eyesOf = (size: number): [number, number][] => [
+  [0, 0],
+  [size - 7, 0],
+  [0, size - 7],
+]
 
 /** Modules of quiet zone around the code, inside the plate. */
 const QUIET = 3
@@ -81,8 +94,10 @@ export interface QrCodeProps {
 }
 
 /**
- * A scannable QR code: ink modules on a white plate with a rounded quiet zone. Always dark on
- * light, in both themes, because that's what phone cameras read best.
+ * A scannable QR code in the brand's dress: ink dots on a cream plate in a jade ring, rounded
+ * eyes in deep jade with a deep-fox centre, and the fox in the middle. Always dark on light, in
+ * both themes (that's what phone cameras read best); the eyes use the deep tones so they still
+ * read as dark. Error correction H lets the badge cover the centre.
  */
 export function QrCode({ value, label, size = 208, badge = false, matrix }: QrCodeProps) {
   const lazy = useQrMatrix(matrix === undefined ? value : null)
@@ -92,13 +107,14 @@ export function QrCode({ value, label, size = 208, badge = false, matrix }: QrCo
   return (
     <div className="qr" style={{ '--qr-size': `${size}px` } as CSSProperties}>
       {m ? (
-        <svg
-          role="img"
-          aria-label={label}
-          viewBox={`${-QUIET} ${-QUIET} ${span} ${span}`}
-          shapeRendering="crispEdges"
-        >
-          <path d={qrPath(m)} fill="currentColor" />
+        <svg role="img" aria-label={label} viewBox={`${-QUIET} ${-QUIET} ${span} ${span}`}>
+          <path className="qr-dots" d={qrDots(m)} />
+          {eyesOf(m.size).map(([x, y]) => (
+            <g key={`${x}-${y}`}>
+              <rect className="qr-eye" x={x + 0.5} y={y + 0.5} width={6} height={6} rx={1.9} />
+              <rect className="qr-pupil" x={x + 2} y={y + 2} width={3} height={3} rx={0.9} />
+            </g>
+          ))}
         </svg>
       ) : failed ? (
         // No encoder (offline before it was cached): the address itself, so there's a way on.

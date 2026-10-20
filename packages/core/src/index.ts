@@ -1,3 +1,4 @@
+export * from './lineup'
 export * from './migrate'
 export * from './presets'
 export * from './samples'

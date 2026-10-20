@@ -17,16 +17,13 @@ import { createEffects } from './effects'
 import { useThemePref, useWakeLock } from './hooks'
 import { readInstall } from './install'
 import { type DataProvider, localProvider } from './provider'
-import { GameScreen } from './screens/GameScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { HomeScreen } from './screens/HomeScreen'
-import { EditRoundSheet } from './sheets/EditRoundSheet'
-import { EndGameSheet } from './sheets/EndGameSheet'
 import { GameDetailSheet } from './sheets/GameDetailSheet'
+import { GameSheet } from './sheets/GameSheet'
 import { InstallSheet } from './sheets/InstallSheet'
 import { NewGameSheet } from './sheets/NewGameSheet'
 import { SettingsSheet } from './sheets/SettingsSheet'
-import { SignInSheet } from './sheets/SignInSheet'
 import {
   createTallyStore,
   reactToRejection,
@@ -141,8 +138,9 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
   const a = useActions()
   const theme = useThemePref(prefs.theme, !embedded)
 
-  const shown = active ?? finished
-  const inGame = screen === 'game' && !!shown
+  const sheet = useTally((s) => s.sheet)
+  // The game is a sheet over Home: the wake lock and the toast's place follow it.
+  const inGame = sheet?.type === 'game' && !!(active ?? finished)
 
   useWakeLock(!embedded && inGame && prefs.wakeLock)
   useInstallHint(!embedded)
@@ -175,24 +173,16 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
 
   return (
     <ThemeRoot theme={theme} fixed={!embedded} className="min-h-dvh">
-      {inGame && shown ? (
-        <GameScreen game={shown} />
-      ) : screen === 'history' ? (
-        <HistoryScreen />
-      ) : (
-        <HomeScreen />
-      )}
+      {screen === 'history' ? <HistoryScreen /> : <HomeScreen />}
 
-      {!inGame && (
-        <BottomNav
-          screen={screen === 'history' ? 'history' : 'home'}
-          live={!!active}
-          foxKey={foxWink}
-          onHome={() => a.go('home', 'tap')}
-          onHistory={() => a.go('history', 'tap')}
-          onFab={a.fab}
-        />
-      )}
+      <BottomNav
+        screen={screen}
+        live={!!active}
+        foxKey={foxWink}
+        onHome={() => a.go('home', 'tap')}
+        onHistory={() => a.go('history', 'tap')}
+        onFab={a.fab}
+      />
 
       <SheetHost />
 
@@ -236,21 +226,17 @@ function useInstallHint(enabled: boolean) {
   }, [showing, store])
 }
 
-function labelOf(spec: SheetSpec | null, gameName: (id: string) => string): string {
+function labelOf(spec: SheetSpec | null, gameName: (id: string) => string, live: string): string {
   if (!spec) return ''
   switch (spec.type) {
     case 'new':
       return COPY.sheetLabel.new
-    case 'round':
-      return COPY.sheetLabel.round(spec.idx + 1)
-    case 'end':
-      return COPY.sheetLabel.end
+    case 'game':
+      return COPY.sheetLabel.game(live)
     case 'detail':
       return COPY.sheetLabel.detail(gameName(spec.id))
     case 'settings':
       return COPY.sheetLabel.settings
-    case 'signin':
-      return COPY.sheetLabel.signin
     case 'install':
       return COPY.sheetLabel.install
   }
@@ -262,6 +248,8 @@ function SheetHost() {
   const sheetKey = useTally((s) => s.sheetKey)
   const games = useTally((s) => s.data.games)
   const active = useTally((s) => s.data.active)
+  const finished = useTally((s) => s.finished)
+  const live = active ?? finished
   const a = useActions()
   const last = useRef<SheetSpec | null>(sheet)
   if (sheet) last.current = sheet
@@ -272,21 +260,18 @@ function SheetHost() {
 
   let content: React.ReactNode = null
   if (spec?.type === 'new') content = <NewGameSheet />
-  else if (spec?.type === 'round' && active?.rounds[spec.idx])
-    content = <EditRoundSheet game={active} idx={spec.idx} />
-  else if (spec?.type === 'end' && active) content = <EndGameSheet game={active} />
+  else if (spec?.type === 'game' && live) content = <GameSheet game={live} page={spec.page} />
   else if (detail && isCompleted(detail)) content = <GameDetailSheet game={detail} />
   else if (spec?.type === 'settings') content = <SettingsSheet />
-  else if (spec?.type === 'signin') content = <SignInSheet />
   else if (spec?.type === 'install') content = <InstallSheet />
 
   return (
     <Sheet
       open={!!sheet}
       onClose={() => a.closeSheet()}
-      // Settings is a stack of pages (SheetNav): full height, named by the page on top.
-      nav={spec?.type === 'settings'}
-      label={labelOf(spec, (id) => games.find((g) => g.id === id)?.name ?? '')}
+      // Settings and the game are stacks of pages (SheetNav): full height, named by the page on top.
+      nav={spec?.type === 'settings' || spec?.type === 'game'}
+      label={labelOf(spec, (id) => games.find((g) => g.id === id)?.name ?? '', live?.name ?? '')}
     >
       <div key={sheetKey} style={{ display: 'contents' }}>
         {content}

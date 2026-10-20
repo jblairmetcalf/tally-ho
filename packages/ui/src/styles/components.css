@@ -99,9 +99,6 @@
     flex-direction: column;
     gap: 16px;
   }
-  .app.no-nav {
-    padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
-  }
 
   /* ---------- type ---------- */
   .display {
@@ -782,15 +779,11 @@
     align-items: center;
     gap: 10px;
   }
+  /* the round and goal under the game sheet's title, beside sound and End game */
   .game-title {
     flex: 1;
     min-width: 0;
-  }
-  .game-title .display {
-    font-size: 28px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--muted);
   }
   .track {
     display: flex;
@@ -1676,7 +1669,7 @@
     font-size: 15px;
   }
 
-  /* SignInSheet */
+  /* a label stacked over its field: the sign-in form, the player-count fields */
   .field-label {
     display: flex;
     flex-direction: column;
@@ -2123,23 +2116,37 @@
     margin-inline: auto;
   }
 
-  /* QrCode: ink modules on a white plate, a rounded quiet zone, the fox in the middle */
+  /* QrCode: ink dots on a cream plate in a jade ring, a rounded quiet zone, the fox in the middle */
   .qr {
     position: relative;
     width: min(var(--qr-size, 208px), 100%);
     aspect-ratio: 1;
     margin-inline: auto;
-    padding: 6px;
-    border-radius: 22px;
+    padding: 8px;
+    border-radius: 26px;
     background: var(--qr-plate);
-    color: var(--ink);
-    border: 1.5px solid var(--line);
-    box-shadow: 0 4px 0 var(--drop-soft);
+    color: var(--qr-ink);
+    /* the app icon's jade ring, pressed into the page like a button */
+    border: 4px solid var(--jade);
+    box-shadow:
+      0 5px 0 var(--jade-deep),
+      0 14px 34px var(--drop-soft);
   }
   .qr svg {
     display: block;
     width: 100%;
     height: 100%;
+  }
+  .qr-dots {
+    fill: var(--qr-ink);
+  }
+  .qr-eye {
+    fill: none;
+    stroke: var(--qr-eye);
+    stroke-width: 1;
+  }
+  .qr-pupil {
+    fill: var(--qr-pupil);
   }
   .qr-wait {
     display: block;
@@ -2169,7 +2176,9 @@
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background: var(--ink);
-    box-shadow: 0 0 0 4px var(--qr-plate);
+    box-shadow:
+      0 0 0 4px var(--qr-plate),
+      0 0 0 6px var(--jade);
     display: grid;
     place-items: center;
   }

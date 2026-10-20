@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import type { Store, ThemePref } from '@tally/core'
-import { Sheet } from '@tally/ui'
+import { Sheet, SheetNav } from '@tally/ui'
 import { useState } from 'react'
 import { TallyContext } from './context'
 import { COPY } from './copy'
 import { createEffects } from './effects'
 import { fixedClock, SCENARIOS, withTheme } from './fixtures'
 import { memoryProvider } from './provider'
-import { SignInSheet, type SignInSheetProps } from './sheets/SignInSheet'
+import { SignInContent, type SignInPreviewProps } from './sheets/SignInSheet'
 import { createTallyStore, type UiState } from './store'
 import {
   demoSession,
@@ -162,15 +162,6 @@ export const SettingsDemoOnlyBuild: Story = {
   args: { store: SCENARIOS.firstRun, session: () => demoSession(), ui: settings },
 }
 
-/** The standalone sign-in sheet (its own title row and close); in Settings it's a page. */
-export const SignIn: Story = {
-  args: {
-    store: SCENARIOS.firstRun,
-    session: demo,
-    ui: { sheet: { type: 'signin' }, sheetKey: 1 },
-  },
-}
-
 /** New game while a game is on: "Flip 7 is in progress · started by Blair" and Resume. */
 export const NewGameWhileLive: Story = {
   args: {
@@ -182,12 +173,17 @@ export const NewGameWhileLive: Story = {
 
 /** The game screen's round log: a tiny initial for whoever scored each round. */
 export const GameScoredBy: Story = {
-  args: { store: familyGame, session: () => family('synced'), ui: { screen: 'game' } },
+  args: {
+    store: familyGame,
+    session: () => family('synced'),
+    ui: { sheet: { type: 'game' }, sheetKey: 1 },
+  },
 }
 
-/* ---------- the sign-in sheet mid-flow (one theme, toolbar switches) ---------- */
+/* ---------- the sign-in page mid-flow (one theme, toolbar switches) ---------- */
 
-function SignInAt(props: SignInSheetProps) {
+/** Family sign in as the app shows it: a page in Settings' sheet (here alone, so no back). */
+function SignInAt(props: SignInPreviewProps) {
   const [store] = useState(() =>
     createTallyStore(memoryProvider(SCENARIOS.firstRun()), fixedClock, {
       effects: createEffects({ silent: true, scroll: false }),
@@ -197,8 +193,20 @@ function SignInAt(props: SignInSheetProps) {
   return (
     <SessionContext.Provider value={api}>
       <TallyContext.Provider value={store}>
-        <Sheet open label={COPY.sheetLabel.signin} onClose={() => {}}>
-          <SignInSheet {...props} />
+        <Sheet open nav label={COPY.signIn.title} onClose={() => {}}>
+          <SheetNav
+            pages={[
+              {
+                key: 'signin',
+                title: COPY.signIn.title,
+                content: <SignInContent {...props} onDone={() => {}} />,
+              },
+            ]}
+            onBack={() => {}}
+            onClose={() => {}}
+            backLabel={COPY.sheetBack}
+            closeLabel={COPY.close}
+          />
         </Sheet>
       </TallyContext.Provider>
     </SessionContext.Provider>

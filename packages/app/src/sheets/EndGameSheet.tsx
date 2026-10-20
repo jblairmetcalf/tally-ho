@@ -1,8 +1,9 @@
 import { type Game, leadersOf, totalsOf } from '@tally/core'
-import { Button, Chip, ConfirmButton, SheetTitle } from '@tally/ui'
+import { Button, Chip, ConfirmButton } from '@tally/ui'
 import { useActions, useRoster } from '../context'
 import { COPY } from '../copy'
 
+/** End the game: a page pushed inside the game sheet. Keep playing goes back to the scoreboard. */
 export function EndGameSheet({ game: g }: { game: Game }) {
   const a = useActions()
   const roster = useRoster()
@@ -12,7 +13,6 @@ export function EndGameSheet({ game: g }: { game: Game }) {
   const tie = l.length > 1 || !g.rounds.length || !first
   return (
     <>
-      <SheetTitle title={COPY.endGame.title(g.name)} onClose={() => a.closeSheet()} />
       {tie ? (
         <p className="hint" style={{ margin: 0, fontSize: 14.5, color: 'var(--muted)' }}>
           {g.rounds.length && first
@@ -40,7 +40,7 @@ export function EndGameSheet({ game: g }: { game: Game }) {
           ))}
         </div>
       )}
-      <Button variant="ghost" block onClick={() => a.closeSheet()}>
+      <Button variant="ghost" block onClick={a.gameBack}>
         {COPY.endGame.keepPlaying}
       </Button>
       <ConfirmButton

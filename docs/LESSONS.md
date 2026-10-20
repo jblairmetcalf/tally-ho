@@ -18,6 +18,8 @@ Gotchas this repo has already paid for, each as symptom → cause → rule. Read
 
 | Symptom | Cause | Fix / rule |
 |---|---|---|
+| Buttons on an overlay can't be tapped or reached by keyboard while a sheet is open (the victory overlay over the game sheet) | Radix Dialog is modal: it sets `pointer-events: none` on everything outside it and traps focus | Close the sheet before raising anything that must be interactive over it (`celebrate()` in `store.ts`). e2e caught it as click timeouts |
+| A restyled QR code looks fine but might not scan | Colour, dots and rounded eyes all eat into what a camera can read | Decode screenshots with macOS's own reader: a JXA script calling `CIDetector` (`osascript -l JavaScript`); Swift may not match the SDK, and Playwright's Chromium has no `BarcodeDetector`. Check both themes at full, half and 30% size |
 | Component button styles ignored (padding, background) | `.tally button { … }` resets have higher specificity than `.btn` | Wrap base resets in `:where()` (`:where(.tally) :where(button)`), so they have zero specificity |
 
 ## Storybook

@@ -21,7 +21,7 @@ If a prototype counterpart exists in `docs/imports/`, port its markup, class nam
 ## 2. The component
 
 - `packages/ui/src/<area>/<Name>.tsx`: named export, typed `<Name>Props` with JSDoc on non-obvious props, a short doc comment on the component.
-- Use existing classes from `packages/ui/src/styles/components.css` and Tailwind utilities on tokens (`bg-surface`, `text-muted`, `rounded-card`). Player colours: `paletteVar(i)`. Use `cx` for conditional classes.
+- Use existing classes from `packages/ui/src/styles/components.css` and Tailwind utilities on tokens (`bg-surface`, `text-muted`; only those mapped in `tokens.css`'s `@theme` block, else `var(--token)` in CSS). Player colours: `paletteVar(i)`. Use `cx` for conditional classes.
 - Strings arrive as props (labels, aria-labels). Callbacks for anything that should make a sound; the caller plays it.
 - Interactive: a real `<button>`/`<input>`, ≥ 44px target, accessible name, visible focus, keyboard path (`rovingKey` for radio groups).
 

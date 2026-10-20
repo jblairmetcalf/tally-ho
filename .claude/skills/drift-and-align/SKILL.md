@@ -17,7 +17,7 @@ Two kinds of drift, two directions of repair:
 ## Phase 0: baseline (read-only)
 1. `git status --short` and `git log --oneline -5`: note a dirty tree; don't mix this work with someone else's uncommitted changes without saying so.
 2. `pnpm check:harness`: dead paths, unknown scripts, bad frontmatter, rule globs that match nothing.
-3. `node scripts/drift-probes.mjs`: the mechanical rule checks (stories, barrels, raw colours, clock/React in core, `next/*` in packages, lazy Firebase, hard deletes, dead copy/CSS/exports/deps, rule coverage, suppressions, TODOs). Keep its counts: they're the "before".
+3. `node scripts/drift-probes.mjs`: the mechanical rule checks (stories, barrels, raw colours, ui copy, clock/React in core, `next/*` in packages, lazy Firebase, sounds in ui, hard deletes, dead copy/CSS/exports/deps, Daylight patches, story determinism, every test file named in TESTING.md, rule coverage, suppressions, TODOs; `pnpm drift` prints the full list). Keep its counts: they're the "before".
 4. `pnpm lint`, `pnpm typecheck`, `pnpm test`: know whether you start green. If red, report that first; don't align on top of a broken build.
 
 ## Phase 1: drift audit (read-only)

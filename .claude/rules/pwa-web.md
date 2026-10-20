@@ -19,7 +19,7 @@ Context: README.md ("Ship it"), docs/ARCHITECTURE.md.
 - **Deploys are prebuilt**: `pnpm deploy` builds locally, `scripts/vercel-output.mjs` packages it, `vercel deploy --prebuilt --prod` uploads it. Vercel builds nothing. Deploying is the user's call: print the command, don't run it.
 - **`TALLY_DIST_DIR`** sends the export to `out-cloud` for the emulator e2e; build-phase only. Don't hardcode `out` elsewhere.
 - **Scripts are Node ESM run from the repo root** (`node scripts/<name>.mjs`, `tsx scripts/icons.ts`), with a header comment giving usage. They must pass `pnpm lint` (Biome).
-- **`scripts/serve.mjs` is the static server for tests**; `scripts/shoot.mjs` reuses its logic on a free port and always closes it.
+- **`scripts/serve.mjs` is the static server for tests**; `scripts/shoot.mjs` runs its own copy on a free port and always closes it. Both keep a MIME table: a new file type (`.jpg` came with the link preview) goes in both.
 - **Ports**: 3100 dev, 6116 storybook, 3101/3103/3105 test builds. Keep them distinct so a test never hits a dev server.
 - **Viewport is `viewportFit: 'cover'`, status bar `black-translucent`**: layouts must respect `env(safe-area-inset-*)`.
 - **No new dependencies** in `apps/web` without saying so.

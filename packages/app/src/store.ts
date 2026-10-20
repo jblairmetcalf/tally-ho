@@ -2,17 +2,21 @@ import {
   type Clock,
   DEFAULT_PRESETS,
   evaluate,
+  fitsRange,
   freshStore,
   type Game,
   hash,
   leaderOf,
   leadersOf,
   MATCH_POINT,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
   PALETTE_SIZE,
   type Player,
   type Prefs,
   type Preset,
   parseScore,
+  rangeForGame,
   type Store,
   slug,
   systemClock,
@@ -24,15 +28,18 @@ import { COPY } from './copy'
 import { createEffects, type Effects } from './effects'
 import type { DataProvider } from './provider'
 
-export type Screen = 'home' | 'history' | 'game'
+/** The tabs. The game itself is a sheet over them (`{ type: 'game' }`), not a screen. */
+export type Screen = 'home' | 'history'
+
+/** A page pushed inside the game sheet: editing a round, or ending the game. */
+export type GamePage = { type: 'round'; idx: number } | { type: 'end' }
 
 export type SheetSpec =
   | { type: 'new' }
-  | { type: 'round'; idx: number }
-  | { type: 'end' }
+  /** The live (or just-finished) game, with Edit round / End game pushed inside it. */
+  | { type: 'game'; page?: GamePage }
   | { type: 'detail'; id: string }
   | { type: 'settings' }
-  | { type: 'signin' }
   /** How to add Tally Ho! to the Home Screen (shown once by itself, and from Settings). */
   | { type: 'install' }
 
@@ -46,6 +53,12 @@ export interface Flash {
 
 export type BannerTone = 'jade' | 'amber' | 'coral'
 
+/**
+ * Starting a game from New game: that sheet slides away (Sheet's 290ms close) and the game's
+ * sheet rises once it's gone. Not a prototype timing (there the game was a screen).
+ */
+export const GAME_AFTER_MS = 300
+
 export interface UiState {
   screen: Screen
   /** The open sheet. The Sheet keeps itself mounted to play its closing animation. */
@@ -57,7 +70,10 @@ export interface UiState {
   flash: Flash | null
   /** The game the victory overlay is celebrating. */
   victory: Game | null
-  /** A just-finished game still on screen behind the overlay. */
+  /**
+   * The game that just finished, still on its sheet for the beat before the victory overlay
+   * rises (the sheet goes as it does).
+   */
   finished: Game | null
   /** Bumped after each round so the nav fox twitches. */
   foxWink: number
@@ -82,11 +98,14 @@ export interface TallyActions {
   showToast(msg: string): void
   showBanner(text: string, tone?: BannerTone): void
   toggleMute(): void
-  /** Resume the live game (Home card, nav FAB). */
+  /** Resume the live game (Home card, nav FAB, New game's notice): its sheet slides up. */
   resume(): void
   /** The nav FAB: back to the game, or deal a new one. */
   fab(): void
-  backFromGame(): void
+  /** Push a page inside the game sheet (Edit round, End game). */
+  gamePage(page: GamePage): void
+  /** Back from that page to the scoreboard. */
+  gameBack(): void
   victoryDone(): void
 
   startGame(cfg: NewGameConfig): void
@@ -167,6 +186,22 @@ export function uniqueId(base: string, taken: Iterable<string>): string {
 }
 
 /** The first palette slot no current player wears, else a stable hash slot (prototype). */
+/**
+ * Player limits as the rules accept them: whole numbers 2–12, the most never below the fewest,
+ * `null` for no limit. Untouched (absent) stays absent, so the built-in default still applies.
+ */
+function limits(p: Preset): Pick<Preset, 'minPlayers' | 'maxPlayers'> {
+  const clamp = (n: number) => Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Math.round(n)))
+  const min = p.minPlayers == null ? undefined : clamp(p.minPlayers)
+  const max =
+    p.maxPlayers === undefined
+      ? undefined
+      : p.maxPlayers === null
+        ? null
+        : Math.max(min ?? MIN_PLAYERS, clamp(p.maxPlayers))
+  return { minPlayers: min, maxPlayers: max }
+}
+
 function nextColor(players: Player[], name: string): number {
   const used = new Set(players.filter((p) => !p.archived).map((p) => p.color))
   for (let i = 0; i < PALETTE_SIZE; i++) if (!used.has(i)) return i
@@ -205,9 +240,44 @@ export function createTallyStore(
       set((s) => ({ sheet: spec, sheetKey: s.sheetKey + 1 }))
     }
     const closeSheet = (silent = false) => {
-      if (!get().sheet) return
+      const was = get().sheet
+      if (!was) return
       if (!silent) fx.play('close')
-      set({ sheet: null })
+      // Leaving the game drops the flash too, so coming back doesn't replay the last round.
+      set(was.type === 'game' ? { sheet: null, finished: null, flash: null } : { sheet: null })
+    }
+    const inGame = () => get().sheet?.type === 'game'
+    /** From a page inside the game sheet back to the scoreboard (the store's own moves: silent). */
+    const toScoreboard = () => {
+      if (inGame()) set({ sheet: { type: 'game' } })
+      else closeSheet(true)
+    }
+    /**
+     * Bring the game up in its sheet. From another sheet (New game), that one slides away first
+     * and the game rises once it's gone (GAME_AFTER_MS); already in the game (a rematch), the
+     * scoreboard just starts over in place. Returns how long until the game is up.
+     */
+    const presentGame = (cue: SfxCue): number => {
+      if (inGame()) {
+        if (cue !== 'open') fx.play(cue)
+        set((s) => ({ sheet: { type: 'game' }, sheetKey: s.sheetKey + 1 }))
+        return 0
+      }
+      if (get().sheet) {
+        closeSheet(true)
+        fx.play(cue)
+        // Unless something else came up in the meantime.
+        fx.later(GAME_AFTER_MS, () => {
+          if (!get().sheet && data().active) openSheet({ type: 'game' }, true)
+        })
+        return GAME_AFTER_MS
+      }
+      if (cue === 'open') openSheet({ type: 'game' })
+      else {
+        fx.play(cue)
+        openSheet({ type: 'game' }, true)
+      }
+      return 0
     }
 
     function finish(g: Game, winnerId: string) {
@@ -215,13 +285,28 @@ export function createTallyStore(
       g.completedAt = new Date(clock.now()).toISOString()
       setData((d) => ({ ...d, active: null, games: [g, ...d.games.filter((x) => x.id !== g.id)] }))
       set({ finished: g })
-      fx.later(500, () => {
-        set({ victory: g })
-        fx.play('win')
-      })
+      fx.later(500, () => celebrate(g))
+    }
+
+    /**
+     * The victory overlay. The game's sheet slides away as it rises: an open sheet is modal (it
+     * holds focus and taps), so the overlay's Rematch and Done must not sit outside it.
+     */
+    function celebrate(g: Game) {
+      closeSheet(true)
+      set({ victory: g })
+      fx.play('win')
     }
 
     function startGame(cfg: NewGameConfig) {
+      // New game won't offer it; Rematch on an older game might (a three-player Fox from before
+      // the limit). Never a silent no: say why.
+      const range = rangeForGame(data().presets, cfg.name)
+      if (!fitsRange(range, cfg.playerIds.length)) {
+        fx.play('error')
+        showToast(COPY.newGame.lineupWhy(cfg.name, range.min, range.max, cfg.playerIds.length))
+        return
+      }
       const d = data()
       const taken = new Set([...d.games.map((x) => x.id), ...(d.active ? [d.active.id] : [])])
       let id = `g${clock.now()}`
@@ -246,11 +331,9 @@ export function createTallyStore(
         games: x.hasSamples ? x.games.filter((y) => !y.sample) : x.games,
         hasSamples: false,
       }))
-      closeSheet(true)
       set({ victory: null, finished: null, flash: null })
-      go('game')
-      fx.play('start')
-      fx.later(250, () => showBanner(COPY.banner.start(cfg.name), 'amber'))
+      const up = presentGame('start')
+      fx.later(up + 250, () => showBanner(COPY.banner.start(cfg.name), 'amber'))
       if (hadSamples) fx.later(1500, () => showToast(COPY.toast.samplesClearedStart))
     }
 
@@ -273,23 +356,28 @@ export function createTallyStore(
         setData((d) => ({ ...d, prefs: { ...d.prefs, muted: m } }))
       },
       resume() {
-        fx.play('pick')
-        go('game')
+        if (!data().active || inGame()) return
+        presentGame('open')
       },
       fab() {
         if (data().active) actions.resume()
         else openSheet({ type: 'new' })
       },
-      backFromGame() {
-        fx.play('tap')
-        // Drop the flash too, so coming back doesn't replay the last round's animations.
-        set({ finished: null, flash: null })
-        go('home')
+      gamePage(page) {
+        if (!inGame()) return
+        fx.play('open')
+        set({ sheet: { type: 'game', page } })
+      },
+      gameBack() {
+        const sh = get().sheet
+        if (sh?.type !== 'game' || !sh.page) return
+        fx.play('close')
+        set({ sheet: { type: 'game' } })
       },
       victoryDone() {
         fx.play('tap')
+        // The game is over (its sheet already went): Home, with it in the history.
         set({ victory: null, finished: null })
-        go('home')
       },
 
       startGame,
@@ -364,7 +452,7 @@ export function createTallyStore(
       crownWinner(playerId) {
         const active = data().active
         if (!active?.rounds.length || !leadersOf(active).includes(playerId)) return
-        closeSheet(true)
+        toScoreboard()
         finish(clone(active), playerId)
       },
 
@@ -377,7 +465,7 @@ export function createTallyStore(
         g.playerIds.forEach((p, i) => {
           r.scores[p] = parseScore(vals[i])
         })
-        closeSheet(true)
+        toScoreboard()
         fx.play('submit')
         set({ flash: { k: key(), gid: g.id, scores: r.scores, edit: true } })
         const res = evaluate(g)
@@ -394,7 +482,7 @@ export function createTallyStore(
         if (!active) return
         const g = clone(active)
         g.rounds.splice(idx, 1)
-        closeSheet(true)
+        toScoreboard()
         fx.play('del')
         setData((d) => ({ ...d, active: g }))
         showToast(COPY.toast.roundDeleted(idx + 1))
@@ -405,7 +493,7 @@ export function createTallyStore(
         if (!active) return
         const g = clone(active)
         const l = leadersOf(g)
-        closeSheet(true)
+        toScoreboard()
         if (l.length === 1 && l[0] && g.rounds.length) finish(g, l[0])
       },
 
@@ -413,7 +501,6 @@ export function createTallyStore(
         closeSheet(true)
         fx.play('del')
         setData((d) => ({ ...d, active: null }))
-        go('home')
         showToast(COPY.toast.gameDiscarded)
       },
 
@@ -511,6 +598,7 @@ export function createTallyStore(
               : preset.goal === 'wins'
                 ? Math.max(1, preset.target ?? 1)
                 : preset.target,
+          ...limits(preset),
         }
         setData((x) => ({
           ...x,
@@ -555,21 +643,18 @@ export function createTallyStore(
         }
         const done = next.games.find((g) => g.id === was.id && g.completedAt && g.winnerId)
         if (done?.winnerId) {
-          const watching = cur.screen === 'game' && !cur.victory
+          const watching = cur.sheet?.type === 'game' && !cur.victory
           if (watching) {
             set({ finished: done })
-            fx.later(500, () => {
-              set({ victory: done })
-              fx.play('win')
-            })
+            fx.later(500, () => celebrate(done))
           } else {
             fx.play('pick')
             showToast(COPY.toast.wonElsewhere(nameOf(done.winnerId), done.name))
           }
           return
         }
-        if (!now && cur.screen === 'game' && !cur.finished) {
-          go('home')
+        if (!now && cur.sheet?.type === 'game' && !cur.finished) {
+          closeSheet(true)
           // A refused write rolls the game back the same way; its rejection can land just
           // before or after this snapshot, so wait a moment before blaming another phone.
           fx.later(400, () => {
@@ -588,8 +673,9 @@ export function createTallyStore(
     return {
       data: initial,
       clock,
-      screen: initial.active ? 'game' : 'home',
-      sheet: null,
+      screen: 'home',
+      // A game in progress opens straight into its scoreboard, as it always has.
+      sheet: initial.active ? { type: 'game' } : null,
       sheetKey: 0,
       toast: null,
       banner: null,

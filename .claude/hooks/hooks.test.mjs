@@ -30,6 +30,7 @@ test('guard blocks protected files, with a reason', () => {
     '.env',
     'apps/web/public/splash-1179x2556.png',
     'apps/web/public/favicon.svg',
+    'apps/web/public/og.jpg',
     `${ROOT}/apps/web/.vercel/project.json`,
   ]) {
     const r = edit(f, 'Write')

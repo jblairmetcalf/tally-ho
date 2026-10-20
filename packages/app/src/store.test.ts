@@ -4,7 +4,7 @@ import { COPY } from './copy'
 import { createEffects } from './effects'
 import { fixedClock, SCENARIOS } from './fixtures'
 import { memoryProvider } from './provider'
-import { createTallyStore, type NewGameConfig } from './store'
+import { createTallyStore, GAME_AFTER_MS, type NewGameConfig } from './store'
 
 const P = ['kate', 'blair', 'alder']
 
@@ -38,7 +38,7 @@ describe('starting a game', () => {
     const { a, s } = setup(freshStore(fixedClock))
     expect(s().data.games).toHaveLength(10)
     a.startGame(flip7)
-    expect(s().screen).toBe('game')
+    expect(s().sheet).toEqual({ type: 'game' })
     expect(s().data.active?.name).toBe('Flip 7')
     expect(s().data.games).toHaveLength(0)
     expect(s().data.hasSamples).toBe(false)
@@ -47,6 +47,67 @@ describe('starting a game', () => {
     expect(s().banner).toMatchObject({ text: COPY.banner.start('Flip 7'), tone: 'amber' })
     vi.advanceTimersByTime(1250)
     expect(s().toast?.msg).toBe(COPY.toast.samplesClearedStart)
+  })
+
+  it('from New game: that sheet slides away first, then the game rises in its own sheet', () => {
+    const { a, s } = setup()
+    a.openSheet({ type: 'new' })
+    a.startGame(flip7)
+    expect(s().sheet).toBeNull() // New game closing
+    expect(s().data.active?.name).toBe('Flip 7')
+    vi.advanceTimersByTime(GAME_AFTER_MS)
+    expect(s().sheet).toEqual({ type: 'game' })
+    expect(s().banner).toBeNull()
+    vi.advanceTimersByTime(250)
+    expect(s().banner?.text).toBe(COPY.banner.start('Flip 7'))
+  })
+
+  it('Resume opens the game sheet (from Home, or from New game after it closes); closing keeps the game', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    a.closeSheet()
+    expect(s().sheet).toBeNull()
+    expect(s().data.active?.name).toBe('Flip 7') // still live
+    expect(s().screen).toBe('home')
+    a.resume()
+    expect(s().sheet).toEqual({ type: 'game' })
+    a.closeSheet()
+    a.openSheet({ type: 'new' })
+    a.resume()
+    expect(s().sheet).toBeNull()
+    vi.advanceTimersByTime(GAME_AFTER_MS)
+    expect(s().sheet).toEqual({ type: 'game' })
+  })
+
+  it('Edit round and End game are pages inside the game sheet; saving goes back to the scoreboard', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    a.submitRound(['10', '5', '0'])
+    a.gamePage({ type: 'round', idx: 0 })
+    expect(s().sheet).toEqual({ type: 'game', page: { type: 'round', idx: 0 } })
+    a.saveRound(0, ['12', '5', '0'])
+    expect(s().sheet).toEqual({ type: 'game' })
+    a.gamePage({ type: 'end' })
+    a.gameBack()
+    expect(s().sheet).toEqual({ type: 'game' })
+    // Pages only exist inside the game sheet.
+    a.closeSheet()
+    a.gamePage({ type: 'end' })
+    expect(s().sheet).toBeNull()
+  })
+
+  it("won't start a game its line-up can't seat (New game explains; this is the backstop)", () => {
+    const { a, s } = setup()
+    a.startGame({ ...flip7, name: 'The Fox in the Forest', playerIds: P })
+    expect(s().data.active).toBeNull()
+    // Rematch on an old three-player Fox lands here too: it says why instead of doing nothing.
+    expect(s().toast?.msg).toBe('The Fox in the Forest is for exactly 2 players.')
+    a.startGame({ ...flip7, name: 'High Society', playerIds: P.slice(0, 2) })
+    expect(s().toast?.msg).toBe('High Society needs at least 3 players.')
+    expect(s().data.active).toBeNull()
+    a.startGame({ ...flip7, name: 'The Fox in the Forest', playerIds: P.slice(0, 2) })
+    expect(s().data.active?.playerIds).toEqual(P.slice(0, 2))
   })
 
   it('remembers who played for next time', () => {
@@ -96,8 +157,11 @@ describe('scoring rounds', () => {
     expect(s().data.games[0]).toMatchObject({ name: 'Flip 7', winnerId: 'kate' })
     expect(s().data.games[0]?.completedAt).toBe(new Date(fixedClock.now()).toISOString())
     expect(s().victory).toBeNull()
+    expect(s().sheet).toEqual({ type: 'game' }) // the final round lands on the scoreboard
     vi.advanceTimersByTime(500)
     expect(s().victory?.winnerId).toBe('kate')
+    // The sheet makes way: the overlay's buttons can't sit outside an open (modal) sheet.
+    expect(s().sheet).toBeNull()
     expect(provider.saved?.games[0]?.winnerId).toBe('kate')
   })
 
@@ -241,6 +305,37 @@ describe('players and presets', () => {
     expect(presets.at(-1)?.name).toBe('Yahtzee')
   })
 
+  it('keeps player limits the rules accept: 2–12, most never below fewest, null = no limit', () => {
+    const { a, s } = setup()
+    const base = {
+      id: 'yahtzee',
+      name: 'Yahtzee',
+      goal: 'rounds' as const,
+      target: 13,
+      lowWins: false,
+    }
+    const get = () => s().data.presets.find((p) => p.id === 'yahtzee')
+    a.upsertPreset({ ...base, minPlayers: 1, maxPlayers: 20 })
+    expect(get()).toMatchObject({ minPlayers: 2, maxPlayers: 12 })
+    a.upsertPreset({ ...base, minPlayers: 5, maxPlayers: 3 })
+    expect(get()).toMatchObject({ minPlayers: 5, maxPlayers: 5 })
+    a.upsertPreset({ ...base, minPlayers: 3, maxPlayers: null })
+    expect(get()).toMatchObject({ minPlayers: 3, maxPlayers: null })
+    a.upsertPreset(base) // untouched stays absent: the built-in default (if any) still applies
+    expect(get()?.minPlayers).toBeUndefined()
+    expect(get()?.maxPlayers).toBeUndefined()
+  })
+
+  it("uses the family's player limits when dealing, including one edited in Settings", () => {
+    const { a, s } = setup()
+    const fox = s().data.presets.find((p) => p.id === 'the-fox-in-the-forest')!
+    a.startGame({ ...flip7, name: fox.name, playerIds: P })
+    expect(s().data.active).toBeNull() // two only, by default
+    a.upsertPreset({ ...fox, maxPlayers: 3 })
+    a.startGame({ ...flip7, name: fox.name, playerIds: P })
+    expect(s().data.active?.playerIds).toEqual(P)
+  })
+
   it('persists prefs', () => {
     const { a, provider } = setup()
     a.setPref('theme', 'light')
@@ -303,7 +398,7 @@ describe('changes from another phone (replaceData)', () => {
     const { a, s } = setup()
     a.startGame(flip7)
     vi.runAllTimers()
-    a.go('home')
+    a.closeSheet() // put the game away: Home behind it
     const remote = structuredClone(s().data)
     const g = remote.active!
     g.completedAt = new Date(fixedClock.now()).toISOString()
@@ -322,7 +417,7 @@ describe('changes from another phone (replaceData)', () => {
     const remote = structuredClone(s().data)
     remote.active = null
     a.replaceData(remote)
-    expect(s().screen).toBe('home')
+    expect(s().sheet).toBeNull()
     // The note waits a moment, in case it was really a refused write (then it says so instead).
     expect(s().toast).toBeNull()
     vi.advanceTimersByTime(400)

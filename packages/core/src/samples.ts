@@ -1,4 +1,5 @@
-import { emptyStore } from './presets'
+import { rangeForGame } from './lineup'
+import { DEFAULT_PRESETS, emptyStore } from './presets'
 import type { Clock, Game, Store } from './schemas'
 import { evaluate, ranked, winRound } from './scoring'
 
@@ -50,12 +51,21 @@ function pickWinner(playerIds: string[], r: () => number, skill: Record<string, 
   return playerIds.at(-1)!
 }
 
-/** Ten finished games between Kate, Blair and Alder, newest first. */
+/** Ten finished games between Kate, Blair and Alder (two at a time where a game says so), newest first. */
 export function makeSamples(clock: Clock, playerIds = ['kate', 'blair', 'alder']): Game[] {
   const r = rng(7)
   const now = clock.now()
+  const plays = new Map<string, number>()
   return PLAN.map(([name, goal, target], i): Game => {
     const start = new Date(now - (PLAN.length - i) * 3 * DAY - r() * DAY).toISOString()
+    // A game with a player limit (The Fox in the Forest: two) seats a rotating pair.
+    const turn = plays.get(name) ?? 0
+    plays.set(name, turn + 1)
+    const max = rangeForGame(DEFAULT_PRESETS, name).max ?? playerIds.length
+    const seats =
+      max >= playerIds.length
+        ? playerIds.slice()
+        : Array.from({ length: max }, (_, k) => playerIds[(turn + k) % playerIds.length]!)
     const g: Game = {
       id: `s${i}`,
       sample: true,
@@ -63,20 +73,20 @@ export function makeSamples(clock: Clock, playerIds = ['kate', 'blair', 'alder']
       goal,
       target,
       lowWins: false,
-      playerIds: playerIds.slice(),
+      playerIds: seats,
       rounds: [],
       startedAt: start,
       completedAt: null,
       winnerId: null,
     }
     const skill: Record<string, number> = {}
-    for (const p of playerIds) skill[p] = 0.75 + r() * 0.5
+    for (const p of seats) skill[p] = 0.75 + r() * 0.5
     let res = evaluate(g)
     let guard = 0
     while (!res.done && guard++ < 40) {
       let sc: Record<string, number> = {}
-      if (goal === 'wins') sc = winRound(playerIds, pickWinner(playerIds, r, skill))
-      else for (const p of playerIds) sc[p] = roundScore(name, r, skill[p] ?? 1) || 0
+      if (goal === 'wins') sc = winRound(seats, pickWinner(seats, r, skill))
+      else for (const p of seats) sc[p] = roundScore(name, r, skill[p] ?? 1) || 0
       g.rounds.push({ id: `${g.id}-r${g.rounds.length + 1}`, scores: sc })
       res = evaluate(g)
     }

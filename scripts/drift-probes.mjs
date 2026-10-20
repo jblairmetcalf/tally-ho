@@ -155,9 +155,11 @@ const deadCopy = []
     const depth = m[1].length / 2
     path = [...path.slice(0, depth - 1), m[2]]
     const leaf = !line.trimEnd().endsWith('{')
-    if (!leaf || path.length < 2 || /^(weekday|month|day|year)$/.test(m[2])) continue
+    if (!leaf || /^(weekday|month|day|year)$/.test(m[2])) continue
     const key = m[2]
-    if (!appUi.some((f) => new RegExp(`\\.${key}\\b`).test(text[f])))
+    // A top-level string is read as COPY.<key> (a bare `.key` would match any property).
+    const read = path.length < 2 ? new RegExp(`COPY\\.${key}\\b`) : new RegExp(`\\.${key}\\b`)
+    if (!appUi.some((f) => read.test(text[f])))
       deadCopy.push(`copy.ts — ${path.join('.')} is never read`)
   }
 }
@@ -260,10 +262,40 @@ probe(
   probe(
     'spec-docs',
     'Every e2e spec and unit test file is named in docs/TESTING.md (rules/testing.md)',
-    all
-      .filter((f) => /\.(spec|test)\.tsx?$/.test(f))
+    [...all, ...walk(join(ROOT, '.claude/hooks'), (p) => p.endsWith('.test.mjs'))]
+      .filter((f) => /\.(spec|test)\.(tsx?|mjs)$/.test(f))
       .filter((f) => !testing.includes(basename(f)))
       .map((f) => `${rel(f)} — not in docs/TESTING.md`),
+  )
+}
+
+{
+  // The Tailwind colour utilities the harness tells people to use must exist: a utility is only
+  // generated for a colour mapped in tokens.css's @theme block (bg-sunk works, bg-amber doesn't).
+  const theme =
+    read(join(ROOT, 'packages/ui/src/styles/tokens.css')).match(
+      /@theme inline \{([\s\S]*?)\}/,
+    )?.[1] ?? ''
+  const mapped = new Set([...theme.matchAll(/--color-([a-z-]+):/g)].map((m) => m[1]))
+  const tokens = new Set(
+    [
+      ...read(join(ROOT, 'packages/ui/src/styles/tokens.css')).matchAll(/^\s+--([a-z0-9-]+):/gm),
+    ].map((m) => m[1]),
+  )
+  const harness = [
+    'CLAUDE.md',
+    'CONVENTIONS.md',
+    ...globSync('docs/*.md', { cwd: ROOT }),
+    ...globSync('.claude/**/*.md', { cwd: ROOT }),
+  ]
+  probe(
+    'harness-utilities',
+    'Tailwind colour utilities named in the harness are mapped in tokens.css @theme (rules/ui.md)',
+    harness.flatMap((f) =>
+      [...read(join(ROOT, f)).matchAll(/`(?:bg|text|border)-([a-z-]+)`/g)]
+        .filter((m) => tokens.has(m[1]) && !mapped.has(m[1]))
+        .map((m) => `${f} — ${m[0]} has no --color-${m[1]} in @theme`),
+    ),
   )
 }
 

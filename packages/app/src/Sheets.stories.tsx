@@ -76,10 +76,11 @@ export const NewGameRoundsPerPlayer: Story = {
   args: { ...NewGame.args, store: SCENARIOS.roundRobin, act: pickGame('Round Robin') },
 }
 
+/** Edit round 2: a page pushed inside the game's sheet (back top left), scores to change or delete. */
 export const EditRound: Story = {
   args: {
     store: SCENARIOS.flip7Race,
-    ui: { screen: 'game', sheet: { type: 'round', idx: 1 }, sheetKey: 1 },
+    ui: { sheet: { type: 'game', page: { type: 'round', idx: 1 } }, sheetKey: 1 },
   },
 }
 
@@ -87,19 +88,27 @@ export const EditRound: Story = {
 export const EditRoundWhoWon: Story = {
   args: {
     store: SCENARIOS.jaipurMatch,
-    ui: { screen: 'game', sheet: { type: 'round', idx: 0 }, sheetKey: 1 },
+    ui: { sheet: { type: 'game', page: { type: 'round', idx: 0 } }, sheetKey: 1 },
   },
 }
 
+/** End the game: a page inside the game's sheet; the leader to crown, keep playing, or discard. */
 export const EndGame: Story = {
-  args: { store: SCENARIOS.flip7Race, ui: { screen: 'game', sheet: { type: 'end' }, sheetKey: 1 } },
+  args: {
+    store: SCENARIOS.flip7Race,
+    ui: { sheet: { type: 'game', page: { type: 'end' } }, sheetKey: 1 },
+  },
 }
 
 /** Tied: crown one of the leaders by the game's tiebreak rule, keep playing, or discard. */
 export const EndGameTied: Story = {
-  args: { store: SCENARIOS.tiebreak, ui: { screen: 'game', sheet: { type: 'end' }, sheetKey: 1 } },
+  args: {
+    store: SCENARIOS.tiebreak,
+    ui: { sheet: { type: 'game', page: { type: 'end' } }, sheetKey: 1 },
+  },
 }
 
+/** A finished game from History: its standings and rounds, and delete. */
 export const GameDetail: Story = {
   args: { store: SCENARIOS.firstRun, ui: { sheet: { type: 'detail', id: 's0' }, sheetKey: 1 } },
 }
@@ -149,7 +158,7 @@ export const SettingsAddGame: Story = {
   },
 }
 
-/** Settings › Games › Edit Flip 7: name, how it ends, low-wins and delete. */
+/** Settings › Games › Edit Flip 7: name, how it ends, low-wins, player counts and delete. */
 export const SettingsEditGame: Story = {
   args: {
     ...Settings.args,

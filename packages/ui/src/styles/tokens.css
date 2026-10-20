@@ -35,11 +35,9 @@
   --amber-rgb: 255 184 0;
   --fox: #ff6a1f;
   --fox-deep: #c9480a;
-  --fox-rgb: 255 106 31;
   --coral: #ff4d6d;
   --coral-deep: #c42848;
   --coral-text: #ff4d6d;
-  --coral-rgb: 255 77 109;
   --lav: #a78bfa;
   --lav-rgb: 167 139 250;
   --lav-deep: #7c5fe0;
@@ -168,8 +166,13 @@
   --glide: cubic-bezier(0.32, 0.72, 0, 1);
   --nav-h: 76px;
 
-  /* QR codes are always dark on light, in both themes: cameras read that best */
-  --qr-plate: #ffffff;
+  /* QR codes are always dark on light, in both themes (cameras read that best): ink dots on a
+     cream plate, eyes in the deep jade and deep fox so they still read as dark. Pinned literals,
+     not var(--cream) etc., so a later brand tweak can't quietly break scanning (decision 21) */
+  --qr-plate: #f7e9d2;
+  --qr-ink: #13112e;
+  --qr-eye: #00977a;
+  --qr-pupil: #c9480a;
 
   /* player chips: the prototype's eight */
   --p0: #00d4aa;
@@ -182,36 +185,15 @@
   --p7: #8be07a;
 }
 
-/* Tailwind utilities over the same tokens: bg-surface, text-muted, border-line, font-display … */
+/* Tailwind utilities over the same tokens, only the ones the code uses (bg-sunk, bg-surface,
+   border-line, text-muted, text-faint, text-jade-text, border-jade). Add a mapping when a
+   component needs a new utility; everything else uses var(--token) in components.css. */
 @theme inline {
-  --color-page: var(--page);
   --color-sunk: var(--sunk);
   --color-surface: var(--surface);
-  --color-surface-hi: var(--surface-hi);
   --color-line: var(--line);
-  --color-text: var(--text);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-jade: var(--jade);
-  --color-jade-deep: var(--jade-deep);
   --color-jade-text: var(--jade-text);
-  --color-amber: var(--amber);
-  --color-amber-deep: var(--amber-deep);
-  --color-amber-text: var(--amber-text);
-  --color-fox: var(--fox);
-  --color-coral: var(--coral);
-  --color-coral-text: var(--coral-text);
-  --color-lav: var(--lav);
-  --color-cream: var(--cream);
-  --color-ink: var(--ink);
-  --color-on-accent: var(--on-accent);
-
-  --font-display: var(--f-display);
-  --font-body: var(--f-body);
-
-  --radius-card: var(--r);
-  --radius-sm: var(--r-sm);
-  --radius-btn: var(--r-btn);
-
-  --ease-spring: var(--spring);
 }

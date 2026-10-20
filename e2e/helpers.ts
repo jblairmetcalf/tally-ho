@@ -63,10 +63,13 @@ export async function startPreset(page: Page, preset: string) {
   // Low-wins presets carry a "Low" tag in their name.
   await sheet.getByRole('button', { name: new RegExp(`^${preset}(\\s*Low)?$`) }).click()
   await sheet.getByRole('button', { name: `Deal in · ${preset}` }).click()
-  await expect(page.getByRole('heading', { level: 1, name: preset })).toBeVisible()
-  // The sheet traps focus until its closing animation ends.
+  // New game slides away, then the game rises in its own sheet, named by the game.
   await expect(sheet).toBeHidden()
+  await expect(gameSheet(page, preset)).toBeVisible()
 }
+
+/** The game's sheet (the scoreboard, Edit round and End game are its pages). */
+export const gameSheet = (page: Page, name: string) => page.getByRole('dialog', { name })
 
 /** Open Settings from the home header. */
 export async function openSettings(page: Page) {

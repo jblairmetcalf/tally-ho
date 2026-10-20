@@ -25,6 +25,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
 | `packages/core/src/scoring.ts`, `stats.ts` | Pure scoring (totals, leader, end conditions for the four goals `score` / `rounds` / `wins` / `open`, tiebreak, match point, `goalLabel`, `winRound`, `targetFor`) and stats |
 | `packages/core/src/presets.ts` | `DEFAULT_PRESETS` (each set from its rulebook: [decision 16](DECISIONS.md)), `DEFAULT_PLAYERS`, `DEFAULT_PREFS`, `emptyStore()` |
 | `packages/core/src/samples.ts` | Deterministic sample history for the demo (`freshStore`) |
+| `packages/core/src/lineup.ts` | Player limits: `playerRangeOf(preset)` (its `minPlayers` / `maxPlayers`, else the built-in default for the id, else 2+), `rangeForGame(presets, name)`, `fitsRange`, `isLimited` ([decision 22](DECISIONS.md)) |
 | `packages/core/src/migrate.ts` | Prototype `tallyho.v2` → v3, `withRoundIds` |
 | `packages/ui/src/styles/` | `tokens.css`, `motion.css`, `components.css` |
 | `packages/ui/src/feel/` | `sfx.ts`, `haptics.ts`, `confetti.ts`, `FxCanvas.tsx` |
@@ -55,7 +56,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
                                    'storage' event = other tab    snapshots ─▶ Store ─▶ mirror (tallyho.family)
 ```
 
-- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `toast`, `banner`, `flash`, `victory`, `finished`). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
+- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `sheetKey`, `toast`, `banner`, `flash`, `victory`, `finished`, `foxWink`). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
 - **Seam** (`DataProvider` in `packages/app/src/provider.ts`): `load()` (sync), `save(s)` (may debounce), optional `subscribe(cb)`. Screens and the store never know which provider they have.
 - **Demo:** `createLocalProvider()` writes `tallyho.v3`, debounced 150 ms, flushed on `pagehide`/hidden. First launch after the prototype migrates `tallyho.v2` once (old key kept as a backup).
 - **Family:** `createCloudProvider()` (`packages/app/src/sync/cloudProvider.ts`):
@@ -67,7 +68,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
   - `watchStatus` feeds the `SyncBadge`; `onRejected` reports writes the rules refused (`TallyApp` hands them to `reactToRejection`: a refused new game → `gameRefused`, else toast `COPY.toast.syncRejected`).
 - **Session** (`sync/session.ts`): `createSessionCore` / `useSessionController` picks the mode. The `tallyho.session` flag boots straight into family mode from the mirror, then loads Firebase and verifies auth and `members/{email}`. `Root` in `TallyApp.tsx` keys the app on mode + email + provider, so sign-in/out swaps in a fresh store.
 - **Firebase is lazy:** `sync/firebase.ts` uses dynamic `import()`; demo mode never loads it.
-- **Remote reactions** (`replaceData` in `store.ts`): a remote round on the live game → `flash` only; a remote win → victory if watching, else a toast (`wonElsewhere`); a remote discard → home + toast (`endedElsewhere`, 400ms later, skipped for a game this phone was refused).
+- **Remote reactions** (`replaceData` in `store.ts`): a remote round on the live game → `flash` only; a remote win → victory if watching (the game sheet open), else a toast (`wonElsewhere`); a remote discard while the game sheet is open → it closes + toast (`endedElsewhere`, 400ms later, skipped for a game this phone was refused).
 - **Defaults** (`DEFAULT_PRESETS`) seed new stores only; `restoreDefaultGames` (Settings › Games) brings an existing demo or family record up to date.
 
 The full contract (document shapes, rules, session API, labels) is [SYNC.md](SYNC.md).

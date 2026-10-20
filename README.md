@@ -4,6 +4,8 @@ A score counter for family game night. Pick a game, deal in, and tap in scores e
 
 It's an installable, offline PWA. Anyone can try it in **demo** mode (scores live on that phone). The family signs in to share one scoreboard across their phones (see [Family sync](#family-sync-firebase)).
 
+**Live:** the app at [tally-ho-pwa.vercel.app](https://tally-ho-pwa.vercel.app) · the design system at [tally-ho-storybook.vercel.app](https://tally-ho-storybook.vercel.app)
+
 **Want your own?** [Build it with one prompt](docs/exports/build-it-with-one-prompt.md): the whole app, design system and agent harness from a single Claude Code prompt, for your family and your games.
 
 ## What's in the box
@@ -32,7 +34,7 @@ pnpm deploy       # build and ship the app to its Vercel production URL
 pnpm deploy:storybook
 ```
 
-`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, offline after one visit, prototype-data migration, no theme flash, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
+`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, offline after one visit, prototype-data migration, no theme flash, link-preview tags, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
 
 ## Ship it
 
@@ -62,12 +64,12 @@ npx vercel link --cwd apps/storybook   # optional: a separate project for Storyb
 ```
 The link is saved in `.vercel/repo.json` at the repo root (newer Vercel CLIs link per repo; older ones wrote `apps/web/.vercel/project.json`). It's gitignored, and later builds don't touch it.
 
-**Environment variables:** because the deploy is prebuilt, the Firebase config comes from `apps/web/.env.local` on the machine that runs `pnpm deploy` (`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`; see `apps/web/.env.example`). Variables set in the Vercel dashboard are not used: Vercel builds nothing. They do no harm, but a build without `.env.local` is demo-only (no Family sign in).
+**Environment variables:** because the deploy is prebuilt, the Firebase config comes from `apps/web/.env.local` on the machine that runs `pnpm deploy` (`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`; see `apps/web/.env.example`). Variables set in the Vercel dashboard are not used: Vercel builds nothing. They do no harm, but a build without `.env.local` is demo-only (no Family sign in). If the app lives anywhere but tally-ho-pwa.vercel.app, also set `NEXT_PUBLIC_SITE_URL` there (e.g. `https://your-app.vercel.app`): link previews need absolute URLs, and the default points at this one.
 
 **Every release:**
 ```sh
 pnpm deploy             # the app → https://<your-project>.vercel.app
-pnpm deploy:storybook   # optional: the design system
+pnpm deploy:storybook   # the design system → https://tally-ho-storybook.vercel.app
 ```
 
 **Link previews:** a shared link shows the card in `apps/web/public/og.jpg` with the title and description from `apps/web/app/layout.tsx` (iMessage, Slack, WhatsApp…). Regenerate the card with `pnpm og` (online; it uses the brand fonts). Apps cache a preview for a while after they first see a link, so a changed card can take a day to show up in old threads.

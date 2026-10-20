@@ -14,7 +14,7 @@ You review changes to Tally Ho!'s data model and Firestore family sync. You **ne
 ## Check
 
 1. **Contract agreement**: every synced field appears consistently in `packages/core/src/schemas.ts`, `packages/app/src/sync/docs.ts` (write and read), `packages/app/src/sync/diff.ts` (`GAME_FIELDS` / round ops), `firestore.rules` (`hasAll`/`hasOnly` + type), `packages/app/src/sync/rules.test.ts` (allow + deny case) and the `docs/SYNC.md` documents table. A key the rules don't list is refused in production.
-2. **Diff ops**: only real changes; rounds as `rounds.<id>` updates (never the whole map on update); a game's final round and `completedAt` in one update; `startedBy`/`by` only filled, never cleared; diff reads no clock (`NOW`/`DELETE` sentinels).
+2. **Diff ops**: only real changes; fields the rules compare (a preset's `minPlayers` / `maxPlayers`, `max ≥ min`) sent together on any change, never one alone; rounds as `rounds.<id>` updates (never the whole map on update); a game's final round and `completedAt` in one update; `startedBy`/`by` only filled, never cleared; diff reads no clock (`NOW`/`DELETE` sentinels).
 3. **Soft delete**: games → `deletedAt`, players → `archived`, only presets `delete`; rules keep `allow delete: if false` for games/players; `gameFrom` filters `deletedAt`.
 4. **Frozen finished games**: `frozenOk()` unchanged or stricter; `finishedGamesAreFinal` in `packages/app/src/sync/fake.ts` mirrors it.
 5. **`updatedAt`** on every set/update (`toEntry` in `packages/app/src/sync/outbox.ts`, seeding in `packages/app/src/sync/session.ts`).

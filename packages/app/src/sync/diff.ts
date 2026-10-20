@@ -94,7 +94,12 @@ export function diff(prevIn: Store, nextIn: Store, by: string): Op[] {
     const old = pr.get(p.id)
     if (!old) ops.push({ type: 'set', col: 'presets', id: p.id, data: presetDoc(p) })
     else {
-      const data = fieldChanges(presetDoc(old), presetDoc(p))
+      const doc = presetDoc(p)
+      const data = fieldChanges(presetDoc(old), doc)
+      // The player limits travel as a pair: the rules check max ≥ min on the merged doc, so a
+      // lone field from one phone could meet the other's from another phone and be refused.
+      if ('minPlayers' in data || 'maxPlayers' in data)
+        for (const k of ['minPlayers', 'maxPlayers'] as const) data[k] = k in doc ? doc[k] : DELETE
       if (Object.keys(data).length) ops.push({ type: 'update', col: 'presets', id: p.id, data })
     }
   }

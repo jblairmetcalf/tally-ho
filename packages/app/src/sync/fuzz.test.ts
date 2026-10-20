@@ -148,6 +148,15 @@ async function act(p: Phone, r: () => number, pick: <T>(xs: T[]) => T | undefine
         target: goal === 'open' ? null : 1 + Math.floor(r() * 90),
         lowWins: r() < 0.5,
         ...(goal === 'rounds' && perPlayer < 0.6 ? { roundsPerPlayer: perPlayer < 0.4 } : {}),
+        // Player limits: absent, a fewest only, or both (Most a number or "no limit").
+        ...pick([
+          {},
+          { minPlayers: 2 + Math.floor(r() * 4) },
+          {
+            minPlayers: 2 + Math.floor(r() * 4),
+            maxPlayers: r() < 0.5 ? null : 2 + Math.floor(r() * 6),
+          },
+        ]),
       })
       return
     }

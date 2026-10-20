@@ -40,6 +40,7 @@ In `packages/core/src/presets.ts`, append to `DEFAULT_PRESETS`:
 - `target` is a positive integer for `score`/`rounds`/`wins`, `null` for `open`.
 - `roundsPerPlayer: true` only with `rounds` (it's an optional, synced field: leave it off otherwise).
 - Keep the comment above `DEFAULT_PRESETS` true, and add the game to decision 16's table in `docs/DECISIONS.md` with its rulebook ending.
+- **Player count:** if the game only works with certain numbers (two-player only, three or more), give the preset `minPlayers` / `maxPlayers` (`maxPlayers: null` = no limit; decision 22). New game then states the limit and keeps Deal in disabled until the line-up fits; sample games seat only that many. Leave both off for the usual 2 or more.
 
 ## 3. Check
 

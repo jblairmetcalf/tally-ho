@@ -10,7 +10,16 @@ import type { Player, Prefs, Preset, Store } from './schemas'
  */
 export const DEFAULT_PRESETS: Preset[] = [
   { id: 'monopoly-deal', name: 'Monopoly Deal', goal: 'wins', target: 1, lowWins: false },
-  { id: 'high-society', name: 'High Society', goal: 'wins', target: 1, lowWins: false },
+  // High Society: 3 or more (the family's rule; the box says 3–5).
+  {
+    id: 'high-society',
+    name: 'High Society',
+    goal: 'wins',
+    target: 1,
+    lowWins: false,
+    minPlayers: 3,
+    maxPlayers: null,
+  },
   { id: 'scout', name: 'Scout', goal: 'wins', target: 1, lowWins: false },
   { id: 'mille-bornes', name: 'Mille Bornes', goal: 'wins', target: 1, lowWins: false },
   { id: 'push', name: 'Push', goal: 'rounds', target: 1, lowWins: false },
@@ -21,6 +30,9 @@ export const DEFAULT_PRESETS: Preset[] = [
     goal: 'wins',
     target: 1,
     lowWins: false,
+    // A two-player game.
+    minPlayers: 2,
+    maxPlayers: 2,
   },
   { id: 'uno', name: 'Uno', goal: 'wins', target: 1, lowWins: false },
   { id: 'flip-7', name: 'Flip 7', goal: 'score', target: 200, lowWins: false },

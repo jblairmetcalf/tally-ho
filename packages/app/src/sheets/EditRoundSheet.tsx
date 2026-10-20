@@ -1,9 +1,10 @@
 import type { Game } from '@tally/core'
-import { Button, ConfirmButton, ScoreFields, SheetTitle, WinnerPicker } from '@tally/ui'
+import { Button, ConfirmButton, ScoreFields, WinnerPicker } from '@tally/ui'
 import { useState } from 'react'
 import { useActions, useRoster } from '../context'
 import { COPY } from '../copy'
 
+/** Edit round N: a page pushed inside the game sheet (its header names it). */
 export function EditRoundSheet({ game: g, idx }: { game: Game; idx: number }) {
   const a = useActions()
   const roster = useRoster()
@@ -25,7 +26,6 @@ export function EditRoundSheet({ game: g, idx }: { game: Game; idx: number }) {
     a.saveRound(idx, wins ? g.playerIds.map((p) => (p === winner ? '1' : '0')) : vals)
   return (
     <>
-      <SheetTitle title={COPY.editRound.title(n)} onClose={() => a.closeSheet()} />
       {wins ? (
         <WinnerPicker
           players={roster.people(g.playerIds)}

@@ -297,3 +297,54 @@ test("Restore default games: built-in games back to how they ship, the family's 
   await expect(games.locator('.player-line', { hasText: 'Spicy' })).toContainText('Who won?')
   await expect(games.locator('.player-line', { hasText: 'Round Robin' })).toHaveCount(1)
 })
+
+test("a game's player count shows and edits in Settings › Games, and New game follows it", async ({
+  page,
+}) => {
+  await seed(page, household())
+  await page.goto('/')
+  const { sheet: games } = await openSettingsArea(page, 'Games')
+  const line = (name: string) => games.locator('.player-line', { hasText: name })
+  await expect(line('The Fox in the Forest')).toContainText('Who won? · 2 players')
+  await expect(line('High Society')).toContainText('Who won? · 3+ players')
+  await expect(line('Flip 7')).not.toContainText('players')
+
+  // The Fox: two only, by default. Clear Most: no limit any more.
+  await games.getByRole('button', { name: 'Edit The Fox in the Forest' }).click()
+  const editor = page.getByRole('dialog', { name: 'Edit The Fox in the Forest' })
+  await expect(editor.getByLabel('Fewest players')).toHaveValue('2')
+  const most = editor.getByLabel('Most players')
+  await expect(most).toHaveValue('2')
+  await most.fill('')
+  await most.press('Enter')
+  // Most can't go below Fewest: 1 settles at 2... and 99 at 12.
+  await editor.getByLabel('Fewest players').fill('1')
+  await editor.getByLabel('Fewest players').press('Enter')
+  await expect(editor.getByLabel('Fewest players')).toHaveValue('2')
+  await editor.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(editor).toBeHidden()
+  await expect(line('The Fox in the Forest')).not.toContainText('players')
+
+  // New game deals the Fox to all three now.
+  await games.getByRole('button', { name: 'Close' }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await openNewGame(page)
+  const sheet = page.getByRole('dialog', { name: 'New game' })
+  await sheet.getByRole('button', { name: 'The Fox in the Forest', exact: true }).click()
+  await expect(sheet.getByRole('button', { name: 'Deal in · The Fox in the Forest' })).toBeEnabled()
+})
+
+test('Add a game takes a player count too', async ({ page }) => {
+  await seed(page, household())
+  await page.goto('/')
+  const { sheet: games } = await openSettingsArea(page, 'Games')
+  await games.getByRole('button', { name: 'Add a game' }).click()
+  const add = page.getByRole('dialog', { name: 'Add a game' })
+  await add.getByLabel('Game name').fill('Codenames')
+  await add.getByLabel('Fewest players').fill('4')
+  await add.getByLabel('Most players').fill('3') // below Fewest: settles at 4
+  await add.getByLabel('Most players').press('Enter')
+  await expect(add.getByLabel('Most players')).toHaveValue('4')
+  await add.getByRole('button', { name: 'Add game' }).click()
+  await expect(games.locator('.player-line', { hasText: 'Codenames' })).toContainText('4 players')
+})

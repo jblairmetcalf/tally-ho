@@ -29,6 +29,7 @@ export interface Effects {
  */
 const FELT: Partial<Record<SfxCue, HapticCue>> = {
   submit: 'submit',
+  deal: 'deal',
   win: 'win',
   lead: 'lead',
   match: 'match',

@@ -1051,11 +1051,13 @@
     display: grid;
     grid-template-columns: 1fr 92px 1fr;
     align-items: center;
-    background: var(--nav-glass);
+    /* the opposite theme's surface, so the tabs stand out from the page */
+    background: var(--bar-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1.5px solid var(--line);
+    border: 1.5px solid var(--bar-line);
     border-radius: var(--r-nav);
+    box-shadow: 0 8px 28px var(--drop-soft);
   }
   .nav-btn {
     display: flex;
@@ -1064,14 +1066,14 @@
     gap: 2px;
     font-size: 11.5px;
     font-weight: 900;
-    color: var(--faint);
+    color: var(--bar-ink);
     padding: 8px;
     min-height: 56px;
     justify-content: center;
     transition: color 0.2s, transform 0.15s var(--spring);
   }
   .nav-btn.on {
-    color: var(--jade-text);
+    color: var(--bar-on);
   }
   .nav-btn:active {
     transform: scale(0.9);

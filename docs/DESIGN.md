@@ -23,6 +23,7 @@ The user picks Dark, Daylight or System in Settings (`prefs.theme`). `ThemeRoot`
 | Accents | `--jade`, `--amber`, `--fox`, `--coral`, `--lav`, `--cream` (+ `-deep` pressed edge; `--jade-rgb`, `--amber-rgb`, `--lav-rgb` for alpha) | Fills, buttons, glows |
 | Small coloured text | `--jade-text`, `--amber-text`, `--coral-text` | Any coloured text under ~18px. In Daylight these are darker shades so they pass AA; fills keep the plain token |
 | On accent | `--on-accent`, `--ink` | Text on jewel fills |
+| Tab bar | `--bar-bg`, `--bar-line`, `--bar-ink`, `--bar-on` | The bottom tabs wear the **opposite theme** so they stand out from the page: a cream bar on Dark, an ink bar on Daylight (each the other theme's surface, muted/faint and jade text, so the AA pairs carry over). The fox button keeps its page-coloured halo |
 | Players | `--p0`…`--p7` | The prototype's eight chip colours. Players store a palette index; use `paletteVar(i)` (`packages/ui/src/brand/palette.ts`). `PLAYER_COLORS` is only for canvas/SVG |
 
 ## Type
@@ -57,6 +58,7 @@ A Web Audio synth with no audio files: `SFX` in `packages/ui/src/feel/sfx.ts` (t
 | `tap` | Key press, nav tap, small toggles |
 | `pick` | Choosing a pill, resuming, a win reported from another phone |
 | `open` / `close` | A sheet slides up / away |
+| `deal` | New game opens: the Tally Ho! tune (about a second; decision 23) |
 | `add` / `remove` | A player joins / leaves the line-up |
 | `start` | Deal in: a new game |
 | `submit` | A round is scored or saved |
@@ -104,7 +106,7 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 - **QR codes** (decision 21): ink dots on a cream plate in a jade ring, rounded deep-jade eyes with deep-fox centres, the fox in the middle; the same in both themes.
 - **Settings is a landing of entry rows**, so it never scrolls on and on: the fox, then `LinkRow`s for install / share / the maker, then Players, Games and Appearance (each hinting what's inside: names, a count, "Dark · Sound on"), then Family (sign-in) inline at the bottom, then the build line. Each row (install, share, the maker, Players, Games, Appearance, Family sign in) **pushes a page**, and the editors (Edit Kate, Add a game, Edit Uno) push a third; archiving, deleting or adding goes back to the list by itself. Back is one tap top left; Close (top right) leaves from any depth.
 - **Stable layout:** a sheet is laid out at full height from the start. Controls that aren't ready yet show skeletons (`.skeleton`, `.skeleton-stack` in `components.css`; see `NewGameSheet.tsx`) in the same slot, so nothing jumps when they appear. No progressive-disclosure jumps.
-- Opening plays `open`, closing `close`. Drag down past 100px, backdrop tap or Escape closes.
+- Opening plays `open` (New game plays `deal`, its tune), closing `close`. Drag down past 100px, backdrop tap or Escape closes.
 
 ## Components and stories
 

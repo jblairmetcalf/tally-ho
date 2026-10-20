@@ -159,6 +159,19 @@ export const SFX = {
   },
   /** A sheet slides up. */
   open: () => tone(240, 0.2, { type: 'triangle', to: 960, vol: 0.16 }),
+  /**
+   * New game opens: the app's own little tune, about a second. A rising "Tal-ly-Ho!" hook over a
+   * walking bass, landing on a held high C with a sparkle on top. The same every time, so it's
+   * the sound people remember the app by (decision 23).
+   */
+  deal: () => {
+    const step = 0.085
+    // Tal - ly - Ho!   ·   tal - ly - HO!
+    seq([523, 659, 784, 0, 659, 784, 1047, 1047], step, { vol: 0.1 })
+    seq([262, 0, 330, 0, 392, 0, 523, 523], step, { type: 'triangle', vol: 0.11 })
+    tone(2093, 0.22, { type: 'triangle', vol: 0.045, at: step * 6.4 })
+    tone(2637, 0.26, { type: 'triangle', vol: 0.035, at: step * 7.2 })
+  },
   /** A sheet slides away. */
   close: () => tone(820, 0.16, { type: 'triangle', to: 210, vol: 0.12 }),
   /** A player joins. */
@@ -196,6 +209,7 @@ export const SFX_CUES: SfxCue[] = [
   'tap',
   'pick',
   'open',
+  'deal',
   'close',
   'add',
   'remove',

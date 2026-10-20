@@ -9,6 +9,8 @@ export const HAPTICS = {
   pick: 10,
   submit: 12,
   add: [8, 30, 8],
+  /** New game's tune: three light taps on the hook. */
+  deal: [8, 60, 8, 60, 14],
   lead: [10, 40, 10],
   match: [14, 50, 14, 50, 14],
   error: [40, 30, 40],

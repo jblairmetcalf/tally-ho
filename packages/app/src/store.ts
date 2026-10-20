@@ -236,7 +236,8 @@ export function createTallyStore(
       fx.scrollTop()
     }
     const openSheet = (spec: SheetSpec, silent = false) => {
-      if (!silent) fx.play('open')
+      // New game opens to its own tune; every other sheet to the slide-up whoosh.
+      if (!silent) fx.play(spec.type === 'new' ? 'deal' : 'open')
       set((s) => ({ sheet: spec, sheetKey: s.sheetKey + 1 }))
     }
     const closeSheet = (silent = false) => {

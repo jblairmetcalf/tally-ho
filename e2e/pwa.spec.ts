@@ -190,6 +190,24 @@ test('sound: plays on tap, the toggle silences it, and it comes back after leavi
   const back = await audio()
   expect(back.contexts).toBeGreaterThan(away.contexts)
   expect(back.notes).toBeGreaterThan(away.notes)
+
+  // Sheets slide up with one whoosh; New game opens to its own tune (two voices and a sparkle).
+  await home.click()
+  const beforeSettings = (await audio()).notes
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await expect.poll(async () => (await audio()).notes).toBe(beforeSettings + 1)
+  await page
+    .getByRole('dialog', { name: 'Settings' })
+    .getByRole('button', { name: 'Close' })
+    .click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  const beforeDeal = (await audio()).notes
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('button', { name: 'New game' })
+    .click()
+  await expect(page.getByRole('dialog', { name: 'New game' })).toBeVisible()
+  await expect.poll(async () => (await audio()).notes - beforeDeal).toBeGreaterThanOrEqual(10)
 })
 
 test('a shared link unfurls: absolute Open Graph and Twitter card tags, and the image is served', async ({

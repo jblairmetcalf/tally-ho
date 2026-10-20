@@ -23,6 +23,12 @@ const CUES: Record<SfxCue, { when: string; icon: IconName; tone: Tone; synth: st
     synth: 'two-note chirp',
   },
   open: { when: 'A sheet slides up.', icon: 'down', tone: 'jade', synth: 'triangle sweep up' },
+  deal: {
+    when: 'New game opens: the Tally Ho! tune.',
+    icon: 'cards',
+    tone: 'amber',
+    synth: 'C–E–G · E–G–C hook over a walking bass, sparkle on top',
+  },
   close: { when: 'A sheet slides away.', icon: 'x', tone: 'jade', synth: 'triangle sweep down' },
   add: { when: 'A player joins the game.', icon: 'users', tone: 'jade', synth: 'E–B pair' },
   remove: { when: 'A player is taken out.', icon: 'x', tone: 'coral', synth: 'falling square' },

@@ -26,6 +26,7 @@ An architecture decision log: why things are the way they are. Read the relevant
 | 20 | The game is a sheet over Home | Accepted |
 | 21 | Branded QR codes that still scan | Accepted |
 | 22 | Player limits per game, on the preset and synced | Accepted |
+| 23 | New game opens to its own tune | Accepted |
 
 ## 1. Static export + PWA on Vercel, prebuilt
 *2026-10 · Accepted*
@@ -177,3 +178,10 @@ An architecture decision log: why things are the way they are. Read the relevant
 - **Context:** Some games only work with certain numbers: The Fox in the Forest is a two-player game, and the family plays High Society with three or more (the box says 3–5). New game let any line-up of two or more deal in, the demo's samples played the Fox three-handed, and Settings › Games didn't show or edit a game's player count.
 - **Decision:** Presets carry optional `minPlayers` (2–12) and `maxPlayers` (2–12, or `null` = no limit), synced like the other preset fields. `playerRangeOf(preset)` (`packages/core/src/lineup.ts`) reads them field by field, falling back to the built-in default with the same id, then to 2 or more; `rangeForGame(presets, name)` finds a game by its preset name or slug (so a game typed into Other as "The Fox in the Forest" counts), else a built-in. Defaults: the Fox 2–2, High Society 3+. Settings › Games (edit and Add a game) has Fewest / Most players fields (blank Most = no limit; clamped 2–12, Most never below Fewest) and the Games list shows "· 2 players". New game states the limit and keeps Deal in disabled with the reason until the line-up fits; `startGame` refuses a line-up that doesn't fit. Sample Fox games seat a rotating pair.
 - **Consequences:** A synced field: `firestore.rules` accepts the two optional keys (`playerLimits()`), so **rules deploy before the app** (old rules refuse a preset write that carries them, e.g. Restore default games or editing a limit). Old app versions never send the keys and keep validating; old docs without them fall back to the built-in defaults, so an existing family record knows the Fox is for two without Restore default games. The editor always writes explicit values, so "no limit" (`null`) sticks instead of falling back. Changing the sample line-ups changed the demo's sample history (same seed).
+
+## 23. New game opens to its own tune
+*2026-10 · Accepted (deviates from the prototype, where New game slid up with the plain `open` sweep)*
+- **Context:** Starting a game is the moment the app is for. The family wanted it to sound like Tally Ho!, sticky and memorable, not like any other sheet.
+- **Decision:** A new cue, `SFX.deal`: a rising "Tal-ly-Ho!" hook (C–E–G · E–G–C) over a walking triangle bass, landing on a held high C with two sparkle notes, about a second (14 synth notes, 0.085 s steps). `openSheet({ type: 'new' })` plays it instead of `open`, from every way in (the nav fox, History's empty state, Home). It has a light haptic on the hook (`deal`: three taps). Every other sheet keeps the `open` sweep, so the tune stays special.
+- **Consequences:** It obeys the audio rules from decision 10 unchanged: it only ever starts inside the tap that opens New game, holds the `playback` session only while it sounds, and the mute toggle silences it. The sheet doesn't wait for it. `e2e/pwa.spec.ts` checks Settings opens with one note and New game with the tune; the soundboard (Foundations/Sound) plays it. If it ever grates, shorten it here rather than reach for a setting.
+

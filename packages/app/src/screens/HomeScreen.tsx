@@ -15,6 +15,7 @@ import {
   ChampionCard,
   EmptyState,
   IconButton,
+  MixtapeShelf,
   Notice,
   ResumeCard,
   SectionTitle,
@@ -25,13 +26,14 @@ import {
   WinsChart,
   Wordmark,
 } from '@tally/ui'
-import { type CSSProperties, useEffect, useMemo } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
+import { shelfOf } from '../mixtape'
 import { takeWelcome } from '../sheets/SignInSheet'
 import { playerOfShelf, shelfItems } from '../stickerShelf'
 import { useSession } from '../sync/session'
-import { GameRowFor } from './GameRowFor'
+import { SongCardFor } from './SongCardFor'
 
 const rise = (i: number) => ({ '--i': i }) as CSSProperties
 
@@ -55,6 +57,14 @@ export function HomeScreen() {
   }, [session, a])
 
   const done = useMemo(() => games.filter(isCompleted), [games])
+  const song = useTally((s) => s.song)
+  const victory = useTally((s) => s.victory)
+  const clock = useTally((s) => s.clock)
+  const shelf = useMemo(() => shelfOf(done), [done])
+  // A game finished since Home was opened is "pressed" onto the shelf, once the victory overlay
+  // has gone (keyed on it, so the card arrives in front of you, not behind the overlay).
+  const [openedAt] = useState(() => clock.now())
+  const pressed = (iso: string | null) => !victory && !!iso && Date.parse(iso) >= openedAt
   const stats = useMemo(() => computeStats(done, nameOf), [done, nameOf])
   const stickers = useMemo(() => computeStickers(done), [done])
   const series = useMemo(
@@ -191,6 +201,28 @@ export function HomeScreen() {
             </Card>
           )}
 
+          <Card as="section" className="rise" style={rise(3)}>
+            <div className="mixtape-head">
+              <SectionTitle>{COPY.foxTrot.title}</SectionTitle>
+              {shelf.length > 1 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={song?.key === 'all' ? 'stop' : 'play'}
+                  onClick={() => a.playAll(shelf.map((g) => g.id))}
+                >
+                  {song?.key === 'all' ? COPY.foxTrot.stopAll : COPY.foxTrot.playAll}
+                </Button>
+              )}
+            </div>
+            <MixtapeShelf label={COPY.foxTrot.title} empty={COPY.foxTrot.empty}>
+              {shelf.map((g) => {
+                const isNew = pressed(g.completedAt)
+                return <SongCardFor key={`${g.id}${isNew ? ':new' : ''}`} game={g} isNew={isNew} />
+              })}
+            </MixtapeShelf>
+          </Card>
+
           {stickers.recent.length > 0 && (
             <Card as="section" className="rise" style={rise(3)}>
               <SectionTitle style={{ marginBottom: 6 }}>{COPY.stickers.fresh}</SectionTitle>
@@ -228,16 +260,6 @@ export function HomeScreen() {
               },
             ]}
           />
-
-          <section
-            className="rise"
-            style={{ ...rise(5), display: 'flex', flexDirection: 'column', gap: 10 }}
-          >
-            <SectionTitle>{COPY.home.recent}</SectionTitle>
-            {done.slice(0, 3).map((g) => (
-              <GameRowFor key={g.id} game={g} roster={roster} />
-            ))}
-          </section>
         </>
       )}
     </main>

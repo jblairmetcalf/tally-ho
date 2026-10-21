@@ -20,6 +20,7 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',

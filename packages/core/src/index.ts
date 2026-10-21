@@ -1,5 +1,6 @@
 export * from './lineup'
 export * from './migrate'
+export * from './mixtape'
 export * from './presets'
 export * from './samples'
 export * from './schemas'

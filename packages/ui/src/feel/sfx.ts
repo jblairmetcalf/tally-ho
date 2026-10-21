@@ -15,12 +15,16 @@
  *     app closes the context (`SFX.sleep()`); the next sound builds a fresh one.
  */
 
+import type { SongNote } from '@tally/core'
+
 type Wave = OscillatorType
 interface ToneOpts {
   type?: Wave
   vol?: number
   at?: number
   to?: number | null
+  /** Where the note goes: a song's bus (so it can be stopped), else the speakers. */
+  dest?: AudioNode
 }
 
 /** How long audio is held after the last note ends before it's handed back to iOS. */
@@ -106,7 +110,7 @@ function tone(f: number, d: number, o: ToneOpts = {}): void {
   if (muted) return
   const c = live()
   if (!c) return
-  const { type = 'square', vol = 0.12, at = 0, to = null } = o
+  const { type = 'square', vol = 0.12, at = 0, to = null, dest } = o
   const t = c.currentTime + at + 0.01
   const osc = c.createOscillator()
   const g = c.createGain()
@@ -117,7 +121,7 @@ function tone(f: number, d: number, o: ToneOpts = {}): void {
   g.gain.exponentialRampToValueAtTime(vol, t + 0.012)
   g.gain.exponentialRampToValueAtTime(0.0001, t + d)
   osc.connect(g)
-  g.connect(c.destination)
+  g.connect(dest ?? c.destination)
   osc.start(t)
   osc.stop(t + d + 0.03)
   holdUntil(t + d + 0.03)
@@ -126,6 +130,67 @@ function tone(f: number, d: number, o: ToneOpts = {}): void {
 /** Each sticker in a run lands a step higher up the scale. */
 const STICKER_NOTES = [523, 587, 659, 784, 880, 1047, 1175, 1319]
 let stickerStep = 0
+
+/**
+ * The Fox Trot's voices (decisions 27, 29), on the same 8-bit synth as every cue: square for the
+ * melody, the riff, the licks and the story; triangle for the bass, the story's octave-down twin,
+ * the chord, the runner-up's answer and the seal's sparkle.
+ */
+const PART: Record<SongNote['part'], ToneOpts> = {
+  // At the cues' own levels (decision 29): the melody like `submit` and `win`, its octave-down
+  // twin and the bass in triangle like `win` and `start`, the seal like `deal`'s sparkle.
+  lead: { vol: 0.1 },
+  riff: { vol: 0.09 },
+  lick: { vol: 0.07 },
+  bass: { type: 'triangle', vol: 0.11 },
+  story: { vol: 0.11 },
+  harmony: { type: 'triangle', vol: 0.1 },
+  chord: { type: 'triangle', vol: 0.09 },
+  answer: { type: 'triangle', vol: 0.1 },
+  seal: { type: 'triangle', vol: 0.045 },
+}
+const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12)
+
+/** The song playing now: every note goes through its bus, so stopping it is instant. */
+let songBus: GainNode | null = null
+
+function stopSong() {
+  const bus = songBus
+  songBus = null
+  if (!bus) return
+  try {
+    bus.gain.setTargetAtTime(0, bus.context.currentTime, 0.015)
+    setTimeout(() => bus.disconnect(), 150)
+  } catch {
+    /* closed */
+  }
+}
+
+/** Play a song (or one round of it); one at a time. Returns its stop. */
+function playSong(notes: SongNote[]): () => void {
+  stopSong()
+  if (muted || !notes.length) return () => {}
+  const c = live()
+  if (!c) return () => {}
+  const bus = c.createGain()
+  // Straight out, like every cue: its parts are balanced to the cues' levels, not squeezed.
+  bus.connect(c.destination)
+  songBus = bus
+  for (const n of notes) {
+    const part = PART[n.part]
+    const v = Math.max(0.2, Math.min(1, n.v ?? 1))
+    tone(hz(n.midi), n.dur, { ...part, vol: (part.vol ?? 0.07) * v, at: n.t, dest: bus })
+  }
+  return () => {
+    if (songBus === bus) stopSong()
+  }
+}
+
+/** A round's note on the soundboard: a chord tone a fifth over its bass. */
+const SAMPLE_ROUND: SongNote[] = [
+  { t: 0, midi: 48, dur: 0.36, part: 'bass', beat: 0 },
+  { t: 0, midi: 67, dur: 0.32, part: 'lead', beat: 0 },
+]
 
 /** A run of notes; 0 is a rest. */
 function seq(notes: number[], step: number, o: ToneOpts = {}): void {
@@ -160,6 +225,17 @@ export const SFX = {
   pick: () => {
     tone(784, 0.05, { vol: 0.09 })
     tone(1175, 0.07, { vol: 0.09, at: 0.05 })
+  },
+  /**
+   * A Fox Trot song (`scheduleOf` in @tally/core), or one round of it. One plays at a time:
+   * a new one stops the last. Muted, nothing sounds (the caller's playhead still moves).
+   */
+  song: playSong,
+  /** Stop whatever song is playing. */
+  stopSong,
+  /** A round is scored: its own note in the game's song (`roundNotes`), in place of `submit`. */
+  note: (notes: SongNote[] = SAMPLE_ROUND) => {
+    playSong(notes)
   },
   /** A sheet slides up. */
   open: () => tone(240, 0.2, { type: 'triangle', to: 960, vol: 0.16 }),
@@ -228,7 +304,10 @@ export const SFX = {
   lose: () => seq([392, 370, 349, 311], 0.26, { type: 'triangle', vol: 0.12 }),
 }
 
-export type SfxCue = Exclude<keyof typeof SFX, 'setMuted' | 'isMuted' | 'unlock' | 'sleep'>
+export type SfxCue = Exclude<
+  keyof typeof SFX,
+  'setMuted' | 'isMuted' | 'unlock' | 'sleep' | 'song' | 'stopSong'
+>
 export const SFX_CUES: SfxCue[] = [
   'tap',
   'pick',
@@ -238,6 +317,7 @@ export const SFX_CUES: SfxCue[] = [
   'add',
   'remove',
   'submit',
+  'note',
   'start',
   'lead',
   'match',

@@ -784,6 +784,19 @@
     font-size: 19px;
     line-height: 1.1;
   }
+  /* which game this was, counting from the first: a small tag after the name */
+  .game-row .game-no {
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: var(--sunk);
+    font-family: var(--f-body);
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--muted);
+    vertical-align: 3px;
+    white-space: nowrap;
+  }
   .game-row .gsub {
     font-size: 12.5px;
     color: var(--muted);
@@ -1049,6 +1062,11 @@
     align-items: center;
     gap: 4px;
     padding: 8px;
+  }
+  /* read-only (a game's details): no pencil column, so the scores spread across */
+  .log.static .log-head,
+  .log.static .log-row {
+    grid-template-columns: 44px repeat(var(--n), 1fr);
   }
   .log-head {
     font-size: 11.5px;
@@ -1498,6 +1516,9 @@
     flex-direction: column;
     gap: 8px;
     margin-top: 6px;
+  }
+  .podium.wide {
+    max-width: none;
   }
   .pod {
     display: flex;
@@ -2657,3 +2678,344 @@
   }
 }
 
+
+/* ---------- the Fox Trot: a staff, song cards, the shelf (decision 27) ---------- */
+@layer components {
+  .staff {
+    --head: 10px;
+    position: relative;
+    height: 96px;
+    padding: 8px 4px;
+  }
+  .staff.full {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .staff.full::-webkit-scrollbar {
+    display: none;
+  }
+  .staff.mini {
+    --head: 5px;
+    height: 34px;
+    padding: 4px 2px;
+  }
+  /* a song card's staff is a thumbnail: the melody only, flat dots */
+  .staff.mini .note {
+    box-shadow: none;
+  }
+  .staff.mini .note.riff {
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 60%, transparent);
+  }
+  .staff.mini .note.bass {
+    display: none;
+  }
+  /* five faint lines; every note of the song placed on them by time (across) and pitch (up) */
+  .staff-row {
+    position: relative;
+    height: 100%;
+    margin: 0 calc(var(--head) / 2);
+    background: repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text) 16%, transparent) 0 1.5px,
+      transparent 1.5px 25%
+    );
+    border-bottom: 1.5px solid color-mix(in srgb, var(--text) 16%, transparent);
+  }
+  /* full size: a long song scrolls sideways rather than crowd its notes */
+  .staff.full .staff-row {
+    min-width: calc(var(--len, 1) * 64px);
+  }
+  .note-at {
+    position: absolute;
+    left: calc(var(--x, 0) * 100% - var(--head) / 2);
+    bottom: calc(var(--y, 0.5) * (100% - var(--head)));
+    width: var(--head);
+    height: calc(var(--head) * 0.82);
+  }
+  /* the round being edited: its notes ringed in amber */
+  .note-at.hi .note {
+    box-shadow:
+      var(--note-ring),
+      0 0 0 4px color-mix(in srgb, var(--amber) 55%, transparent);
+  }
+  /* a new round's notes drop in; the playhead's pop is on the note inside, so neither replays the other */
+  .note-at.drop {
+    animation: letterDrop 0.5s var(--spring) both;
+  }
+  .note {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c, var(--muted));
+    box-shadow: var(--note-ring);
+  }
+  /* the riff is the game's, nobody's: a hollow ink ring */
+  .note.riff {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--text) 60%, transparent);
+  }
+  .note.riff.on {
+    background: var(--amber);
+  }
+  /* the bass keeps time underneath: small and faint */
+  .note.bass {
+    width: 55%;
+    height: 55%;
+    margin: 22%;
+    background: var(--muted);
+    opacity: 0.5;
+    box-shadow: none;
+  }
+  /* each note lights up while it sounds: a pop and the amber glow */
+  .note.on {
+    animation: pop 0.3s var(--spring);
+    opacity: 1;
+    box-shadow: var(--note-ring), var(--playhead-glow);
+  }
+  .note.bass.on {
+    background: var(--amber);
+    box-shadow: none;
+  }
+
+  .song-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 150px;
+    border-radius: var(--r);
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    overflow: hidden;
+  }
+  .song-card.pressed {
+    animation: rise 0.5s var(--spring) both;
+  }
+  .song-card.pressed .song-cover {
+    animation: pop 0.45s var(--spring) 0.35s both;
+  }
+  .song-open {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 0 4px;
+    text-align: left;
+    color: inherit;
+    transition: transform 0.2s var(--spring);
+  }
+  .song-open:active {
+    transform: scale(0.96);
+  }
+  .song-cover {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    height: 84px;
+    padding: 8px 10px;
+    background: var(--c);
+    color: var(--on-accent);
+    overflow: hidden;
+  }
+  .song-cover b {
+    position: relative;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.05;
+    max-width: 92px;
+    overflow-wrap: anywhere;
+  }
+  /* a record peeking out of its sleeve; it spins while the song plays */
+  .disc {
+    position: absolute;
+    right: -22px;
+    top: -18px;
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, var(--c) 0 15%, var(--ink) 16% 19%, transparent 20%),
+      repeating-radial-gradient(
+        circle,
+        var(--ink) 0 3px,
+        color-mix(in srgb, var(--ink) 82%, var(--c)) 3px 4.5px
+      );
+    box-shadow: 0 2px 8px var(--drop);
+  }
+  .song-card.playing .disc {
+    animation: spin 1.8s linear infinite;
+  }
+  .song-open .staff {
+    margin: 0 8px;
+  }
+  .song-meta {
+    padding: 0 10px;
+    font-size: 11.5px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--muted);
+  }
+  .song-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+    padding: 0 6px 6px;
+  }
+  .mixtape {
+    gap: 12px;
+  }
+  .mixtape-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  /* every card as tall as the tallest (a name or a meta line that wraps), play buttons in a line */
+  .mixtape li {
+    flex: none;
+    display: flex;
+  }
+}
+
+/* ---------- a game's song as one tappable strip (game screen, edit round, victory, details) ---------- */
+@layer components {
+  .song-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: var(--r);
+    padding: 10px 12px;
+  }
+  /* on the victory overlay's centred column: no card, as wide as the pack's row */
+  .song-strip.bare {
+    background: none;
+    border: 0;
+    padding: 0;
+    width: min(300px, 100%);
+    align-self: center;
+  }
+  /* the victory overlay and the game screen: a shorter staff */
+  .song-strip.bare .staff,
+  .song-strip.compact .staff {
+    height: 56px;
+  }
+  .song-strip.compact {
+    padding: 4px 12px;
+  }
+  .song-strip-caption {
+    margin: 2px 0;
+  }
+  .song-strip-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    color: inherit;
+    text-align: left;
+    transition: transform 0.2s var(--spring);
+  }
+  .song-strip-btn:active {
+    transform: scale(0.97);
+  }
+  .song-strip-btn .staff {
+    flex: 1;
+    min-width: 0;
+  }
+  .song-strip-icon {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--jade);
+    color: var(--on-accent);
+    box-shadow: 0 3px 0 var(--jade-deep);
+  }
+  .song-strip-btn.playing .song-strip-icon {
+    background: var(--amber);
+    box-shadow: 0 3px 0 var(--amber-deep);
+  }
+}
+
+/* ---------- the launch screen (decision 28): brand art, the same in both themes ---------- */
+@layer components {
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--splash-bg);
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .splash.out {
+    animation: fadeOut 0.32s ease forwards;
+    pointer-events: none;
+  }
+  /* Placed exactly as the iOS launch images place it (SPLASH_ART.box in apps/web/app/splash.ts):
+     min(88vw, 386px) wide, centred, its middle 44% down. */
+  .splash-art {
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: min(88vw, 386px);
+    aspect-ratio: 944 / 1055;
+    transform: translate(-50%, -50%);
+  }
+  .splash-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* starts and ends still, so the hand-off from the launch image is seamless */
+    animation: wobble 0.9s ease-in-out 0.25s 1;
+  }
+  .splash-foot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(44% + min(88vw, 386px) * 0.56 + 6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px;
+  }
+  .splash-tagline {
+    margin: 0;
+    font-weight: 800;
+    font-size: 19px;
+    color: var(--cream);
+    text-align: center;
+    animation: rise 0.5s var(--spring) 0.15s both;
+  }
+  .splash-bar {
+    width: min(56vw, 210px);
+    height: 12px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--cream) 14%, transparent);
+    overflow: hidden;
+  }
+  .splash-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+    background: var(--jade);
+    transform-origin: left;
+    animation: grow 0.95s cubic-bezier(0.3, 0.7, 0.4, 1) both;
+  }
+  .splash-loading {
+    margin: 0;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--lav);
+    animation: fadeIn 0.4s ease 0.3s both;
+  }
+}

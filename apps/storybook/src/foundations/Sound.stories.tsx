@@ -38,6 +38,12 @@ const CUES: Record<SfxCue, { when: string; icon: IconName; tone: Tone; synth: st
     tone: 'jade',
     synth: 'C major arpeggio',
   },
+  note: {
+    when: "A round is scored: its own step in the game's fox trot, in place of submit.",
+    icon: 'music',
+    tone: 'jade',
+    synth: "the round's chord tone over the bass, with its lick",
+  },
   start: {
     when: 'Deal in: a new game starts.',
     icon: 'cards',

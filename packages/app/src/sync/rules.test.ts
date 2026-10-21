@@ -333,5 +333,48 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('firestore.rules', () => {
       await assertFails(ref.update({ name: 'Renamed', updatedAt: NOW }))
       await assertSucceeds(ref.update({ deletedAt: NOW, updatedAt: NOW }))
     })
+
+    it('presets and games: a Mixtape song key is optional and well formed', async () => {
+      const key = { tonic: 7, mode: 'major', loop: 2 }
+      await assertSucceeds(
+        db(blair)
+          .doc('presets/flip-7')
+          .set(preset({ song: key })),
+      )
+      await assertSucceeds(
+        db(blair)
+          .doc('games/g1')
+          .set(game({ song: key })),
+      )
+      await assertFails(
+        db(blair)
+          .doc('presets/flip-7')
+          .set(preset({ song: { ...key, tonic: 12 } })),
+      )
+      await assertFails(
+        db(blair)
+          .doc('presets/flip-7')
+          .set(preset({ song: { ...key, mode: 'dorian' } })),
+      )
+      await assertFails(
+        db(blair)
+          .doc('presets/flip-7')
+          .set(preset({ song: { ...key, loop: 4 } })),
+      )
+      await assertFails(
+        db(blair)
+          .doc('games/g2')
+          .set(game({ id: 'g2', song: { ...key, extra: 1 } })),
+      )
+      await assertFails(
+        db(blair)
+          .doc('games/g2')
+          .set(game({ id: 'g2', song: 'G major' })),
+      )
+    })
+
+    it('songs are never stored: there is no songs collection', async () => {
+      await assertFails(db(blair).doc('songs/g1').set({ gameId: 'g1', updatedAt: NOW }))
+    })
   })
 })

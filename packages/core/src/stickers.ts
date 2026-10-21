@@ -241,3 +241,9 @@ export function computeStickers(games: Game[]): StickerBook {
   book.recent.reverse()
   return book
 }
+
+/**
+ * The win shapes stickers judge, for the Fox Trot's ending to read the same way (decision 29):
+ * Comeback Kid's comeback, Photo Finish's photo finish, Steamroller's steamroller. Unchanged.
+ */
+export { comeback as isComeback, photo as isPhotoFinish, steam as isSteamroller }

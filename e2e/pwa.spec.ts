@@ -232,3 +232,56 @@ test('a shared link unfurls: absolute Open Graph and Twitter card tags, and the 
   expect(res.headers()['content-type']).toContain('image/jpeg')
   expect((await res.body()).length).toBeLessThan(300_000)
 })
+
+test('launch screen: shows at once, stays at least a second, then fades into the app', async ({
+  page,
+}) => {
+  // Note when the app comes up and when the splash leaves (ms since the page started).
+  await page.addInitScript(() => {
+    const w = window as unknown as { __readyAt?: number; __goneAt?: number }
+    addEventListener('tally:ready', () => {
+      w.__readyAt ??= performance.now()
+    })
+    new MutationObserver(() => {
+      if (w.__goneAt == null && document.body && !document.getElementById('splash'))
+        w.__goneAt = performance.now()
+    }).observe(document, { childList: true, subtree: true })
+  })
+  await seed(page, household())
+  await page.goto('/')
+  // In the static page itself: it paints before any script.
+  const splash = page.getByRole('status', { name: 'Loading Tally Ho!' })
+  await expect(splash).toBeVisible()
+  await expect(splash.getByText('Good cards. Better company.')).toBeVisible()
+  await expect(splash).toHaveCount(0, { timeout: 4000 })
+  const { __readyAt: readyAt, __goneAt: goneAt } = await page.evaluate(() => {
+    const w = window as unknown as { __readyAt: number; __goneAt: number }
+    return { __readyAt: w.__readyAt, __goneAt: w.__goneAt }
+  })
+  // The app came up first (fast, from the cache), yet the splash held for at least a second.
+  expect(readyAt).toBeLessThan(goneAt)
+  expect(goneAt).toBeGreaterThanOrEqual(1000)
+  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
+  // Its art is precached for offline launches.
+  const art = await page.request.get('/splash-art.webp')
+  expect(art.ok()).toBe(true)
+  expect((await art.body()).byteLength).toBeLessThan(80_000)
+})
+
+test('feels native: the window never pinch- or double-tap-zooms', async ({ page }) => {
+  await seed(page, household())
+  await page.goto('/')
+  const viewport = await page.locator('meta[name="viewport"]').getAttribute('content')
+  expect(viewport).toContain('maximum-scale=1')
+  expect(viewport).toContain('user-scalable=no')
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).touchAction)).toBe(
+    'pan-x pan-y',
+  )
+  // iOS pinches arrive as gesture events: they're cancelled.
+  const cancelled = await page.evaluate(() => {
+    const e = new Event('gesturestart', { cancelable: true })
+    document.dispatchEvent(e)
+    return e.defaultPrevented
+  })
+  expect(cancelled).toBe(true)
+})

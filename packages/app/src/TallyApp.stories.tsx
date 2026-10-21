@@ -93,6 +93,22 @@ export const Victory: Story = {
   },
 }
 
+/** The victory song playing (it starts after the fanfare and the sting): the playhead on round three. */
+export const VictorySong: Story = {
+  args: {
+    store: () => finishedScenario().store,
+    ui: (() => {
+      const { game } = finishedScenario()
+      return {
+        finished: game,
+        victory: game,
+        pack: { open: false, shown: 0 },
+        song: { key: 'victory' as const, gameId: game.id, whole: true, beat: -1 },
+      }
+    })(),
+  },
+}
+
 /** The victory sticker pack torn open: the winner's chip and the stickers the game gave out. */
 export const VictoryPackOpen: Story = {
   args: {

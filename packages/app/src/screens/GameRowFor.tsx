@@ -2,9 +2,19 @@ import { type CompletedGame, ranked, totalsOf } from '@tally/core'
 import { GameRow } from '@tally/ui'
 import type { Roster } from '../context'
 import { useActions } from '../context'
+import { COPY } from '../copy'
 
 /** A finished game as a GameRow; opens its detail sheet. */
-export function GameRowFor({ game: g, roster }: { game: CompletedGame; roster: Roster }) {
+export function GameRowFor({
+  game: g,
+  roster,
+  number,
+}: {
+  game: CompletedGame
+  roster: Roster
+  /** Which game this was, from the first (History). */
+  number?: number
+}) {
   const a = useActions()
   const t = totalsOf(g)
   return (
@@ -20,6 +30,7 @@ export function GameRowFor({ game: g, roster }: { game: CompletedGame; roster: R
         total: t[id] ?? 0,
         won: id === g.winnerId,
       }))}
+      number={number ? COPY.history.number(number) : undefined}
       onClick={() => a.openSheet({ type: 'detail', id: g.id })}
     />
   )

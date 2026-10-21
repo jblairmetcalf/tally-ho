@@ -74,8 +74,8 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore // the 
 |---|---|
 | `members/{lowercase email}` | `name: string, playerId: string`. Console-only |
 | `players/{id}` | `id, name (1–16), color (0–7 int), archived?: bool, updatedAt: string` |
-| `presets/{id}` | `id, name (1–32), goal ('score'\|'rounds'\|'wins'\|'open'), target (int>0 \| null; an int for 'wins'), lowWins: bool, roundsPerPlayer?: bool, minPlayers?: int 2–12, maxPlayers?: int 2–12 \| null, updatedAt`. `minPlayers` / `maxPlayers` are optional (absent on older docs: the app falls back to the built-in default for the id; `maxPlayers: null` = no limit, and never below `minPlayers`). `roundsPerPlayer` is optional (old clients' docs lack it, and the rules still accept them); switching it off writes `false`; a preset that drops the key sends `deleteField()` (both valid) |
-| `games/{id}` | `id, name (1–40), goal (as presets), target (int>0 \| null; an int for 'wins'), lowWins, playerIds (list 2–12), startedAt, completedAt (string\|null), winnerId (string\|null), startedBy?, deletedAt?: string, updatedAt, rounds: map<roundId, { scores: map<playerId, int\|null>, at: string, by?: string }>` (≤ 1000 rounds). A "Who won?" (`wins`) round is an ordinary round scored `{ winner: 1, others: 0 }`; games never carry `roundsPerPlayer` (the round count is fixed into `target` when dealt) |
+| `presets/{id}` | `id, name (1–32), goal ('score'\|'rounds'\|'wins'\|'open'), target (int>0 \| null; an int for 'wins'), lowWins: bool, roundsPerPlayer?: bool, minPlayers?: int 2–12, maxPlayers?: int 2–12 \| null, song?: { tonic: int 0–11, mode: 'major'\|'minor', loop: int 0–3 }, updatedAt`. `song` is the game type's Fox Trot key (decision 27), absent = picked from the name; clearing it sends `deleteField()`. `minPlayers` / `maxPlayers` are optional (absent on older docs: the app falls back to the built-in default for the id; `maxPlayers: null` = no limit, and never below `minPlayers`). `roundsPerPlayer` is optional (old clients' docs lack it, and the rules still accept them); switching it off writes `false`; a preset that drops the key sends `deleteField()` (both valid) |
+| `games/{id}` | `id, name (1–40), goal (as presets), target (int>0 \| null; an int for 'wins'), lowWins, playerIds (list 2–12), startedAt, completedAt (string\|null), winnerId (string\|null), startedBy?, song?: (as presets; copied from the preset when dealt, written only on create), deletedAt?: string, updatedAt, rounds: map<roundId, { scores: map<playerId, int\|null>, at: string, by?: string }>` (≤ 1000 rounds). A "Who won?" (`wins`) round is an ordinary round scored `{ winner: 1, others: 0 }`; games never carry `roundsPerPlayer` (the round count is fixed into `target` when dealt) |
 
 ## Rules (`firestore.rules`)
 
@@ -85,7 +85,7 @@ export function createSessionCore(opts: SessionCoreOptions): SessionCore // the 
 - `goal` is `'score' | 'rounds' | 'wins' | 'open'`; a `'wins'` preset or game must have an int `target` (older score/rounds docs aren't held to this). New optional keys go in `hasOnly`, never `hasAll`, so documents written by older app versions stay valid.
 - **No hard deletes** of games or players; presets may be deleted.
 - A game whose stored `completedAt != null` may only change `deletedAt` / `updatedAt` (late rounds refused; undoing a delete allowed).
-- Everything else is denied. Deploy with `pnpm firebase:rules`, **before** an app version that writes a new value or key (old rules refuse `'wins'`, `roundsPerPlayer`, `minPlayers` and `maxPlayers`; new rules keep accepting older app versions' writes).
+- Everything else is denied. Deploy with `pnpm firebase:rules`, **before** an app version that writes a new value or key (old rules refuse `'wins'`, `roundsPerPlayer`, `minPlayers`, `maxPlayers`, and `song`; new rules keep accepting older app versions' writes).
 
 ## UI labels
 

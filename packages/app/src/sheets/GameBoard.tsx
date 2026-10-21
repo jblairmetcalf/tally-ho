@@ -17,11 +17,13 @@ import {
   RoundPips,
   ScoreFields,
   SectionTitle,
+  SongStrip,
   WinnerPicker,
 } from '@tally/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
+import { useStaff } from '../mixtape'
 
 /**
  * The live scoreboard (or a just-finished game behind the victory overlay): the root page of the
@@ -29,6 +31,11 @@ import { COPY } from '../copy'
  */
 export function GameBoard({ game: g }: { game: Game }) {
   const flash = useTally((s) => s.flash)
+  const song = useTally((s) => s.song)
+  const pulse = useTally((s) => s.pulse)
+  const staff = useStaff(g)
+  // Only rounds scored while the sheet is open drop in (opening it doesn't rain every note).
+  const [dropFrom] = useState(() => g.rounds.length)
   const muted = useTally((s) => s.data.prefs.muted)
   const a = useActions()
   const roster = useRoster()
@@ -113,6 +120,33 @@ export function GameBoard({ game: g }: { game: Game }) {
       )}
       {g.goal === 'rounds' && g.target != null && (
         <RoundPips target={g.target} done={g.rounds.length} />
+      )}
+
+      {/* The fox trot so far; a one-round game ends on its first note, so it has none. */}
+      {!(g.goal === 'wins' && winTarget <= 1) && !(g.goal === 'rounds' && g.target === 1) && (
+        <div style={{ marginTop: 14 }}>
+          <SongStrip
+            title={COPY.foxTrot.soFar}
+            caption={COPY.foxTrot.caption}
+            song={staff}
+            compact
+            dropFrom={dropFrom}
+            pulse={
+              song?.gameId === g.id && !song.whole
+                ? song.beat
+                : pulse?.gameId === g.id
+                  ? pulse.idx
+                  : null
+            }
+            playing={song?.gameId === g.id && song.key === 'live' && song.whole}
+            onPlay={() => a.playSong(g.id, 'live')}
+            label={
+              song?.gameId === g.id && song.key === 'live' && song.whole
+                ? COPY.foxTrot.stop(g.name)
+                : COPY.foxTrot.play(g.name)
+            }
+          />
+        </div>
       )}
 
       <div className="board" style={{ marginTop: 14 }}>

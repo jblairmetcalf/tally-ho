@@ -1,8 +1,9 @@
-import type { Game } from '@tally/core'
-import { Button, ConfirmButton, ScoreFields, WinnerPicker } from '@tally/ui'
-import { useState } from 'react'
-import { useActions, useRoster } from '../context'
+import { type Game, parseScore } from '@tally/core'
+import { Button, ConfirmButton, ScoreFields, SongStrip, WinnerPicker } from '@tally/ui'
+import { useMemo, useState } from 'react'
+import { useActions, useRoster, useTally } from '../context'
 import { COPY } from '../copy'
+import { useStaff } from '../mixtape'
 
 /** Edit round N: a page pushed inside the game sheet (its header names it). */
 export function EditRoundSheet({ game: g, idx }: { game: Game; idx: number }) {
@@ -20,6 +21,15 @@ export function EditRoundSheet({ game: g, idx }: { game: Game; idx: number }) {
   const [winner, setWinner] = useState<string | null>(
     () => g.playerIds.find((p) => (r?.scores[p] ?? 0) > 0) ?? null,
   )
+  // The song as it would be with this edit: its staff, and the round to hear before saving.
+  const preview = useMemo((): Game => {
+    const scores = Object.fromEntries(
+      g.playerIds.map((p, i) => [p, wins ? (p === winner ? 1 : 0) : parseScore(vals[i])]),
+    )
+    return { ...g, rounds: g.rounds.map((x, i) => (i === idx ? { ...x, scores } : x)) }
+  }, [g, idx, vals, winner, wins])
+  const staff = useStaff(preview)
+  const song = useTally((s) => s.song)
   if (!r) return null
   const n = idx + 1
   const save = () =>
@@ -47,6 +57,13 @@ export function EditRoundSheet({ game: g, idx }: { game: Game; idx: number }) {
         />
       )}
       <span className="hint">{wins ? COPY.editRound.winsHint : COPY.editRound.hint}</span>
+      <SongStrip
+        song={staff}
+        highlight={idx}
+        pulse={song?.key === 'preview' && song.gameId === g.id ? song.beat : null}
+        onPlay={() => a.previewRound(preview, idx)}
+        label={song?.key === 'preview' ? COPY.foxTrot.stop(g.name) : COPY.foxTrot.hear}
+      />
       <Button block icon="check" onClick={save}>
         {COPY.editRound.save(n)}
       </Button>

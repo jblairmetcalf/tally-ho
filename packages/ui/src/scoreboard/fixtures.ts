@@ -6,8 +6,11 @@ import {
   type Game,
   makeSamples,
   type Player,
+  plotOf,
   type Round,
   ranked,
+  scheduleOf,
+  songOf,
   totalsOf,
   winSeries,
 } from '@tally/core'
@@ -58,3 +61,10 @@ export const rounds = (ids: string[], rows: (number | null)[][]): Round[] =>
   rows.map((row) => ({ scores: Object.fromEntries(ids.map((id, i) => [id, row[i] ?? null])) }))
 
 export const players = (n: number) => PLAYERS.slice(0, n)
+
+/** A game's Fox Trot for the staff, as the app builds it (`songOf` → `scheduleOf` → `plotOf`). */
+export const staffFor = (g: Game) => {
+  const colorOf = (id: string) => byId(id).color
+  const sched = scheduleOf(songOf(g, colorOf))
+  return { notes: plotOf(sched, colorOf), length: sched.length }
+}

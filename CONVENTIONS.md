@@ -12,7 +12,7 @@ which Claude Code loads automatically when you touch that area.
 - Two modes behind one seam: **demo** (signed out, this phone) and **family** (signed in, Firestore). Screens never ask which.
 
 ## The original
-`docs/imports/Tally Ho!.html` is the reference (and `docs/imports/Tally Ho Sticker Club.html` for the Sticker Club, decision 24). Port its behaviour, copy, timings, sounds and animations
+`docs/imports/Tally Ho!.html` is the reference (and `docs/imports/Tally Ho Sticker Club.html` for the Sticker Club, decision 24; `docs/imports/Tally Ho! Mixtape Feature Spec.md` for the Fox Trot, decision 27, and `docs/imports/Tally Ho Chime Lab.html` for how a song ends, decision 29). Port its behaviour, copy, timings, sounds and animations
 faithfully. Deviate only on purpose (accessibility, native feel, sheet stability) and record why in
 `docs/DECISIONS.md`.
 
@@ -20,7 +20,7 @@ faithfully. Deviate only on purpose (accessibility, native feel, sheet stability
 1. **Tokens, not raw colours.** Brand art (the fox, the icon) is the only exception.
 2. **Two themes, always.** Dark and Daylight, WCAG AA (small coloured text uses the `-text` tokens).
 3. **Feel is built in, and respects reduced motion.** Sound, haptics, confetti and motion come from `@tally/ui`.
-4. **Native feel.** Targets ≥ 44px, no text selection or callouts outside text fields, no tap delay, every icon-only control named.
+4. **Native feel.** Targets ≥ 44px, no text selection or callouts outside text fields, no tap delay, no pinch or double-tap zoom, every icon-only control named.
 5. **Every component has stories** covering each meaningful state.
 6. **Never lose a score.** No hard deletes; finished games are frozen; offline writes are kept until synced.
 7. **Strings live in `packages/app/src/copy.ts`.**

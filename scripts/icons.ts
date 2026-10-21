@@ -8,20 +8,22 @@
  *   favicon.svg         a simplified mark for tabs: the fox's face on the ink disc in a jade ring
  *   favicon.png         64, from the SVG
  *   favicon.ico         16 (a bolder cut: thicker ring, bigger fox, no crown) + 32/48, PNG-in-ICO
- *   splash-WxH.png      iOS launch screens: the icon on ink, one per iPhone (apps/web/app/splash.ts)
+ *   splash-art.webp     the launch art (docs/imports/splash-screen.png, cropped to the fox and the
+ *                       wordmark): the web splash (`Splash` in @tally/ui) draws it with live words
+ *   splash-WxH.png      iOS launch screens: the same art where the web splash puts it, one per
+ *                       iPhone (apps/web/app/splash.ts), so launch → splash → app never jumps
  */
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import sharp from 'sharp'
-import { SPLASH, splashFile } from '../apps/web/app/splash'
+import { SPLASH, SPLASH_ART, SPLASH_BG, splashFile } from '../apps/web/app/splash'
 
 /** Run from the repo root (`pnpm icons`). */
 const root = process.cwd()
 const SRC = resolve(root, 'docs/imports/tally-ho.png')
+const SPLASH_SRC = resolve(root, 'docs/imports/splash-screen.png')
 const OUT = resolve(root, 'apps/web/public')
 const INK = '#13112E'
-/** The icon PNG's own background (one step off INK), so the splash has no seam. */
-const ICON_BG = '#12112E'
 
 const png = (size: number) =>
   sharp(SRC).resize(size, size, { fit: 'cover', kernel: 'lanczos3' }).png({ compressionLevel: 9 })
@@ -93,22 +95,40 @@ async function ico(name: string, sizes: number[]) {
 }
 
 /** The icon centred a little above the middle of an ink screen, like the app's first paint. */
+/**
+ * The launch art: the fox and the wordmark from the splash design (its words are live text).
+ * Its own background isn't perfectly even, so the edges feather to transparent: no seam
+ * against the splash ground.
+ */
+async function art(width: number) {
+  const height = Math.round((width * SPLASH_ART.crop.height) / SPLASH_ART.crop.width)
+  const pad = Math.round(width * 0.03)
+  const mask = Buffer.from(
+    `<svg width="${width}" height="${height}"><defs><filter id="b"><feGaussianBlur stdDeviation="${pad / 2}"/></filter></defs><rect x="${pad}" y="${pad}" width="${width - 2 * pad}" height="${height - 2 * pad}" rx="${pad}" fill="#fff" filter="url(#b)"/></svg>`,
+  )
+  const img = await sharp(SPLASH_SRC)
+    .extract(SPLASH_ART.crop)
+    .resize({ width, height, kernel: 'lanczos3' })
+    .ensureAlpha()
+    .toBuffer()
+  return sharp(img).composite([{ input: mask, blend: 'dest-in' }])
+}
+
+async function splashArt() {
+  await (await art(SPLASH_ART.file.width))
+    .webp({ quality: 82, alphaQuality: 80, effort: 6 })
+    .toFile(resolve(OUT, SPLASH_ART.file.name))
+}
+
+/** An iOS launch screen: the art exactly where the web splash draws it (`SPLASH_ART.box`). */
 async function splash(s: (typeof SPLASH)[number]) {
   const w = s.w * s.dpr
   const h = s.h * s.dpr
-  const size = Math.round(w * 0.56)
-  // Feather only the outermost edge of the square art, hiding the PNG's faint noise seam
-  // without touching the lettering (which reaches into the corners).
-  const pad = Math.round(size * 0.03)
-  const mask = Buffer.from(
-    `<svg width="${size}" height="${size}"><defs><filter id="b"><feGaussianBlur stdDeviation="${pad / 2}"/></filter></defs><rect x="${pad}" y="${pad}" width="${size - 2 * pad}" height="${size - 2 * pad}" fill="#fff" filter="url(#b)"/></svg>`,
-  )
-  const art = await png(size)
-    .composite([{ input: mask, blend: 'dest-in' }])
-    .toBuffer()
-  await sharp({ create: { width: w, height: h, channels: 4, background: ICON_BG } })
+  const box = SPLASH_ART.box(s.w, s.h)
+  const img = await (await art(Math.round(box.width * s.dpr))).png().toBuffer()
+  await sharp({ create: { width: w, height: h, channels: 4, background: SPLASH_BG } })
     .composite([
-      { input: art, left: Math.round((w - size) / 2), top: Math.round(h * 0.42 - size / 2) },
+      { input: img, left: Math.round(box.left * s.dpr), top: Math.round(box.top * s.dpr) },
     ])
     .png({ compressionLevel: 9 })
     .toFile(resolve(OUT, splashFile(s)))
@@ -125,6 +145,7 @@ async function main() {
     writeFile(resolve(OUT, 'favicon.svg'), `${faviconSvg()}\n`),
     fav(64).toFile(resolve(OUT, 'favicon.png')),
     ico('favicon.ico', [16, 32, 48]),
+    splashArt(),
     ...SPLASH.map(splash),
   ])
   console.log(`icons → ${OUT}`)

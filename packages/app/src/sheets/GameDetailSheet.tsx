@@ -14,11 +14,13 @@ import {
   RoundLog,
   SheetNav,
   type SheetNavPage,
+  SongStrip,
   StickerShelf,
 } from '@tally/ui'
 import { useMemo, useState } from 'react'
 import { useActions, useRoster, useTally } from '../context'
 import { COPY, longDate } from '../copy'
+import { useStaff } from '../mixtape'
 import { playerOfShelf, shelfItems } from '../stickerShelf'
 import { StickerBook } from './StickerBookSheet'
 
@@ -77,6 +79,9 @@ function GameDetail({
   const roster = useRoster()
   const t = totalsOf(g)
   const games = useTally((s) => s.data.games)
+  const song = useTally((s) => s.song)
+  const staff = useStaff(g)
+  const playing = song?.gameId === g.id && song.key === 'detail' && song.whole
   // Stickers depend on every game before this one (streaks, firsts), so the whole history counts.
   const earned = useMemo(
     () => computeStickers(games.filter(isCompleted)).byGame[g.id] ?? [],
@@ -89,6 +94,7 @@ function GameDetail({
       </div>
       <div className="group">
         <Podium
+          wide
           rows={[g.winnerId, ...ranked(g).filter((id) => id !== g.winnerId)].map((id) => ({
             id,
             name: roster.nameOf(id),
@@ -98,6 +104,12 @@ function GameDetail({
           delayMs={0}
         />
       </div>
+      <SongStrip
+        song={staff}
+        playing={playing}
+        onPlay={() => a.playSong(g.id, 'detail')}
+        label={playing ? COPY.foxTrot.stop(g.name) : COPY.foxTrot.play(g.name)}
+      />
       <RoundLog
         players={roster.people(g.playerIds)}
         rounds={g.rounds}

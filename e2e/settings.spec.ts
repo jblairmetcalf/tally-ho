@@ -430,3 +430,25 @@ test('Standings mark a real change of place: passing someone, never just drawing
   await expect(down('Kate')).toBeVisible()
   await expect(marks).toHaveCount(2)
 })
+
+test('History numbers every game from the first; filters keep each its number', async ({
+  page,
+}) => {
+  await seed(page, withSamples())
+  await page.goto('/')
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('button', { name: 'History' })
+    .click()
+  const rows = page.locator('.game-row')
+  await expect(rows).toHaveCount(10)
+  // Newest first, so the top row is how many games there have been.
+  await expect(rows.first().locator('.game-no')).toHaveText('#10')
+  await expect(rows.last().locator('.game-no')).toHaveText('#1')
+  // Filtered to one winner: the same games keep the same numbers.
+  const first = (await rows.nth(2).locator('.game-no').textContent()) ?? ''
+  const winner = ((await rows.nth(2).locator('.gsub').textContent()) ?? '').split(' won')[0] ?? ''
+  await page.getByRole('group', { name: 'Winner' }).getByRole('button', { name: winner }).click()
+  await expect(page.locator('.game-no', { hasText: first })).toHaveCount(1)
+  await expect(rows.first().locator('.game-no')).not.toHaveText('#1')
+})

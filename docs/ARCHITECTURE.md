@@ -5,7 +5,7 @@ How the code is laid out, how data flows from a tap to localStorage or Firestore
 ## Package graph
 
 ```
-                 packages/core      Zod schemas, scoring, stats, stickers, samples, migrate (no React, no clock)
+                 packages/core      Zod schemas, scoring, stats, stickers, mixtape, samples, migrate (no React, no clock)
                        │
                  packages/ui        tokens, motion, feel (SFX/Haptics/FX), brand, components
                        │
@@ -25,6 +25,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
 | `packages/core/src/scoring.ts`, `stats.ts` | Pure scoring (totals, leader, end conditions for the four goals `score` / `rounds` / `wins` / `open`, tiebreak, match point, `goalLabel`, `winRound`, `targetFor`) and stats Standings carry `move`: places passed or lost in the last game ([decision 25](DECISIONS.md)). |
 | `packages/core/src/presets.ts` | `DEFAULT_PRESETS` (each set from its rulebook: [decision 16](DECISIONS.md)), `DEFAULT_PLAYERS`, `DEFAULT_PREFS`, `emptyStore()` |
 | `packages/core/src/samples.ts` | Deterministic sample history for the demo (`freshStore`) |
+| `packages/core/src/mixtape.ts` | The Fox Trot ([decision 27](DECISIONS.md)): `songOf(game, colorOf)` (derived from the rounds, never stored), `scheduleOf` (timed notes for `SFX.song`), `staffOf` (the staff's columns), `roundNotes` (one round), `keyOf` / `riffOf` / `voiceOf`, `SONG_RULES`. The app maps it to player colours with `packages/app/src/mixtape.ts` (`useStaff`, `shelfOf`) |
 | `packages/core/src/stickers.ts` | The Sticker Club ([decision 24](DECISIONS.md)): `STICKERS`, `STICKER_RULES`, `computeStickers(games)` (derived from finished games, never stored), `stickersOf`, `totalsAt`. The app turns earned stickers into shelf items with `packages/app/src/stickerShelf.ts` |
 | `packages/core/src/lineup.ts` | Player limits: `playerRangeOf(preset)` (its `minPlayers` / `maxPlayers`, else the built-in default for the id, else 2+), `rangeForGame(presets, name)`, `fitsRange`, `isLimited` ([decision 22](DECISIONS.md)) |
 | `packages/core/src/migrate.ts` | Prototype `tallyho.v2` → v3, `withRoundIds` |
@@ -37,7 +38,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
 | `packages/app/src/sync/` | Family mode: session, cloud provider, diff, outbox, Firebase loader, fake Firestore |
 | `packages/app/src/TallyApp.tsx` | Root: session → keyed store → shell, sheets, toasts, victory |
 | `packages/app/src/copy.ts` | Every user-facing string |
-| `apps/web/app/` | `layout.tsx` (fonts, theme boot script), `page.tsx`, `manifest.ts`, `splash.ts`, `sw-register.tsx` |
+| `apps/web/app/` | `layout.tsx` (fonts, theme boot script, no-zoom script, the launch screen and its exit), `page.tsx`, `manifest.ts`, `splash.ts`, `sw-register.tsx` |
 | `apps/web/public/sw.js` | The service worker (template; rewritten at build) |
 | `apps/storybook/.storybook/` | `main.ts`, `preview.tsx` (both-themes decorator), `manager.ts` |
 | `apps/storybook/src/foundations/` | Colour, Type, Shape, Motion, Sound, Haptics, Icons pages |
@@ -57,7 +58,7 @@ Packages are consumed as TypeScript source (`exports: ./src/index.ts`); there is
                                    'storage' event = other tab    snapshots ─▶ Store ─▶ mirror (tallyho.family)
 ```
 
-- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `sheetKey`, `toast`, `banner`, `flash`, `victory`, `finished`, `foxWink`, `pack`: the victory sticker pack's open / shown). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
+- **Store** (`packages/app/src/store.ts`): one zustand store per session holding `data` (the persisted `Store`) and UI state (`screen`, `sheet`, `sheetKey`, `toast`, `banner`, `flash`, `victory`, `finished`, `foxWink`, `pack`: the victory sticker pack's open / shown, `song`: the Fox Trot song playing and its beat, `pulse`: an edited round's note). Every data change is saved through the provider unless it came from the provider (the `remote` flag stops echoes).
 - **Seam** (`DataProvider` in `packages/app/src/provider.ts`): `load()` (sync), `save(s)` (may debounce), optional `subscribe(cb)`. Screens and the store never know which provider they have.
 - **Demo:** `createLocalProvider()` writes `tallyho.v3`, debounced 150 ms, flushed on `pagehide`/hidden. First launch after the prototype migrates `tallyho.v2` once (old key kept as a backup).
 - **Family:** `createCloudProvider()` (`packages/app/src/sync/cloudProvider.ts`):
@@ -82,7 +83,7 @@ The full contract (document shapes, rules, session API, labels) is [SYNC.md](SYN
 | No theme flash | `THEME_BOOT` in `apps/web/app/layout.tsx` | Inline script reads `tallyho.v3` prefs before first paint, sets `data-theme` and the theme-color meta |
 | Service worker | `apps/web/public/sw.js`, registered by `apps/web/app/sw-register.tsx` (production only) | Navigations network-first (last good copy, else a themed offline page); static files cache-first; precaches everything on install, `skipWaiting` + `clients.claim` |
 | Precache list | `scripts/sw-precache.mjs` (runs after `next build`) | Fills `PRECACHE` and `VERSION` (build hash); **excludes Firebase chunks**, which cache on first sign-in |
-| Manifest, icons, splash | `apps/web/app/manifest.ts`, `apps/web/app/splash.ts`, `scripts/icons.ts` | `pnpm icons` regenerates from `docs/imports/tally-ho.png` |
+| Manifest, icons, splash | `apps/web/app/manifest.ts`, `apps/web/app/splash.ts`, `scripts/icons.ts` | `pnpm icons` regenerates icons from `docs/imports/tally-ho.png` and the launch art and iOS launch images from `docs/imports/splash-screen.png` |
 
 ## Build and deploy
 

@@ -12,6 +12,8 @@
 
   /* surfaces */
   --page: #13112e;
+  /* the launch screen's ground: the splash art's own background (the same in both themes) */
+  --splash-bg: #0c102b;
   --sunk: #1b1840;
   --surface: #24204d;
   --surface-hi: #2f2a60;
@@ -91,6 +93,9 @@
 
   /* a sticker's die-cut border and the ink on it */
   --die: #f7f5ff;
+  /* the Fox Trot staff: a note's edge, and the playhead's glow */
+  --note-ring: 0 0 0 2px var(--surface);
+  --playhead-glow: 0 0 0 5px rgb(var(--amber-rgb) / 0.45), 0 0 14px rgb(var(--amber-rgb) / 0.6);
 }
 
 [data-theme="light"] {
@@ -159,6 +164,9 @@
   --bar-on: #00d4aa;
 
   --die: #ffffff;
+  /* bright notes (amber, jade, cream) need an ink edge on white */
+  --note-ring: 0 0 0 1.5px var(--surface), 0 0 0 2.5px var(--ink);
+  --playhead-glow: 0 0 0 4px var(--amber-deep), 0 0 12px rgb(var(--amber-rgb) / 0.7);
 }
 
 :root {

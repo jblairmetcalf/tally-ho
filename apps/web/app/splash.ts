@@ -1,3 +1,24 @@
+/** The launch screen's ground: the splash art's own background, so the art has no seam. */
+export const SPLASH_BG = '#0C102B'
+
+/**
+ * The launch art (`pnpm icons` cuts it from docs/imports/splash-screen.png): where it is in the
+ * design, the file the web splash shows, and where it sits on a screen. The web splash's CSS
+ * (`.splash-art` in @tally/ui) and the iOS launch images both place it by `box`, so the native
+ * launch image, the web splash and the app follow each other without a jump.
+ */
+export const SPLASH_ART = {
+  // The fox and the wordmark with room around them for the feathered edge.
+  crop: { left: 40, top: 100, width: 944, height: 1055 },
+  file: { name: 'splash-art.webp', width: 680, height: 760 },
+  /** Width min(88vw, 386px), centred across, its middle 44% down the screen. */
+  box(w: number, h: number) {
+    const width = Math.min(w * 0.88, 386)
+    const height = width * (1055 / 944)
+    return { width, height, left: (w - width) / 2, top: h * 0.44 - height / 2 }
+  },
+}
+
 /**
  * iOS launch screens. iOS ignores the manifest's background colour and shows white unless a
  * startup image matches the device exactly, so there is one per iPhone screen (portrait).

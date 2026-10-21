@@ -1,7 +1,9 @@
+import { COPY } from '@tally/app/copy'
+import { Splash } from '@tally/ui/splash'
 import type { Metadata, Viewport } from 'next'
 import { Lilita_One, Nunito } from 'next/font/google'
 import type { ReactNode } from 'react'
-import { SPLASH, splashFile, splashMedia } from './splash'
+import { SPLASH, SPLASH_ART, splashFile, splashMedia } from './splash'
 import { SwRegister } from './sw-register'
 import './globals.css'
 
@@ -20,6 +22,20 @@ const INK = '#13112E'
  * flashes the dark page while the app loads. Mirrors `useThemePref`, which takes over after.
  */
 const THEME_BOOT = `(function(){try{var t='system';var r=localStorage.getItem('tallyho.v3');if(r){var p=JSON.parse(r).prefs;if(p&&p.theme)t=p.theme}if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var d=document.documentElement;d.dataset.theme=t;d.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.removeAttribute('media');m.content=t==='light'?'#FFF4E2':'${INK}'}}catch(e){}})()`
+
+/**
+ * A native app doesn't zoom: no pinch, no double-tap (decision 28). The viewport meta covers
+ * Android, `touch-action` (globals.css) covers Chrome and Android pinch; iOS Safari ignores both
+ * for pinch, so its gesture events are cancelled, and a trackpad pinch (ctrl + wheel) too.
+ */
+const NO_ZOOM = `(function(){var n=function(e){e.preventDefault()};['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,n,{passive:false})});addEventListener('wheel',function(e){if(e.ctrlKey)e.preventDefault()},{passive:false})})()`
+
+/**
+ * The launch screen leaves once the app says it's up ('tally:ready', READY_EVENT in @tally/app),
+ * but never before the page is a second old, so a fast load still shows it; if the app never
+ * comes up, it goes after 8 s rather than hide an error.
+ */
+const SPLASH_OUT = `(function(){var s=document.getElementById('splash');if(!s)return;var d=0;function go(){if(d)return;d=1;setTimeout(function(){s.classList.add('out');setTimeout(function(){s.remove()},340)},Math.max(0,1000-performance.now()))}addEventListener('tally:ready',go);setTimeout(go,8000)})()`
 
 /**
  * Where the app lives, for the absolute URLs link previews need (iMessage, Slack and WhatsApp
@@ -78,6 +94,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: INK,
 }
@@ -93,8 +111,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed inline boot script */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed inline boot script */}
+        <script dangerouslySetInnerHTML={{ __html: NO_ZOOM }} />
+        <link rel="preload" as="image" href={`/${SPLASH_ART.file.name}`} fetchPriority="high" />
       </head>
       <body>
+        <Splash
+          art={`/${SPLASH_ART.file.name}`}
+          tagline={COPY.splash.tagline}
+          loading={COPY.splash.loading}
+          label={COPY.splash.label}
+        />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed inline script */}
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_OUT }} />
         {children}
         <SwRegister />
       </body>

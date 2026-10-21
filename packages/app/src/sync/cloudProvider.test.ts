@@ -383,4 +383,26 @@ describe('cloudProvider', () => {
     expect(backend.get('presets', 'round-robin')?.roundsPerPlayer).toBe(true)
     expect(k.data().presets.find((p) => p.id === 'round-robin')?.roundsPerPlayer).toBe(true)
   })
+
+  it('the Mixtape: a key reaches the other phone and rides on the game; playing writes nothing', async () => {
+    const { backend, k, b } = family()
+    await settle()
+    // Flip 7 gets its own key; a game dealt from it keeps that key.
+    const flip = k.data().presets.find((p) => p.name === 'Flip 7')!
+    const key = { tonic: 9, mode: 'minor' as const, loop: 1 }
+    k.a.upsertPreset({ ...flip, song: key })
+    await settle()
+    expect(b.data().presets.find((p) => p.id === flip.id)?.song).toEqual(key)
+    k.a.startGame({ ...flip7, target: 20 })
+    await settle()
+    k.a.submitRound(['25', '0', '0'])
+    await settle()
+    const id = k.data().games[0]!.id
+    expect(backend.get('games', id)?.song).toEqual(key)
+    // A song is computed from the rounds: playing it writes nothing.
+    const n = backend.log.length
+    k.a.playSong(id)
+    await settle()
+    expect(backend.log.length).toBe(n)
+  })
 })

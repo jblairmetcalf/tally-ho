@@ -1,4 +1,13 @@
-import { DEFAULT_PRESETS, emptyStore, freshStore, type Store, totalsOf } from '@tally/core'
+import {
+  DEFAULT_PRESETS,
+  emptyStore,
+  freshStore,
+  outcomesOf,
+  type Store,
+  scheduleOf,
+  songOf,
+  totalsOf,
+} from '@tally/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COPY } from './copy'
 import { createEffects } from './effects'
@@ -10,6 +19,8 @@ import {
   type NewGameConfig,
   PACK_FIRST_MS,
   PACK_STEP_MS,
+  SONG_AFTER_MS,
+  SONG_GAP_MS,
 } from './store'
 
 const P = ['kate', 'blair', 'alder']
@@ -427,6 +438,9 @@ describe('changes from another phone (replaceData)', () => {
     expect(s().finished?.id).toBe(g.id)
     vi.advanceTimersByTime(500)
     expect(s().victory?.winnerId).toBe('kate')
+    // Nothing plays without a tap here: no song follows a win from another phone (Replay does).
+    vi.advanceTimersByTime(SONG_AFTER_MS)
+    expect(s().song).toBeNull()
   })
 
   it('a game won elsewhere is a toast when you are on another screen', () => {
@@ -511,5 +525,108 @@ describe('Who won? and picking a tiebreak winner', () => {
     expect(s().data.games[0]?.winnerId).toBe('blair')
     vi.advanceTimersByTime(500)
     expect(s().victory?.winnerId).toBe('blair')
+  })
+})
+
+describe('the Mixtape', () => {
+  const lengthOf = (st: Store, id: string) => {
+    const g = st.games.find((x) => x.id === id)!
+    const color = (p: string) => st.players.find((x) => x.id === p)?.color ?? 0
+    return scheduleOf(songOf(g, color, outcomesOf(st.games).get(id)))
+  }
+
+  it('plays a song with the playhead stepping through, then stops; nothing is stored', () => {
+    const { a, s } = setup(freshStore(fixedClock))
+    const before = s().data
+    const g = s().data.games[0]!
+    const sched = lengthOf(s().data, g.id)
+    a.playSong(g.id)
+    // A whole song: the staff lights each note as it sounds, from now.
+    expect(s().song).toEqual({ key: 'shelf', gameId: g.id, whole: true, beat: -1 })
+    vi.advanceTimersByTime(sched.beatTimes[1]! * 1000)
+    expect(s().song?.whole).toBe(true)
+    // A song is computed from the rounds: playing it never touches the saved data.
+    expect(s().data).toBe(before)
+    vi.advanceTimersByTime(sched.length * 1000)
+    expect(s().song).toBeNull()
+  })
+
+  it('one at a time: a second song stops the first; tapping the playing one stops it', () => {
+    const { a, s } = setup(freshStore(fixedClock))
+    const [one, two] = s().data.games
+    a.playSong(one!.id)
+    a.playSong(two!.id, 'detail')
+    expect(s().song).toMatchObject({ gameId: two!.id, key: 'detail' })
+    // The first song's timers no longer move the playhead.
+    vi.advanceTimersByTime(600)
+    expect(s().song?.gameId).toBe(two!.id)
+    a.playSong(two!.id, 'detail')
+    expect(s().song).toBeNull()
+  })
+
+  it('a sheet or a tab stops the song', () => {
+    const { a, s } = setup(freshStore(fixedClock))
+    a.playSong(s().data.games[0]!.id)
+    a.openSheet({ type: 'settings' })
+    expect(s().song).toBeNull()
+    a.playSong(s().data.games[0]!.id)
+    a.go('history')
+    expect(s().song).toBeNull()
+  })
+
+  it('Play all runs the shelf back to back, playing all the way through, then stops', () => {
+    const { a, s } = setup(freshStore(fixedClock))
+    const [one, two] = s().data.games
+    a.playAll([one!.id, two!.id])
+    expect(s().song).toMatchObject({ key: 'all', gameId: one!.id })
+    // Between songs the run is still playing (Play all stays Stop), with no card lit.
+    vi.advanceTimersByTime(lengthOf(s().data, one!.id).length * 1000 + 1)
+    expect(s().song).toMatchObject({ key: 'all', gameId: '' })
+    vi.advanceTimersByTime(SONG_GAP_MS)
+    expect(s().song).toMatchObject({ key: 'all', gameId: two!.id })
+    // After the last song, the run is over.
+    vi.advanceTimersByTime(lengthOf(s().data, two!.id).length * 1000 + SONG_GAP_MS + 1)
+    expect(s().song).toBeNull()
+    a.playAll([one!.id, two!.id])
+    a.playAll([one!.id, two!.id]) // the same button stops it
+    expect(s().song).toBeNull()
+  })
+
+  it('scoring a round sings its note; an edit pulses the changed note', () => {
+    const { a, s } = setup()
+    a.startGame(flip7)
+    vi.runAllTimers()
+    a.submitRound(['10', '4', '0'])
+    expect(s().song).toMatchObject({ key: 'live', whole: false, beat: 0 })
+    vi.advanceTimersByTime(400)
+    expect(s().song).toBeNull()
+    // Play right after scoring (while the round's note still rings) plays the song, not stops it.
+    a.submitRound(['3', '4', '0'])
+    a.playSong(s().data.active!.id, 'live')
+    expect(s().song).toMatchObject({ key: 'live', whole: true })
+    a.saveRound(0, ['2', '30', '0'])
+    expect(s().pulse).toMatchObject({ idx: 0 })
+    vi.advanceTimersByTime(700)
+    expect(s().pulse).toBeNull()
+  })
+
+  it('victory plays the song after the fanfare and the sting, unless the pack was torn open', () => {
+    const won = setup()
+    won.a.startGame({ ...flip7, target: 20 })
+    vi.runAllTimers()
+    won.a.submitRound(['25', '0', '0'])
+    vi.advanceTimersByTime(500)
+    expect(won.s().victory).not.toBeNull()
+    vi.advanceTimersByTime(SONG_AFTER_MS)
+    expect(won.s().song).toMatchObject({ key: 'victory' })
+
+    const ripped = setup()
+    ripped.a.startGame({ ...flip7, target: 20 })
+    vi.runAllTimers()
+    ripped.a.submitRound(['25', '0', '0'])
+    vi.advanceTimersByTime(500)
+    ripped.a.openPack(1, true)
+    vi.advanceTimersByTime(SONG_AFTER_MS)
+    expect(ripped.s().song).toBeNull()
   })
 })

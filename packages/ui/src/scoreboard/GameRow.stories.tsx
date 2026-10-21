@@ -14,6 +14,8 @@ export default meta
 type Story = StoryObj<typeof GameRow>
 
 export const Default: Story = {}
+/** In History: which game it was, counting from the first ever. */
+export const Numbered: Story = { args: { number: '#128' } }
 export const SixPlayers: Story = {
   args: {
     name: 'Skull King',
@@ -30,12 +32,17 @@ export const SixPlayers: Story = {
     ],
   },
 }
-/** Recent games: the latest three from the core samples. */
-export const RecentList: Story = {
+/** History: the latest three from the core samples, numbered from the first (newest highest). */
+export const HistoryList: Story = {
   render: (args) => (
     <div className="flex flex-col gap-2.5">
-      {SAMPLES.slice(0, 3).map((g) => (
-        <GameRow key={g.id} {...gameRowProps(g)} onClick={args.onClick} />
+      {SAMPLES.slice(0, 3).map((g, i) => (
+        <GameRow
+          key={g.id}
+          {...gameRowProps(g)}
+          number={`#${SAMPLES.length - i}`}
+          onClick={args.onClick}
+        />
       ))}
     </div>
   ),

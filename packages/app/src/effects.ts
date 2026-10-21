@@ -1,3 +1,4 @@
+import type { SongNote } from '@tally/core'
 import { type BurstOpts, FX, type HapticCue, Haptics, SFX, type SfxCue } from '@tally/ui'
 
 /**
@@ -8,6 +9,10 @@ import { type BurstOpts, FX, type HapticCue, Haptics, SFX, type SfxCue } from '@
 export interface Effects {
   /** Play a sound cue (and its haptic, when the cue has one worth feeling). */
   play(cue: SfxCue): void
+  /** Play a Fox Trot song, or one round of it (one at a time). Returns its stop. */
+  song(notes: SongNote[]): () => void
+  /** Stop any song playing. */
+  stopSong(): void
   /** Mute or unmute the synth at once (prefs follow). */
   mute(m: boolean): void
   /** A haptic on its own (the prototype's `vibrate`). */
@@ -29,6 +34,7 @@ export interface Effects {
  */
 const FELT: Partial<Record<SfxCue, HapticCue>> = {
   submit: 'submit',
+  note: 'submit',
   sticker: 'sticker',
   rip: 'rip',
   deal: 'deal',
@@ -62,6 +68,17 @@ export function createEffects(opts: { silent?: boolean; scroll?: boolean } = {})
       }
       const h = FELT[cue]
       if (h) Haptics.play(h)
+    },
+    song(notes) {
+      if (silent) return () => {}
+      try {
+        return SFX.song(notes)
+      } catch {
+        return () => {}
+      }
+    },
+    stopSong() {
+      if (!silent) SFX.stopSong()
     },
     mute(m) {
       SFX.setMuted(m)

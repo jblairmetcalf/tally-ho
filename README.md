@@ -19,6 +19,7 @@ It's an installable, offline PWA. Anyone can try it in **demo** mode (scores liv
   - the screen stays awake during a game
 - **Record:** family champion, win streaks, standings (with ▲ / ▼ when someone passes someone), a wins-over-time chart, and a filterable history with rematch.
 - **Sticker Club:** twelve stickers earned from your games (First Crown, Hat Trick, Comeback Kid, Night Owl…), each player's sticker book, a sticker pack to tear open after every win, and the latest stickers on Home.
+- **Fox Trot:** every game becomes a few-second chiptune composed from its rounds (a note per round in the winner's colour, licks for lead changes and busts, the winner's own tag at the end). Hear the song so far while you play, the full song after the fanfare, and replay the latest from the shelf on Home. Songs are computed from the scores, never stored.
 - **The game is a sheet** over Home: put it away and it stays live; Resume brings it back.
 - **Yours to edit:** players (names and chip colours) and game presets. Choose the Light (Daylight) or Dark theme, or follow the system; the next theme spreads out from the button you tap.
 
@@ -32,12 +33,12 @@ pnpm e2e          # Playwright on an iPhone 14 viewport
 pnpm test:rules   # firestore.rules against the Firestore emulator (needs Java)
 pnpm e2e:cloud    # family sync end to end against the Auth + Firestore emulators (needs Java)
 pnpm build        # static export in apps/web/out
-pnpm icons        # regenerate icons + iOS splash screens from docs/imports/tally-ho.png
+pnpm icons        # regenerate icons (docs/imports/tally-ho.png) + launch art and iOS splash screens (docs/imports/splash-screen.png)
 pnpm deploy       # build and ship the app to its Vercel production URL
 pnpm deploy:storybook
 ```
 
-`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, the Sticker Club, the theme reveal, Standings marks, offline after one visit, prototype-data migration, no theme flash, link-preview tags, sound, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
+`pnpm e2e` runs two suites against static builds: **web** (gameplay, settings, the Sticker Club, the Fox Trot, the theme reveal, Standings marks, offline after one visit, prototype-data migration, no theme flash, link-preview tags, sound, axe) and **storybook** (every story in both themes: renders cleanly with no serious axe violations).
 
 ## Ship it
 

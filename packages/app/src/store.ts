@@ -11,14 +11,18 @@ import {
   MATCH_POINT,
   MAX_PLAYERS,
   MIN_PLAYERS,
+  outcomesOf,
   PALETTE_SIZE,
   type Player,
   type Prefs,
   type Preset,
   parseScore,
   rangeForGame,
+  roundNotes,
   type Store,
+  scheduleOf,
   slug,
+  songOf,
   systemClock,
   totalsOf,
 } from '@tally/core'
@@ -65,6 +69,26 @@ export const GAME_AFTER_MS = 300
 export const PACK_FIRST_MS = 500
 export const PACK_STEP_MS = 280
 
+/**
+ * The Fox Trot (decision 27): the victory song starts once the fanfare and the losers' sting are
+ * done (`VICTORY_LOSE_MS` 2.3 s + the sting's second), so nothing overlaps. Play all pauses
+ * `SONG_GAP_MS` between songs.
+ */
+export const SONG_AFTER_MS = 3400
+export const SONG_GAP_MS = 450
+
+/** The Fox Trot song playing: which control started it, its game, and the beat sounding (-1 the riff). */
+export interface SongState {
+  key: 'shelf' | 'detail' | 'victory' | 'live' | 'all' | 'preview'
+  gameId: string
+  /**
+   * A whole song from its start (the staff lights each note as it sounds), or just one round's
+   * note (`beat`: the round, lit while it sounds).
+   */
+  whole: boolean
+  beat: number
+}
+
 export interface UiState {
   screen: Screen
   /** The open sheet. The Sheet keeps itself mounted to play its closing animation. */
@@ -85,6 +109,10 @@ export interface UiState {
   foxWink: number
   /** The victory sticker pack: torn open yet, and how many of its items have slapped down. */
   pack: { open: boolean; shown: number } | null
+  /** The Fox Trot song playing (one at a time, from anywhere). */
+  song: SongState | null
+  /** A round whose note just changed (an edit): its note pulses once. */
+  pulse: { gameId: string; idx: number; k: number } | null
 }
 
 export interface NewGameConfig {
@@ -120,6 +148,17 @@ export interface TallyActions {
    * (PACK_STEP_MS apart, from PACK_FIRST_MS). `instant` (reduced motion): all at once, quietly.
    */
   openPack(count: number, instant?: boolean): void
+
+  /**
+   * The Fox Trot: play a game's song from a control (`key`), or stop it if that one is playing.
+   * A tap plays; anything else that sounds, a sheet or a tab stops it. Nothing is stored.
+   */
+  playSong(gameId: string, key?: SongState['key']): void
+  /** Play these games' songs back to back (the shelf's Play all), or stop. */
+  playAll(gameIds: string[]): void
+  stopSong(): void
+  /** Hear one round as it would sound (Edit round's preview, before saving). */
+  previewRound(g: Game, idx: number): void
 
   startGame(cfg: NewGameConfig): void
   submitRound(vals: string[], btn?: Element | null): void
@@ -243,12 +282,52 @@ export function createTallyStore(
       set({ banner: { text, tone, k: key() } })
       fx.timer('banner', 1400, () => set({ banner: null }))
     }
+    // ── the Fox Trot ──
+    /** Bumped whenever a song starts or stops, so a stopped song's timers do nothing. */
+    let songToken = 0
+    const colorOf = (id: string) =>
+      data().players.find((p) => p.id === id)?.color ?? hash(id) % PALETTE_SIZE
+    const findGame = (id: string) =>
+      data().active?.id === id ? data().active : data().games.find((g) => g.id === id)
+    const stopSong = () => {
+      songToken++
+      fx.stopSong()
+      if (get().song) set({ song: null })
+    }
+    /** Sing a game's song, the playhead stepping with it; `after` when it ends. */
+    function sing(g: Game, key: SongState['key'], o: { after?: () => void } = {}) {
+      const token = ++songToken
+      // Its ending reads how it was won, from the family's history (decision 29).
+      const sched = scheduleOf(songOf(g, colorOf, outcomesOf(data().games).get(g.id)))
+      fx.song(sched.notes)
+      // The staff follows the song itself, note by note, from this moment.
+      set({ song: { key, gameId: g.id, whole: true, beat: -1 } })
+      fx.later(sched.length * 1000, () => {
+        if (songToken !== token) return
+        // In a run (Play all) the run plays on through the pause: no card lit, but still playing,
+        // so Play all stays Stop from the first song to the last instead of flickering.
+        set({ song: o.after ? { key, gameId: '', whole: true, beat: -1 } : null })
+        o.after?.()
+      })
+    }
+    /** A round's own note (scoring it, or hearing an edit): it stops any song. */
+    const singRound = (g: Game, idx: number, key: SongState['key'] = 'live') => {
+      const token = ++songToken
+      fx.song(roundNotes(songOf(g, colorOf), idx))
+      set({ song: { key, gameId: g.id, whole: false, beat: idx } })
+      fx.later(400, () => {
+        if (songToken === token) set({ song: null })
+      })
+    }
+
     const go = (screen: Screen, cue?: SfxCue) => {
+      stopSong()
       if (cue) fx.play(cue)
       set({ screen })
       fx.scrollTop()
     }
     const openSheet = (spec: SheetSpec, silent = false) => {
+      stopSong()
       // New game opens to its own tune, the sticker book to a sticker; every other sheet whooshes.
       if (!silent)
         fx.play(spec.type === 'new' ? 'deal' : spec.type === 'stickers' ? 'sticker' : 'open')
@@ -257,6 +336,7 @@ export function createTallyStore(
     const closeSheet = (silent = false) => {
       const was = get().sheet
       if (!was) return
+      stopSong()
       if (!silent) fx.play('close')
       // Leaving the game drops the flash too, so coming back doesn't replay the last round.
       set(was.type === 'game' ? { sheet: null, finished: null, flash: null } : { sheet: null })
@@ -307,10 +387,19 @@ export function createTallyStore(
      * The victory overlay. The game's sheet slides away as it rises: an open sheet is modal (it
      * holds focus and taps), so the overlay's Rematch and Done must not sit outside it.
      */
-    function celebrate(g: Game) {
+    /** `tapped`: this phone's tap finished it, so its song may follow (never for a remote win). */
+    function celebrate(g: Game, tapped = true) {
       closeSheet(true)
       set({ victory: g, pack: { open: false, shown: 0 } })
       fx.play('win')
+      // Then the game's song, once the fanfare and the sting are done: unless they've moved on,
+      // torn the pack open, or started it themselves. Only after a tap here (a win from another
+      // phone has Replay instead: nothing plays without a tap).
+      if (!tapped) return
+      fx.later(SONG_AFTER_MS, () => {
+        const s = get()
+        if (s.victory?.id === g.id && !s.pack?.open && !s.song) sing(g, 'victory')
+      })
     }
 
     function startGame(cfg: NewGameConfig) {
@@ -323,6 +412,8 @@ export function createTallyStore(
         return
       }
       const d = data()
+      // The game type's Fox Trot key, fixed now so later edits never re-key this game's song.
+      const song = d.presets.find((p) => p.name === cfg.name)?.song
       const taken = new Set([...d.games.map((x) => x.id), ...(d.active ? [d.active.id] : [])])
       let id = `g${clock.now()}`
       while (taken.has(id)) id += 'x'
@@ -337,6 +428,7 @@ export function createTallyStore(
         startedAt: new Date(clock.now()).toISOString(),
         completedAt: null,
         winnerId: null,
+        ...(song ? { song } : {}),
       }
       const hadSamples = d.hasSamples
       setData((x) => ({
@@ -346,6 +438,7 @@ export function createTallyStore(
         games: x.hasSamples ? x.games.filter((y) => !y.sample) : x.games,
         hasSamples: false,
       }))
+      stopSong()
       set({ victory: null, finished: null, flash: null, pack: null })
       const up = presentGame('start')
       fx.later(up + 250, () => showBanner(COPY.banner.start(cfg.name), 'amber'))
@@ -390,6 +483,7 @@ export function createTallyStore(
         set({ sheet: { type: 'game' } })
       },
       victoryDone() {
+        stopSong()
         fx.play('tap')
         // The game is over (its sheet already went): Home, with it in the history.
         set({ victory: null, finished: null, pack: null })
@@ -397,6 +491,7 @@ export function createTallyStore(
       openPack(count, instant = false) {
         const pack = get().pack
         if (!pack || pack.open) return
+        stopSong()
         fx.play('rip')
         if (instant) {
           set({ pack: { open: true, shown: count } })
@@ -413,6 +508,36 @@ export function createTallyStore(
           })
       },
 
+      playSong(gameId, key = 'shelf') {
+        const s = get().song
+        // Tapping the song that's playing stops it; a round's note isn't a song, so play starts.
+        if (s?.whole && s.gameId === gameId && s.key === key) return stopSong()
+        const g = findGame(gameId)
+        if (!g?.rounds.length) return
+        sing(g, key)
+      },
+      playAll(gameIds) {
+        if (get().song?.key === 'all') return stopSong()
+        const run = (i: number) => {
+          const id = gameIds[i]
+          const g = id ? findGame(id) : undefined
+          // The last song is done: the run is over.
+          if (!g) return set({ song: null })
+          sing(g, 'all', {
+            after: () => {
+              const token = songToken
+              fx.later(SONG_GAP_MS, () => {
+                if (songToken === token) run(i + 1)
+              })
+            },
+          })
+        }
+        run(0)
+      },
+      stopSong,
+      previewRound(g, idx) {
+        singRound(g, idx, 'preview')
+      },
       startGame,
 
       submitRound(vals, btn) {
@@ -426,7 +551,9 @@ export function createTallyStore(
           sc[p] = parseScore(vals[i])
         })
         g.rounds.push({ id: roundId(), scores: sc, at: new Date(clock.now()).toISOString() })
-        fx.play('submit')
+        // The round's own note in the game's song (the Fox Trot), in place of `submit`.
+        singRound(g, g.rounds.length - 1)
+        fx.buzz('submit')
         fx.burstFrom(btn, 22, { power: 9, spread: 1.6 })
         set((s) => ({ flash: { k: key(), gid: g.id, scores: sc }, foxWink: s.foxWink + 1 }))
         const res = evaluate(g)
@@ -500,7 +627,11 @@ export function createTallyStore(
         })
         toScoreboard()
         fx.play('submit')
-        set({ flash: { k: key(), gid: g.id, scores: r.scores, edit: true } })
+        set({
+          flash: { k: key(), gid: g.id, scores: r.scores, edit: true },
+          pulse: { gameId: g.id, idx, k: key() },
+        })
+        fx.timer('pulse', 700, () => set({ pulse: null }))
         const res = evaluate(g)
         if (res.done) {
           finish(g, res.winner)
@@ -679,7 +810,7 @@ export function createTallyStore(
           const watching = cur.sheet?.type === 'game' && !cur.victory
           if (watching) {
             set({ finished: done })
-            fx.later(500, () => celebrate(done))
+            fx.later(500, () => celebrate(done, false))
           } else {
             fx.play('pick')
             showToast(COPY.toast.wonElsewhere(nameOf(done.winnerId), done.name))
@@ -697,6 +828,8 @@ export function createTallyStore(
       },
 
       dispose() {
+        songToken++
+        fx.stopSong()
         fx.dispose()
         unsubRemote?.()
         unsubSave?.()
@@ -717,6 +850,8 @@ export function createTallyStore(
       finished: null,
       foxWink: 0,
       pack: null,
+      song: null,
+      pulse: null,
       ...opts.ui,
       actions,
     }

@@ -5,6 +5,7 @@ import {
   type PlayerRange,
   type Preset,
   playerRangeOf,
+  type SongKey,
   type ThemePref,
 } from '@tally/core'
 import {
@@ -44,6 +45,7 @@ import { InstallGuide } from './InstallSheet'
 import { PlayerFields } from './PlayerFields'
 import { ShareContent } from './ShareSheet'
 import { SignInContent } from './SignInSheet'
+import { SongFields } from './SongFields'
 
 const C = COPY.settings
 
@@ -273,6 +275,15 @@ function PresetEditor({ preset, onDeleted }: { preset: Preset; onDeleted: () => 
           range={playerRangeOf(preset)}
           onChange={(r) => save({ minPlayers: r.min, maxPlayers: r.max })}
         />
+        <SongFields
+          name={preset.name}
+          lowWins={preset.lowWins}
+          song={preset.song}
+          onChange={(song) => {
+            a.play('pick')
+            save({ song })
+          }}
+        />
       </div>
       <ConfirmButton
         label={C.deleteGame}
@@ -308,6 +319,7 @@ function GameCreator({ onDone }: { onDone: () => void }) {
   const [lowWins, setLowWins] = useState(false)
   const [perPlayer, setPerPlayer] = useState(false)
   const [range, setRange] = useState<PlayerRange>({ min: 2, max: null })
+  const [song, setSong] = useState<SongKey | undefined>(undefined)
   const trimmed = name.trim()
   const taken = presets.some((p) => p.name.trim().toLowerCase() === trimmed.toLowerCase())
   const target = goal === 'open' ? null : Number.parseInt(targets[goal], 10)
@@ -327,6 +339,7 @@ function GameCreator({ onDone }: { onDone: () => void }) {
       ...(goal === 'rounds' && perPlayer ? { roundsPerPlayer: true } : {}),
       minPlayers: range.min,
       maxPlayers: range.max,
+      ...(song ? { song } : {}),
     })
     a.play('add')
     a.showToast(COPY.toast.gameAdded(trimmed))
@@ -383,6 +396,15 @@ function GameCreator({ onDone }: { onDone: () => void }) {
           }}
         />
         <PlayerFields range={range} onChange={setRange} />
+        <SongFields
+          name={trimmed}
+          lowWins={goal === 'wins' ? false : lowWins}
+          song={song}
+          onChange={(s) => {
+            a.play('pick')
+            setSong(s)
+          }}
+        />
       </div>
       <div className="sheet-cta">
         <Button block icon="plus" iconSize={20} disabled={!ready} onClick={add}>

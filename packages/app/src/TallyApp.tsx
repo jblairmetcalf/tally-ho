@@ -16,6 +16,7 @@ import {
   Ribbon,
   SFX,
   Sheet,
+  SongStrip,
   StickerPack,
   ThemeRoot,
   Toast,
@@ -27,6 +28,7 @@ import { COPY } from './copy'
 import { createEffects } from './effects'
 import { useThemePref, useWakeLock } from './hooks'
 import { readInstall } from './install'
+import { useStaff } from './mixtape'
 import { type DataProvider, localProvider } from './provider'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { HomeScreen } from './screens/HomeScreen'
@@ -101,6 +103,9 @@ const providerId = (p: DataProvider) => {
   return id
 }
 
+/** Told to the web shell once the app has mounted: its launch screen can fade (decision 28). */
+export const READY_EVENT = 'tally:ready'
+
 /** Keyed on the session so a sign-in or sign-out swaps in a fresh store over its provider. */
 function Root({ api, ...props }: TallyAppProps & { api: SessionApi }) {
   const key = `${api.session.mode}:${api.session.mode === 'family' ? api.session.member.email : ''}:${providerId(api.provider)}`
@@ -157,6 +162,10 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
   useWakeLock(!embedded && inGame && prefs.wakeLock)
   useInstallHint(!embedded)
 
+  // The app is up: the web shell's launch screen may go (after its first second; decision 28).
+  useEffect(() => {
+    if (!embedded) window.dispatchEvent(new Event(READY_EVENT))
+  }, [embedded])
   useEffect(() => {
     if (!silent) SFX.setMuted(prefs.muted)
   }, [prefs.muted, silent])
@@ -170,18 +179,23 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
     const u = () => SFX.unlock()
     const events = ['touchend', 'click', 'keydown'] as const
     for (const e of events) window.addEventListener(e, u, { capture: true, passive: true })
-    // Leaving the app: release the audio; the first tap back builds a fresh, working context.
+    // Leaving the app: release the audio (and stop any Fox Trot song, so its playhead doesn't
+    // run on unheard); the first tap back builds a fresh, working context.
+    const sleep = () => {
+      a.stopSong()
+      SFX.sleep()
+    }
     const away = () => {
-      if (document.visibilityState === 'hidden') SFX.sleep()
+      if (document.visibilityState === 'hidden') sleep()
     }
     document.addEventListener('visibilitychange', away)
-    window.addEventListener('pagehide', SFX.sleep)
+    window.addEventListener('pagehide', sleep)
     return () => {
       for (const e of events) window.removeEventListener(e, u, { capture: true })
       document.removeEventListener('visibilitychange', away)
-      window.removeEventListener('pagehide', SFX.sleep)
+      window.removeEventListener('pagehide', sleep)
     }
-  }, [silent])
+  }, [silent, a])
 
   return (
     <ThemeRoot theme={theme} fixed={!embedded} className="min-h-dvh">
@@ -299,8 +313,10 @@ function Victory() {
   const victory = useTally((s) => s.victory)
   const games = useTally((s) => s.data.games)
   const pack = useTally((s) => s.pack)
+  const song = useTally((s) => s.song)
   const a = useActions()
   const roster = useRoster()
+  const staff = useStaff(victory)
   // The pack: the winner's own crowned chip, then the stickers this game gave out (firsts first).
   const items = useMemo((): PackItem[] => {
     if (!victory?.winnerId) return []
@@ -366,6 +382,13 @@ function Victory() {
       onDone={a.victoryDone}
       onRematch={() => a.rematch(victory)}
     >
+      <SongStrip
+        bare
+        song={staff}
+        playing={song?.gameId === victory.id && song.whole}
+        onPlay={() => a.playSong(victory.id, 'victory')}
+        label={song?.gameId === victory.id ? COPY.foxTrot.stop(victory.name) : COPY.foxTrot.replay}
+      />
       {pack && (
         <StickerPack
           items={items}

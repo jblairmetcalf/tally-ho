@@ -71,6 +71,11 @@ export const ICONS = {
   zero: '<ellipse cx="12" cy="12" rx="5.5" ry="8"/><path d="M8 19L16 5"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   underdog: '<path d="M3.5 17.5l6-6 4 4 7-7"/><path d="M15 8.5h5.5V14"/>',
+  // the Fox Trot
+  play: '<path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/>',
+  stop: '<rect fill="currentColor" x="6.5" y="6.5" width="11" height="11" rx="2"/>',
+  music:
+    '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
 } as const
 export type IconName = keyof typeof ICONS
 

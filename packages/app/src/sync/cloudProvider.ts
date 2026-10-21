@@ -251,7 +251,11 @@ export function createCloudProvider(opts: CloudOptions): CloudProvider {
   }
 
   const assemble = (): Store => {
-    const v = { players: view('players'), presets: view('presets'), games: view('games') }
+    const v = {
+      players: view('players'),
+      presets: view('presets'),
+      games: view('games'),
+    }
     const players = v.players
       ? keepOrder(
           current.players,

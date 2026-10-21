@@ -25,6 +25,8 @@ The user picks Dark, Daylight or System in Settings (`prefs.theme`). `ThemeRoot`
 | On accent | `--on-accent`, `--ink` | Text on jewel fills |
 | Tab bar | `--bar-bg`, `--bar-line`, `--bar-ink`, `--bar-on` | The bottom tabs wear the **opposite theme** so they stand out from the page: a cream bar on Dark, an ink bar on Daylight (each the other theme's surface, muted/faint and jade text, so the AA pairs carry over). The fox button keeps its page-coloured halo The selected tab's icon fills in (`homeFill`, `scrollFill`) with a pop. |
 | Stickers | `--die` | The die-cut border and the shine under a sticker (white-ish in both themes); glyphs are `--on-accent` ink |
+| Launch screen | `--splash-bg` | The splash art's own ground (#0c102b, the same in both themes: it's brand art, like the icon) |
+| Fox Trot | `--note-ring`, `--playhead-glow` | A staff note's edge (the surface in Dark; an ink edge in Daylight, so amber, jade and cream notes hold 3:1 on white) and the playhead's amber glow (a solid deep-amber ring in Daylight) |
 | Players | `--p0`…`--p7` | The prototype's eight chip colours. Players store a palette index; use `paletteVar(i)` (`packages/ui/src/brand/palette.ts`). `PLAYER_COLORS` is only for canvas/SVG |
 
 ## Type
@@ -47,6 +49,8 @@ Fonts load via `next/font` in `apps/web/app/layout.tsx`. Numbers use `.num` (tab
 - Keyframes live in `packages/ui/src/styles/motion.css`, all shown on Foundations › Motion: every prototype keyframe verbatim, the Sticker Club's `foil`, and our own (`themeReveal`, `navInPush`…) (`rise`, `pop`, `crownDrop`, `bump`, `deltaUp`, `ribbon`, `sheetIn`, `toastIn`, `matchGlow`…) plus `dangerGlow` for lowest-wins games. Add new ones there.
 - The spring curve is `--spring: cubic-bezier(0.25, 1.45, 0.45, 1)`.
 - **Segmented controls** slide: the raised background is one thumb (`.seg-thumb`) that springs to the chosen segment on `--spring`, measured from the button (columns may differ in width), inside a clipped track so the overshoot never leaves the well.
+- **The launch screen** (`Splash`, decision 28): the fox with its cards (`splash-art.webp`, cut from `docs/imports/splash-screen.png` by `pnpm icons`) on `--splash-bg`, min(88vw, 386px) wide with its middle 44% down, exactly where the iOS launch images put it, so launch image → splash → app never jumps. The art `wobble`s once (it starts and ends still), the tagline `rise`s, a jade bar `grow`s, "Loading…" fades in; it leaves with `fadeOut` once the app is up but never before the page is a second old. Rendered into the static page, so it paints before any script; the same in both themes.
+- **The Fox Trot** (decisions 27, 29; the coda that tells how the game was won is decision 29, tuned on Foundations › Fox Trot Lab): a game's song drawn as a `Staff` (five faint `--text` lines and **every note of the song placed by time and pitch**: the riff as hollow ink rings, each round in its singer's palette colour, the bass small and faint underneath, the coda in the winner's colours; each note lights up with a `pop` and the amber glow while it sounds, frame by frame; a song card's mini staff shows the melody as flat dots). A new round's beat drops in with `letterDrop` (only rounds scored while the sheet is open); the playhead `pop`s each note with an amber glow; an edited round is tinted amber. `SongStrip` makes the staff one tappable strip with a jade play glyph (amber stop) for the game sheet (`compact`: a 56px staff, "The song so far" and its caption only before the first round, so the score entry stays above the fold), Edit round (Hear it), the victory overlay (bare, a 56px staff) and game details. `SongCard` (150 wide: cover in the winner's colour, the game in the display face, a record that `spin`s while it plays, a mini staff, winner · date · rounds, a 44px play/stop) fills the `MixtapeShelf` on Home, edge to edge; a game finished since Home opened is pressed onto it (`rise` + `pop`) once the victory overlay has gone. No new keyframes.
 - **The victory sticker pack** sits in `VictoryOverlay`'s children slot (between the name and the podium); with a pack the badge shrinks so it stays one screen on most phones, and the overlay scrolls from the top (`safe center`) when it can't.
 - **A view transition (the theme reveal) isn't a backdrop tap:** while one runs its overlay takes every tap, so `Sheet` ignores outside interactions on `<html>` or during `.theme-reveal` (LESSONS).
 - **Stickers** (decision 24) are die-cut: a coloured shape (circle, burst, hex, rounded square) with a `--die` border and a soft shadow, the glyph in ink (`--on-accent`, AA on every fill), never quite straight (`tilt`). Locked ones are a dashed `--faint` outline of the same shape. They move in the app's own vocabulary, not the Sticker Club's (decision 26): they `rise` onto the sticker book (staggered), `pop` out of the victory pack (with the `sticker` sound a note higher each time), and the pack rises with the podium, then nudges with the podium winner's `wobble` to invite the tap, its foil shining (`foil`). Their only tilt is the sticker's own static one. Standings rows open sticker books, said under the heading ("Tap a name for their stickers"); a row's spoken name keeps its place and wins. A sticker inside a named control has no label of its own (decorative).
@@ -68,7 +72,9 @@ A Web Audio synth with no audio files: `SFX` in `packages/ui/src/feel/sfx.ts` (t
 | `sticker` / `rip` | A sticker lands: `pick`'s blip over a triangle thump, each in a run a step higher / the victory sticker pack tears open: a fast zip up and a sparkle |
 | `add` / `remove` | A player joins / leaves the line-up |
 | `start` | Deal in: a new game |
-| `submit` | A round is scored or saved |
+| `submit` | A round is saved from Edit round, a game is finished from End game |
+| `note` | A round is scored: that round's note in the game's Fox Trot song (`roundNotes`), in place of `submit` (decision 27); buzzes like `submit` |
+| (Fox Trot) | Not cues: songs play through `SFX.song(notes)` on one stoppable bus. Parts at the cues' own levels, no compressor: `lead`/`riff`/`lick`/`story` square, `bass`/`harmony`/`chord`/`answer`/`seal` triangle (the story is `win`'s two voices, the chord rolls like `start`, the seal is `deal`'s sparkle); each note's `v` scales it (decision 29). Hear them on Foundations › Fox Trot Lab |
 | `lead` | Someone takes the lead |
 | `match` | Someone reaches match point (within 15% of the target) |
 | `tie` | Tied at the end: tiebreak |
@@ -81,7 +87,7 @@ iOS rules (why it's built this way: [DECISIONS.md](DECISIONS.md#10-ios-audio-pla
 
 ## Haptics
 
-`Haptics` (`packages/ui/src/feel/haptics.ts`): named patterns (`tap`, `pick`, `submit`, `add`, `deal`, `sticker`, `rip`, `lead`, `match`, `error`, `del`, `win`). Vibration API on Android; on iOS 18+ a hidden `<input type="checkbox" switch>` click plays the system tick, one per pulse. `effects.ts` buzzes on `submit`, `deal`, `sticker`, `rip`, `win`, `lead`, `match`, `error`, `del`. Off when `prefs.haptics` is false.
+`Haptics` (`packages/ui/src/feel/haptics.ts`): named patterns (`tap`, `pick`, `submit`, `add`, `deal`, `sticker`, `rip`, `lead`, `match`, `error`, `del`, `win`). Vibration API on Android; on iOS 18+ a hidden `<input type="checkbox" switch>` click plays the system tick, one per pulse. `effects.ts` buzzes on `submit`, `note`, `deal`, `sticker`, `rip`, `win`, `lead`, `match`, `error`, `del`. Off when `prefs.haptics` is false.
 
 ## Confetti
 
@@ -93,6 +99,7 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 
 - `.tally` sets `user-select: none`, `-webkit-touch-callout: none`, `-webkit-tap-highlight-color: transparent`.
 - `touch-action: manipulation` on **every** element (`:where(.tally) *`), because it doesn't inherit; this removes the double-tap-zoom tap delay. Elements needing more (the sheet's grab handle) set their own.
+- **The window never zooms** (decision 28): the viewport meta has `maximum-scale=1, user-scalable=no`; the page is `touch-action: pan-x pan-y` (`globals.css`), which every element's `manipulation` intersects with, so pinch and double-tap zoom are off everywhere; iOS Safari ignores both for pinch, so the layout's `NO_ZOOM` script cancels its `gesturestart/change/end` events, and a trackpad pinch (ctrl + wheel) too.
 - Images, SVGs and links can't be dragged.
 - Inputs, textareas, `contenteditable` and `.selectable` opt back in to selection and callouts.
 - Base element resets are wrapped in `:where()` so component classes always win.
@@ -119,7 +126,7 @@ The app should feel like an iOS app, not a web page. Base rules are in the top o
 
 | Group | Path | Examples |
 |---|---|---|
-| Brand | `packages/ui/src/brand/` | `Fox`, `Icon`, `Wordmark`, `Chip`, `Badge`, `FoxNote` (the fox's badge with a headline and a line), `Sticker` (die-cut, locked, ×N) |
+| Brand | `packages/ui/src/brand/` | `Fox`, `Icon`, `Wordmark`, `Chip`, `Badge`, `FoxNote` (the fox's badge with a headline and a line), `Sticker` (die-cut, locked, ×N), `Splash` (the launch screen) |
 | Theme | `packages/ui/src/theme/` | `ThemeRoot` (sets `data-theme`, `THEME_COLOR`); no story of its own: every story renders inside it |
 | Primitives | `packages/ui/src/primitives/` | `Button` (+ `ButtonLink`), `IconButton`, `ConfirmButton`, `Sheet`, `SheetNav` (pages pushed inside one sheet), `Segmented`, `Switch`, `TextInput`, `Toast`, `SyncBadge`, `LinkRow` (menu row: tile, title, hint, chevron), `StepList` (numbered how-to steps), `QrCode` (branded: ink dots on a cream plate in a jade ring, deep-jade/deep-fox eyes, the same in both themes; optional fox badge; encoder `uqr` loaded on demand; decision 21), `BottomNav`, `EmptyState`, `Pill` / `PillRow`, `Ribbon`, `Swatches`, and the small text pieces in `Card.tsx` (`Card`, `Eyebrow`, `SectionTitle`, `Notice`) |
 | Scoreboard | `packages/ui/src/scoreboard/` | `PlayerCard`, `RaceTrack`, `RoundPips`, `RoundLog` (scores or wins), `WinnerPicker` ("Who won?"), `Standings` (▲ / ▼ under a rank only when the last game really changed the standings: a player passed someone they weren't ahead of, by wins. Drawing level, the name-order tiebreak, and winning or losing alone show nothing), `StatList`, `Podium`, `WinsChart`, `VictoryOverlay`, `ChampionCard`, `StickerPack` (the victory pack), `StickerShelf` (a row of earned stickers), `GameRow`, `ResumeCard`, `RollNumber`, `ScoreFields`, `FxCanvas` (from `feel/`, the confetti layer) |

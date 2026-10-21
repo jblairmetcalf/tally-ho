@@ -11,6 +11,16 @@ export const PALETTE_SIZE = 8
 export const GoalSchema = z.enum(['score', 'rounds', 'wins', 'open'])
 export type Goal = z.infer<typeof GoalSchema>
 
+/** A song's key and chord loop (the Fox Trot, decision 27). */
+export const SongKeySchema = z.object({
+  /** 0 = C … 11 = B. */
+  tonic: z.number().int().min(0).max(11),
+  mode: z.enum(['major', 'minor']),
+  /** Which of the mode's four loops (`LOOPS` in mixtape.ts). */
+  loop: z.number().int().min(0).max(3),
+})
+export type SongKey = z.infer<typeof SongKeySchema>
+
 export const PlayerSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(16),
@@ -38,6 +48,8 @@ export const PresetSchema = z.object({
   minPlayers: z.number().int().min(2).max(12).optional(),
   /** At most this many; `null` = no limit. Absent: the built-in default for this id, else none. */
   maxPlayers: z.number().int().min(2).max(12).nullable().optional(),
+  /** The game type's song key; absent: from its name (the Fox Trot, decision 27). */
+  song: SongKeySchema.optional(),
 })
 export type Preset = z.infer<typeof PresetSchema>
 
@@ -66,6 +78,8 @@ export const GameSchema = z.object({
   sample: z.boolean().optional(),
   /** Who dealt it in (a player id), filled in by the synced provider. */
   startedBy: z.string().optional(),
+  /** The song key, copied from the preset at deal-in so later edits never re-key old songs. */
+  song: SongKeySchema.optional(),
 })
 export type Game = z.infer<typeof GameSchema>
 /** A game that has been finished and crowned. */

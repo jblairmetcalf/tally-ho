@@ -13,18 +13,31 @@ export interface GameRowProps {
   /** Best first. */
   totals: { id: string; name: string; color: number; total: number; won: boolean }[]
   onClick: () => void
+  /** Which game this was, counting every finished game from the first ("#12"). */
+  number?: string
 }
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-/** A finished game in Home's "Recent games" and in History. */
-export function GameRow({ name, winner, completedAt, rounds, totals, onClick }: GameRowProps) {
+/** A finished game in History. */
+export function GameRow({
+  name,
+  winner,
+  completedAt,
+  rounds,
+  totals,
+  onClick,
+  number,
+}: GameRowProps) {
   return (
     <button type="button" className="game-row" onClick={onClick}>
       <Chip name={winner.name} color={winner.color} size={42} crown />
       <div className="meta">
-        <div className="gname">{name}</div>
+        <div className="gname">
+          {name}
+          {number && <span className="game-no">{number}</span>}
+        </div>
         <div className="gsub">
           {winner.name} won · {fmtDate(completedAt)} · {rounds} {rounds === 1 ? 'round' : 'rounds'}
         </div>

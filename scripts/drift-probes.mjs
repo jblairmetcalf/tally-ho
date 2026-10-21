@@ -145,7 +145,10 @@ probe(
 
 // ── dead weight ──
 const copyFile = join(ROOT, 'packages/app/src/copy.ts')
-const appUi = prod.filter((f) => /packages\/(app|ui)\/src\//.test(f) && f !== copyFile)
+// The web shell reads copy too (the launch screen's words, rendered into the static page).
+const appUi = prod.filter(
+  (f) => /packages\/(app|ui)\/src\/|apps\/web\/app\//.test(f) && f !== copyFile,
+)
 const deadCopy = []
 {
   let path = []

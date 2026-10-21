@@ -235,6 +235,15 @@ describe('diff', () => {
     ])
   })
 
+  it('the Mixtape: a song key rides on presets and games (songs themselves are never stored)', () => {
+    const key = { tonic: 7, mode: 'major' as const, loop: 2 }
+    const g = game({ song: key })
+    expect(diff(base(), base({ active: g }), 'kate')[0]).toMatchObject({ data: { song: key } })
+    expect(gameFrom('g1', gameDoc(g))?.song).toEqual(key)
+    const p = { ...emptyStore().presets[0]!, song: key }
+    expect(presetFrom(p.id, presetDoc(p))?.song).toEqual(key)
+  })
+
   it('samples never sync', () => {
     expect(
       diff(base(), base({ games: [game({ sample: true, completedAt: at(4) })] }), 'k'),

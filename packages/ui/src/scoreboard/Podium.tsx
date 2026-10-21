@@ -17,13 +17,15 @@ export interface PodiumProps {
   showLast?: boolean
   /** When the first row rises; each next row 110 ms later. Default 750 ms (the victory beat). */
   delayMs?: number
+  /** Across the whole column (a game's details), not capped for the victory overlay. */
+  wide?: boolean
 }
 
 /** The finishing order: ordinal, chip (crowned winner), name and total, rising in one by one. */
-export function Podium({ rows, showLast = false, delayMs }: PodiumProps) {
+export function Podium({ rows, showLast = false, delayMs, wide = false }: PodiumProps) {
   return (
     <div
-      className="podium"
+      className={wide ? 'podium wide' : 'podium'}
       style={delayMs == null ? undefined : ({ '--pod-delay': `${delayMs}ms` } as CSSProperties)}
     >
       {rows.map((p, i) => {

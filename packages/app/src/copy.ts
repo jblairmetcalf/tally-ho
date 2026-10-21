@@ -38,10 +38,11 @@ export const COPY = {
     bigDetail: (name: string, game: string) => `${name}, ${game}`,
     mostPlayed: 'Most played',
     dash: '–',
-    recent: 'Recent games',
   },
 
   history: {
+    /** Which game a row was, counting every finished game from the first. */
+    number: (n: number) => `#${n}`,
     eyebrow: 'History',
     title: 'The record',
     game: 'Game',
@@ -440,6 +441,39 @@ export const COPY = {
     isNew: 'new',
   },
 
+  /** The launch screen (decision 28). */
+  splash: {
+    label: 'Loading Tally Ho!',
+    tagline: 'Good cards. Better company.',
+    loading: 'Loading…',
+  },
+
+  /** Fox Trot (decisions 27 and 29): every game is a little song, its fox trot. */
+  foxTrot: {
+    title: 'Fox Trots',
+    empty: 'Finish a game for your first fox trot',
+    soFar: 'The fox trot so far',
+    caption: "Each round adds a step in the round winner's color",
+    play: (game: string) => `Play ${game} fox trot`,
+    stop: (game: string) => `Stop ${game} fox trot`,
+    playAll: 'Play the set',
+    stopAll: 'Stop',
+    /** A card, as a button: opens the game's details. */
+    open: (game: string, winner: string, when: string) =>
+      `${game}, won by ${winner}, ${when}. Open game`,
+    meta: (winner: string, when: string, rounds: number) =>
+      `${winner} · ${when} · ${rounds} ${plural(rounds, 'round', 'rounds')}`,
+    replay: 'Replay the fox trot',
+    hear: 'Hear it',
+    /** The Games editor's key picker. */
+    key: 'Song key',
+    keyAuto: 'Auto',
+    keyAutoHint: (name: string) => `Picked from the name: every ${name} game sounds alike`,
+    mode: { major: 'Major', minor: 'Minor' },
+    modeLabel: 'Major or minor',
+    loop: 'Chord loop',
+  },
+
   sheetLabel: {
     new: 'New game',
     /** The game sheet is named by its page: the game's name, Edit round N, End game. */
@@ -450,6 +484,10 @@ export const COPY = {
     stickers: 'Sticker book',
   },
 } as const
+
+/** "Oct 12" (a song card). */
+export const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
 /** "Mon, Oct 12, 2026" (prototype detail sheet). */
 export const longDate = (iso: string) =>

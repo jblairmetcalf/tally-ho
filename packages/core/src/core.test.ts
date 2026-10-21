@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { fitsRange, playerRangeOf, rangeForGame } from './lineup'
 import { migrate } from './migrate'
+import {
+  beatLength,
+  type CodaFacts,
+  chordOf,
+  codaOf,
+  keyOf,
+  LOOPS,
+  loopName,
+  outcomesOf,
+  riffOf,
+  roundNotes,
+  SONG_RULES,
+  scaleOf,
+  scheduleOf,
+  songOf,
+  voiceOf,
+} from './mixtape'
 import { DEFAULT_PRESETS } from './presets'
-import { freshStore, makeSamples } from './samples'
+import { freshStore, makeSamples, rng } from './samples'
 import type { Game } from './schemas'
 import {
   evaluate,
@@ -566,5 +583,299 @@ describe('stickers', () => {
     expect(a).toEqual(computeStickers(makeSamples(clock)))
     expect(a.recent.length).toBeGreaterThan(0)
     expect(STICKERS).toHaveLength(12)
+  })
+})
+
+describe('mixtape', () => {
+  // Colours 0 (root), 1 (third), 2 (fifth), 3 (root again).
+  const colors: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 }
+  const colorOf = (id: string) => colors[id] ?? 0
+  const pc = (m: number) => ((m % 12) + 12) % 12
+
+  it('gives every player a fixed part of the chord, from their colour', () => {
+    expect([0, 1, 2, 3, 7].map(voiceOf)).toEqual(['root', 'third', 'fifth', 'root', 'third'])
+  })
+
+  it('keys a game by its name: same name, same key, loop and riff; low wins is minor', () => {
+    const a = keyOf({ name: 'Flip 7', lowWins: false })
+    expect(keyOf({ name: ' flip 7 ', lowWins: false })).toEqual(a)
+    expect(a.mode).toBe('major')
+    expect(keyOf({ name: 'Hearts', lowWins: true }).mode).toBe('minor')
+    expect(riffOf({ name: 'Flip 7', lowWins: false })).toEqual(
+      riffOf({ name: 'Flip 7', lowWins: false }),
+    )
+    const own = { tonic: 2, mode: 'minor' as const, loop: 3 }
+    expect(keyOf({ name: 'Flip 7', lowWins: false, song: own })).toEqual(own)
+    expect(loopName('major', 0)).toBe('I–V–vi–IV')
+    expect(loopName('minor', 0)).toBe('i–VI–III–VII')
+  })
+
+  it('riffs are 6 to 8 notes, all in the key', () => {
+    for (const name of ['Flip 7', 'Sushi Go', 'Uno', 'Hearts', 'Push', 'Jaipur 2']) {
+      const g = game({ name })
+      const s = songOf(g, colorOf)
+      expect(s.riff.length).toBeGreaterThanOrEqual(6)
+      expect(s.riff.length).toBeLessThanOrEqual(8)
+      const scale = scaleOf(s.key)
+      for (const n of scheduleOf(s).notes) expect(scale).toContain(pc(n.midi))
+    }
+  })
+
+  it('a round sings its best scorer; ties sing a chord; nobody scoring is a rest', () => {
+    const g = game({ rounds: rounds([10, 4], [6, 6], [0, 0], [null, null]) })
+    const s = songOf(g, colorOf)
+    expect(s.beats.map((b) => b.tones.map((t) => t.playerId))).toEqual([['a'], ['a', 'b'], [], []])
+    expect(s.beats[1]?.tones.map((t) => t.voice)).toEqual(['root', 'third'])
+    // A rest still has its bass.
+    const sched = scheduleOf(s)
+    const rest = sched.notes.filter((n) => n.beat === 2)
+    expect(rest.map((n) => n.part)).toEqual(['bass'])
+  })
+
+  it('low wins: the lowest score sings', () => {
+    const g = game({ lowWins: true, rounds: rounds([3, 9]) })
+    expect(songOf(g, colorOf).beats[0]?.tones[0]?.playerId).toBe('a')
+  })
+
+  it('scales the band to the game: a share of the target in a race', () => {
+    const band = (target: number, a: number) =>
+      songOf(game({ target, rounds: rounds([a, 0]) }), colorOf).beats[0]?.tones[0]
+    // Flip 7 to 200: 10 is low, 30 middle, 45 high, 70 high with the ninth.
+    expect(band(200, 10)?.band).toBe(0)
+    expect(band(200, 30)?.band).toBe(1)
+    expect(band(200, 45)?.band).toBe(2)
+    expect(band(200, 70)).toMatchObject({ band: 2, ninth: true })
+    // Mille Bornes to 5000: a 700-point hand is middle, not off the top.
+    expect(band(5000, 700)?.band).toBe(1)
+    expect(SONG_RULES.race).toHaveLength(3)
+  })
+
+  it('rounds games compare with the best earlier round; a record adds the ninth', () => {
+    const g = game({ goal: 'rounds', target: 5, rounds: rounds([20, 0], [5, 0], [25, 0], [18, 0]) })
+    const t = songOf(g, colorOf).beats.map((b) => b.tones[0])
+    expect(t[0]).toMatchObject({ band: 1 })
+    expect(t[1]?.band).toBe(0)
+    expect(t[2]).toMatchObject({ band: 2, ninth: true })
+    expect(t[3]?.band).toBe(2)
+  })
+
+  it('Who won? games sing the middle band, the deciding win high', () => {
+    const g = game({
+      goal: 'wins',
+      target: 2,
+      rounds: [{ scores: winRound(['a', 'b'], 'a') }, { scores: winRound(['a', 'b'], 'a') }],
+    })
+    expect(songOf(g, colorOf).beats.map((b) => b.tones[0]?.band)).toEqual([1, 2])
+  })
+
+  it('licks mark their moments, one per beat at most', () => {
+    // b takes the lead in round 2 (turnaround); a busts in round 2 too, but the lead wins.
+    const lead = songOf(game({ rounds: rounds([5, 2], [0, 20]) }), colorOf)
+    expect(lead.beats[0]?.lick).toBeUndefined()
+    expect(lead.beats[1]?.lick).toMatchObject({ kind: 'turnaround', playerId: 'b' })
+    // Three round wins in a row: the hammer.
+    const ham = songOf(game({ rounds: rounds([5, 1], [5, 1], [5, 1]) }), colorOf)
+    expect(ham.beats[2]?.lick?.kind).toBe('hammer')
+    // A zero while the other scores (and nothing more telling): the slide.
+    const slide = songOf(game({ rounds: rounds([5, 1], [5, 0]) }), colorOf)
+    expect(slide.beats[1]?.lick).toMatchObject({ kind: 'slide', playerId: 'b' })
+    // Reaching match point: the suspension, once per player.
+    const mp = songOf(game({ rounds: rounds([50, 1], [36, 1], [5, 1]) }), colorOf)
+    expect(mp.beats[1]?.lick).toMatchObject({ kind: 'suspension', playerId: 'a' })
+    expect(mp.beats[2]?.lick?.kind).not.toBe('suspension')
+  })
+
+  it('a finished game ends on a coda; a live one has none', () => {
+    const done = game({
+      completedAt: '2026-10-02T00:00:00Z',
+      winnerId: 'b',
+      rounds: rounds([1, 9]),
+    })
+    const s = songOf(done, colorOf)
+    // No history given: a routine, decisive ending on the winner's part.
+    expect(s.coda).toMatchObject({ story: 'routine', streak: 1, seal: 'decisive', voice: 'third' })
+    expect(songOf(game({ rounds: rounds([1, 9]) }), colorOf).coda).toBeUndefined()
+    const parts = new Set(scheduleOf(s).notes.map((n) => n.part))
+    expect(parts.has('story') && parts.has('chord')).toBe(true)
+  })
+
+  it("the coda's story: each occasion has its own motif; routine is the winner's signature", () => {
+    const key = { tonic: 0, mode: 'major' as const, loop: 0 }
+    const base: CodaFacts = {
+      story: 'routine',
+      streak: 1,
+      seal: 'decisive',
+      strength: 0,
+      voice: 'root',
+      color: 0,
+      answer: null,
+    }
+    const contour = (f: Partial<CodaFacts>) =>
+      codaOf(key, { ...base, ...f })
+        .story.filter((n) => n.part === 'story')
+        .slice(1)
+        .map((n) => n.midi)
+    const all = (['comeback', 'first', 'upset', 'new', 'defend', 'routine'] as const).map((story) =>
+      contour({ story }).join(','),
+    )
+    expect(new Set(all).size).toBe(6)
+    // A comeback dips under the tonic before it leaps.
+    const cb = contour({ story: 'comeback' })
+    expect(Math.min(...cb)).toBeLessThan(cb[cb.length - 1]! - 12)
+    // Routine: three notes, walking up into them for a stronger win (Score Climb).
+    expect(contour({ strength: 0 })).toHaveLength(3)
+    expect(contour({ strength: 0.5 })).toHaveLength(4)
+    expect(contour({ strength: 0.9 })).toHaveLength(5)
+    // The signature lands on the winner's own part, so every win of theirs ends alike.
+    expect(contour({ voice: 'third' }).at(-1)! % 12).toBe(4) // E over C
+  })
+
+  it("the coda's chord stacks the streak; the seal tells how close it was", () => {
+    const key = { tonic: 0, mode: 'major' as const, loop: 0 }
+    const f: CodaFacts = {
+      story: 'routine',
+      streak: 1,
+      seal: 'decisive',
+      strength: 0.5,
+      voice: 'root',
+      color: 0,
+      answer: 'third',
+    }
+    const tones = (streak: number) =>
+      codaOf(key, { ...f, streak }).chord.filter((n) => n.part === 'chord').length
+    // The streak's stack, plus the winner's signature colour on top.
+    expect([1, 2, 3, 4, 5, 9].map(tones)).toEqual([2, 3, 4, 5, 6, 6])
+    const top = (color: number) =>
+      codaOf(key, { ...f, color })
+        .chord.filter((n) => n.part === 'chord')
+        .at(-1)!.midi % 12
+    expect([0, 1, 2, 3].map(top)).toEqual([2, 9, 11, 5]) // add9 D, 6th A, 7th B, 4th F over C
+    // Decisive: a clean fifth rings over the chord.
+    expect(codaOf(key, f).seal.map((n) => n.midi % 12)).toEqual([7])
+    // Photo finish: the runner-up answers, and a 4th resolves to the 3rd (F → E in C).
+    const photo = codaOf(key, { ...f, seal: 'photo' }).seal
+    expect(photo.filter((n) => n.part === 'answer')).toHaveLength(2)
+    const sus = photo.filter((n) => n.part === 'seal').map((n) => n.midi % 12)
+    expect(sus).toEqual([5, 4])
+    // Steamroller: `deal`'s sparkle, the tonic and third high over the top.
+    const steam = codaOf(key, { ...f, seal: 'steam' }).seal.map((n) => n.midi % 12)
+    expect(steam).toEqual([0, 4])
+  })
+
+  it('the longest song (20 rounds, the longest story, a full stack, a photo finish) is 5 s or less', () => {
+    const long = game({
+      completedAt: '2026-10-02T00:00:00Z',
+      winnerId: 'a',
+      rounds: Array.from({ length: 20 }, (_, i) => ({ scores: { a: i % 3, b: i % 2 } })),
+    })
+    for (const story of ['comeback', 'upset', 'new'] as const) {
+      const out = { story, streak: 9, seal: 'photo' as const, strength: 1, runnerUp: 'b' }
+      expect(scheduleOf(songOf(long, colorOf, out)).length).toBeLessThanOrEqual(5.0)
+    }
+  })
+
+  it('outcomes read the history before each game, the way stickers do', () => {
+    const at = (d: number) => `2026-10-${String(d).padStart(2, '0')}T20:00:00Z`
+    const won = (id: string, d: number, w: string, rs = rounds([10, 4])): Game =>
+      game({ id, completedAt: at(d), winnerId: w, rounds: rs })
+    const history = [
+      won('g1', 1, 'a'), // a's first win
+      won('g2', 2, 'b'), // b's first win
+      won('g3', 3, 'a'), // a leads again: new champion
+      won('g4', 4, 'a'), // a defends, two in a row… three
+      won('g5', 5, 'b'), // b was last: an upset
+      won('g6', 6, 'b', rounds([30, 0], [0, 40])), // came from 30 behind: a comeback
+    ]
+    const o = outcomesOf(history)
+    expect(['g1', 'g2', 'g3', 'g4', 'g5', 'g6'].map((id) => o.get(id)?.story)).toEqual([
+      'first',
+      'first',
+      'new',
+      'defend',
+      'upset',
+      'comeback',
+    ])
+    expect(o.get('g4')?.streak).toBe(2)
+    expect(o.get('g6')?.streak).toBe(2)
+    expect(o.get('g1')?.runnerUp).toBe('b')
+    // Order of the list doesn't matter, only completion order; live games have none.
+    expect(outcomesOf([...history].reverse())).toEqual(o)
+    expect(outcomesOf([game()]).size).toBe(0)
+    // A song with its outcome uses it.
+    expect(songOf(history[4]!, colorOf, o.get('g5')).coda?.story).toBe('upset')
+  })
+
+  it('is deterministic, and a new round never changes the earlier ones', () => {
+    const g = game({ rounds: rounds([5, 3], [2, 8], [0, 0], [7, 7]) })
+    expect(songOf(g, colorOf)).toEqual(songOf(structuredClone(g), colorOf))
+    const more = { ...g, rounds: [...g.rounds, ...rounds([9, 1])] }
+    expect(songOf(more, colorOf).beats.slice(0, 4)).toEqual(songOf(g, colorOf).beats)
+  })
+
+  it('every note is in the key and every beat tone is in its chord (any game)', () => {
+    const r = rng(7)
+    const goals = ['score', 'rounds', 'wins', 'open'] as const
+    for (let k = 0; k < 120; k++) {
+      const ids = ['a', 'b', 'c', 'd'].slice(0, 2 + Math.floor(r() * 3))
+      const goal = goals[k % 4] ?? 'score'
+      const n = 1 + Math.floor(r() * 20)
+      const rs = Array.from({ length: n }, () =>
+        goal === 'wins'
+          ? { scores: winRound(ids, ids[Math.floor(r() * ids.length)] ?? 'a') }
+          : {
+              scores: Object.fromEntries(
+                ids.map((p) => [p, Math.floor(r() * 4) * Math.floor(r() * 30)]),
+              ),
+            },
+      )
+      const g = game({
+        name: `Game ${k}`,
+        goal,
+        target: goal === 'open' ? null : goal === 'rounds' ? n : 150,
+        lowWins: goal !== 'wins' && k % 5 === 0,
+        playerIds: ids,
+        rounds: rs,
+        completedAt: k % 2 ? '2026-10-02T00:00:00Z' : null,
+        winnerId: k % 2 ? (ids[0] ?? null) : null,
+      })
+      const stories = ['comeback', 'first', 'upset', 'new', 'defend', 'routine'] as const
+      const seals = ['photo', 'decisive', 'steam'] as const
+      const outcome = {
+        story: stories[k % 6] ?? 'routine',
+        streak: 1 + (k % 6),
+        seal: seals[k % 3] ?? 'decisive',
+        strength: r(),
+        runnerUp: ids[1] ?? null,
+      }
+      const s = songOf(g, colorOf, outcome)
+      expect(s.beats).toHaveLength(n)
+      const sched = scheduleOf(s)
+      const scale = scaleOf(s.key)
+      for (const note of sched.notes) expect(scale).toContain(pc(note.midi))
+      for (const note of sched.notes.filter((x) => x.part === 'lead' || x.part === 'bass')) {
+        const b = s.beats[note.beat]
+        if (b) expect(chordOf(s.key, b.chord)).toContain(pc(note.midi))
+      }
+      for (const b of s.beats) expect(LOOPS[s.key.mode][s.key.loop]).toContain(b.chord)
+      // Short: never much over five seconds, however long the game.
+      expect(sched.length).toBeLessThanOrEqual(5.0)
+    }
+  })
+
+  it('lays out one beat per round, tighter for long games', () => {
+    expect(beatLength(4)).toBe(SONG_RULES.beat)
+    expect(beatLength(20)).toBeCloseTo(SONG_RULES.minBeat)
+    const s = scheduleOf(songOf(game({ rounds: rounds([1, 0], [0, 1], [2, 0]) }), colorOf))
+    expect(s.beatTimes).toHaveLength(3)
+    expect(s.beatTimes[1]! - s.beatTimes[0]!).toBeCloseTo(SONG_RULES.beat)
+    expect(roundNotes(songOf(game({ rounds: rounds([1, 0]) }), colorOf), 0)[0]?.t).toBe(0)
+    expect(roundNotes(songOf(game(), colorOf), 3)).toEqual([])
+  })
+
+  it('songs are never stored: a store saved with an old shelf still loads, without it', () => {
+    const s = { ...freshStore(clock), songs: [{ gameId: 'x', favorite: true }] }
+    const loaded = migrate(s)
+    expect(loaded?.games).toHaveLength(10)
+    expect(loaded).not.toHaveProperty('songs')
   })
 })

@@ -58,6 +58,8 @@ export const presetDoc = (p: Preset): DocData =>
     // `maxPlayers: null` is a real value: "no limit", chosen in the editor.
     minPlayers: p.minPlayers,
     maxPlayers: p.maxPlayers,
+    // Optional: the game type's Fox Trot key, picked in the editor (absent: from the name).
+    song: p.song,
   })
 
 export const roundDoc = (r: Round, by?: string): DocData =>
@@ -80,6 +82,8 @@ export function gameDoc(g: Game, by?: string): DocData {
     completedAt: g.completedAt ?? null,
     winnerId: g.winnerId ?? null,
     startedBy: g.startedBy ?? by,
+    // Optional: the song key, fixed at deal-in (written only when the game is created).
+    song: g.song,
     rounds,
   })
 }

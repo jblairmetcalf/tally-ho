@@ -38,6 +38,8 @@ const extras = [
   '/apple-touch-icon.png',
   '/favicon.png',
   '/favicon.svg',
+  // The launch screen's art: offline launches show it too.
+  '/splash-art.webp',
 ]
 const precache = ['/', ...extras, ...statics].sort()
 

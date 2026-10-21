@@ -49,7 +49,7 @@ export function RoundLog({
   const order = rounds.map((r, i) => ({ r, i })).reverse()
   return (
     <section
-      className={cx('card log', className)}
+      className={cx('card log', !editable && 'static', className)}
       style={{ '--n': players.length, ...style } as CSSProperties}
     >
       <div className="log-head">
@@ -59,7 +59,7 @@ export function RoundLog({
             {p.name}
           </span>
         ))}
-        <span />
+        {editable && <span />}
       </div>
       {order.map(({ r, i }, k) => {
         const vals = players.map((p) => r.scores[p.id]).filter((v): v is number => v != null)
@@ -122,7 +122,11 @@ export function RoundLog({
                 </span>
               )
             })}
-            <span className="ed">{editable && <Icon name="pencil" size={16} />}</span>
+            {editable && (
+              <span className="ed">
+                <Icon name="pencil" size={16} />
+              </span>
+            )}
           </>
         )
         const key = fresh ? `${i}-${freshKey}` : String(i)

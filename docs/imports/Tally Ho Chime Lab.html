@@ -1,0 +1,839 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tally Ho Chime Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a single-column instrument rack. One control bench at the top sets the game state; ten chime modules below each draw their own notes as a piano roll and play on tap. */
+:root{
+  --f-display:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --f-body:'Archivo',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+
+  --bg:#E6EBEA;
+  --panel:#FBFCFB;
+  --panel-2:#DCE4E3;
+  --sunk:#CFD9D8;
+  --rule:#BCC9C8;
+  --ink:#10201F;
+  --ink-2:#3C5150;
+  --muted:#6E8382;
+  --faint:#9DAFAE;
+  --brass:#9A6F12;
+  --brass-ink:#FFF8E8;
+  --danger:#A6331F;
+  --focus:#9A6F12;
+  --grid:rgba(16,32,31,.07);
+  --shadow:0 1px 2px rgba(16,32,31,.10),0 10px 24px -16px rgba(16,32,31,.42);
+  --inset:inset 0 2px 5px rgba(16,32,31,.13);
+  --roll-bg:#E9EFEE;
+
+  --h1:#B0531E; --h2:#A2660F; --h3:#7E7414; --h4:#4F7C2E;
+  --h5:#15785E; --h6:#0F7684; --h7:#2A6698; --h8:#5A54A6;
+  --h9:#8A3F93; --h10:#A33A63;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1514;
+  --panel:#15211F;
+  --panel-2:#1D2B29;
+  --sunk:#0A1211;
+  --rule:#2C3C3A;
+  --ink:#ECF2F0;
+  --ink-2:#BCCBC9;
+  --muted:#899C9A;
+  --faint:#5E706E;
+  --brass:#E2B257;
+  --brass-ink:#161008;
+  --danger:#F08264;
+  --focus:#E2B257;
+  --grid:rgba(236,242,240,.07);
+  --shadow:0 1px 0 rgba(255,255,255,.04),0 14px 30px -18px #000;
+  --inset:inset 0 2px 6px rgba(0,0,0,.55);
+  --roll-bg:#0E1A19;
+
+  --h1:#FF8F5E; --h2:#F2B23C; --h3:#D4D14A; --h4:#8CD45C;
+  --h5:#36D6A6; --h6:#3FCDE0; --h7:#64AEFF; --h8:#9B8CFF;
+  --h9:#D178E8; --h10:#FF6F9B;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1514;
+  --panel:#15211F;
+  --panel-2:#1D2B29;
+  --sunk:#0A1211;
+  --rule:#2C3C3A;
+  --ink:#ECF2F0;
+  --ink-2:#BCCBC9;
+  --muted:#899C9A;
+  --faint:#5E706E;
+  --brass:#E2B257;
+  --brass-ink:#161008;
+  --danger:#F08264;
+  --focus:#E2B257;
+  --grid:rgba(236,242,240,.07);
+  --shadow:0 1px 0 rgba(255,255,255,.04),0 14px 30px -18px #000;
+  --inset:inset 0 2px 6px rgba(0,0,0,.55);
+  --roll-bg:#0E1A19;
+
+  --h1:#FF8F5E; --h2:#F2B23C; --h3:#D4D14A; --h4:#8CD45C;
+  --h5:#36D6A6; --h6:#3FCDE0; --h7:#64AEFF; --h8:#9B8CFF;
+  --h9:#D178E8; --h10:#FF6F9B;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:72px 72px;
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2.5px solid var(--focus);outline-offset:3px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{
+  max-width:680px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:28px calc(96px + env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;gap:22px;
+}
+
+/* masthead */
+.mast{display:flex;align-items:flex-start;gap:14px}
+.mast-txt{flex:1;min-width:0}
+.kicker{font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(38px,10.5vw,58px);line-height:.94;letter-spacing:-.01em;margin-top:6px;text-wrap:balance}
+h1 em{font-style:italic;color:var(--brass)}
+.lede{color:var(--ink-2);font-size:15px;max-width:52ch;margin-top:10px}
+.icon-btn{
+  width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:10px;
+  background:var(--panel);box-shadow:var(--shadow);color:var(--ink-2);
+  transition:transform .16s var(--ease),color .16s;
+}
+.icon-btn:active{transform:scale(.9)}
+.icon-btn:hover{color:var(--brass)}
+
+/* bench */
+.bench{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.bench-head{
+  display:flex;align-items:center;gap:10px;padding:11px 16px;
+  background:var(--panel-2);border-bottom:1px solid var(--rule);
+}
+.bench-head h2{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);flex:1}
+.mini-btn{
+  font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  padding:7px 11px;border-radius:7px;background:var(--panel);color:var(--ink-2);
+  box-shadow:0 1px 0 var(--rule),inset 0 0 0 1px var(--rule);transition:transform .14s var(--ease),color .14s;
+}
+.mini-btn:active{transform:translateY(1px)}
+.mini-btn:hover{color:var(--brass)}
+.bench-body{padding:16px;display:flex;flex-direction:column;gap:18px}
+
+.seg-row{display:flex;flex-direction:column;gap:8px}
+.lab{font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;gap:4px;background:var(--sunk);border-radius:10px;padding:4px;box-shadow:var(--inset)}
+.seg button{
+  flex:1;min-width:0;padding:9px 6px;border-radius:7px;font-size:13.5px;font-weight:600;
+  color:var(--muted);text-align:center;transition:all .18s var(--ease);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.seg button[aria-checked="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.seg button:active{transform:scale(.96)}
+
+.sliders{display:grid;gap:16px}
+.sld{display:flex;flex-direction:column;gap:7px}
+.sld-top{display:flex;align-items:baseline;gap:8px}
+.sld-top .lab{flex:1}
+.sld-val{font-family:var(--f-mono);font-size:14px;font-weight:600;color:var(--brass)}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--sunk);box-shadow:var(--inset)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--sunk);box-shadow:var(--inset)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:22px;height:22px;margin-top:-8px;border-radius:50%;
+  background:var(--brass);box-shadow:0 2px 5px rgba(0,0,0,.4),inset 0 -2px 0 rgba(0,0,0,.2);
+}
+input[type=range]::-moz-range-thumb{
+  width:22px;height:22px;border:0;border-radius:50%;
+  background:var(--brass);box-shadow:0 2px 5px rgba(0,0,0,.4),inset 0 -2px 0 rgba(0,0,0,.2);
+}
+.toggles{display:flex;flex-wrap:wrap;gap:8px}
+.tog{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 13px 9px 10px;border-radius:9px;
+  background:var(--sunk);box-shadow:var(--inset);font-size:13.5px;font-weight:600;color:var(--muted);
+  transition:all .18s var(--ease);
+}
+.tog[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tog .dot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none;transition:background .18s}
+.tog[aria-pressed="true"] .dot{background:var(--brass-ink)}
+.tog:active{transform:scale(.96)}
+
+.readout{
+  font-family:var(--f-mono);font-size:11.5px;line-height:1.7;color:var(--muted);
+  background:var(--sunk);box-shadow:var(--inset);border-radius:9px;padding:11px 13px;
+}
+.readout b{color:var(--ink-2);font-weight:600}
+
+/* modules */
+.rack{display:flex;flex-direction:column;gap:14px}
+.rack-lab{display:flex;align-items:baseline;gap:10px;padding-top:4px}
+.rack-lab h2{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.rack-lab .rule{flex:1;height:1px;background:var(--rule)}
+
+.mod{
+  background:var(--panel);border-radius:14px;box-shadow:var(--shadow);
+  border-left:3px solid var(--hue);overflow:hidden;
+  transition:box-shadow .3s var(--ease);
+}
+.mod.live{box-shadow:var(--shadow),0 0 0 2px var(--hue)}
+.mod-head{display:flex;align-items:flex-start;gap:12px;padding:14px 16px 10px}
+.mod-no{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--hue);letter-spacing:.06em;padding-top:7px;flex:none}
+.mod-id{flex:1;min-width:0}
+.mod-id h3{font-family:var(--f-display);font-weight:400;font-size:27px;line-height:1.05;letter-spacing:-.005em}
+.mod-id p{color:var(--ink-2);font-size:13.5px;margin-top:3px;text-wrap:pretty}
+.play{
+  width:50px;height:50px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--hue);color:var(--panel);
+  box-shadow:0 3px 10px -2px color-mix(in srgb,var(--hue) 55%,transparent);
+  transition:transform .18s var(--ease);
+}
+.play:active{transform:scale(.86)}
+.play.on{animation:breathe 1.1s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding:0 16px 10px 16px}
+.chip{
+  font-family:var(--f-mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 7px;border-radius:5px;background:var(--panel-2);color:var(--muted);
+}
+.chip.hot{background:color-mix(in srgb,var(--hue) 20%,transparent);color:var(--hue)}
+
+.roll-box{position:relative;margin:0 16px;border-radius:9px;overflow:hidden;background:var(--roll-bg);box-shadow:var(--inset)}
+.roll{display:block;width:100%;height:auto}
+.roll .gl{stroke:var(--rule);stroke-width:.5;opacity:.5}
+.roll .nb{fill:var(--hue);opacity:.42;transition:opacity .12s linear}
+.roll .nb.v2{opacity:.22}
+.roll .nb.hit{opacity:1}
+.roll .ph{stroke:var(--hue);stroke-width:1.5;opacity:0}
+.roll .ph.go{opacity:.9}
+
+.mod-foot{padding:10px 16px 14px;display:flex;flex-direction:column;gap:6px}
+.notes{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);word-break:break-word}
+.notes span{color:var(--hue);font-weight:600}
+.howto{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);line-height:1.6}
+
+/* dock */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:linear-gradient(to top,var(--bg) 55%,transparent);
+}
+.dock-in{
+  max-width:680px;margin:0 auto 12px;display:flex;gap:8px;align-items:center;
+  background:var(--panel);border-radius:13px;padding:8px;box-shadow:var(--shadow),0 0 0 1px var(--rule);
+}
+.dock-btn{
+  flex:1;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:9px;font-family:var(--f-mono);font-size:11.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  transition:transform .14s var(--ease);
+}
+.dock-btn:active{transform:scale(.97)}
+.dock-btn.primary{background:var(--brass);color:var(--brass-ink)}
+.dock-btn.ghost{background:var(--panel-2);color:var(--ink-2)}
+.dock-btn.ghost:hover{color:var(--brass)}
+
+footer{color:var(--muted);font-size:12.5px;line-height:1.65;padding-top:2px;max-width:56ch}
+footer b{color:var(--ink-2);font-weight:600}
+
+@media (max-width:420px){
+  .mod-id h3{font-size:24px}
+  .seg button{font-size:12.5px;padding:9px 3px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+(function(){
+'use strict';
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+const html=htm.bind(React.createElement);
+
+/* ═══════════ audio engine ═══════════ */
+let AC=null,BUS=null;
+function ac(){
+  if(!AC){
+    const A=window.AudioContext||window.webkitAudioContext;
+    if(!A)return null;
+    AC=new A();
+    const comp=AC.createDynamicsCompressor();
+    comp.threshold.value=-14;comp.ratio.value=3.5;comp.attack.value=.003;comp.release.value=.2;
+    BUS=AC.createGain();BUS.gain.value=.9;
+    BUS.connect(comp);comp.connect(AC.destination);
+  }
+  if(AC.state==='suspended')AC.resume();
+  return AC;
+}
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const mname=m=>NAMES[((Math.round(m)%12)+12)%12]+(Math.floor(Math.round(m)/12)-1);
+
+function env(g,t,peak,atk,dec){
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(Math.max(.0004,peak),t+atk);
+  g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(atk+.02,dec));
+}
+/* FM operator — one carrier, one modulator */
+function fm(f,t,dur,o){
+  const c=ac();if(!c)return;
+  const {ratio=2,index=2,vel=.3,atk=.004,decayIdx=null}=o||{};
+  const car=c.createOscillator(),mod=c.createOscillator(),mg=c.createGain(),g=c.createGain();
+  car.frequency.value=f;mod.frequency.value=f*ratio;
+  mg.gain.setValueAtTime(f*index,t);
+  mg.gain.exponentialRampToValueAtTime(Math.max(1,f*(decayIdx!=null?decayIdx:.02)),t+dur);
+  mod.connect(mg);mg.connect(car.frequency);
+  env(g,t,vel,atk,dur);
+  car.connect(g);g.connect(BUS);
+  car.start(t);mod.start(t);car.stop(t+dur+.06);mod.stop(t+dur+.06);
+}
+/* Karplus-Strong plucked string */
+const KS={};
+function pluck(f,t,dur,o){
+  const c=ac();if(!c)return;
+  const {vel=.34,bright=.55,damp=.996}=o||{};
+  const key=Math.round(f*4)+'|'+dur.toFixed(2)+'|'+bright+'|'+damp;
+  let buf=KS[key];
+  if(!buf){
+    const sr=c.sampleRate,P=Math.max(2,Math.round(sr/f)),len=Math.max(1,Math.floor(sr*dur));
+    buf=c.createBuffer(1,len,sr);const y=buf.getChannelData(0);let last=0;
+    for(let i=0;i<P;i++){const r=Math.random()*2-1;last=bright*r+(1-bright)*last;y[i]=last}
+    for(let i=P;i<len;i++)y[i]=damp*.5*(y[i-P]+y[i-P-1>=0?i-P-1:0]);
+    KS[key]=buf;
+  }
+  const s=c.createBufferSource();s.buffer=buf;
+  const g=c.createGain();g.gain.setValueAtTime(vel,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(g);g.connect(BUS);s.start(t);
+}
+/* filtered saw, for brass */
+function brassy(f,t,dur,o){
+  const c=ac();if(!c)return;
+  const {vel=.17}=o||{};
+  const osc=c.createOscillator(),fl=c.createBiquadFilter(),g=c.createGain();
+  osc.type='sawtooth';osc.frequency.setValueAtTime(f,t);
+  const lfo=c.createOscillator(),lg=c.createGain();
+  lfo.frequency.value=5.2;lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(f*.008,t+dur*.6);
+  lfo.connect(lg);lg.connect(osc.frequency);
+  fl.type='lowpass';fl.Q.value=4;
+  fl.frequency.setValueAtTime(f*1.4,t);
+  fl.frequency.exponentialRampToValueAtTime(Math.min(11000,f*7),t+Math.min(.14,dur*.4));
+  fl.frequency.exponentialRampToValueAtTime(Math.max(200,f*2),t+dur);
+  env(g,t,vel,.022,dur);
+  osc.connect(fl);fl.connect(g);g.connect(BUS);
+  osc.start(t);lfo.start(t);osc.stop(t+dur+.05);lfo.stop(t+dur+.05);
+}
+/* soft sine body, doubles other voices */
+function body(f,t,dur,vel){
+  const c=ac();if(!c)return;
+  const osc=c.createOscillator(),g=c.createGain();
+  osc.type='sine';osc.frequency.value=f;
+  env(g,t,vel,.01,dur);
+  osc.connect(g);g.connect(BUS);osc.start(t);osc.stop(t+dur+.05);
+}
+/* a soft mallet transient */
+function mallet(t,vel){
+  const c=ac();if(!c)return;
+  const len=Math.floor(c.sampleRate*.03);
+  const b=c.createBuffer(1,len,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+  const s=c.createBufferSource();s.buffer=b;
+  const fl=c.createBiquadFilter();fl.type='bandpass';fl.frequency.value=2600;fl.Q.value=1.2;
+  const g=c.createGain();g.gain.setValueAtTime(vel,t);g.gain.exponentialRampToValueAtTime(.0001,t+.04);
+  s.connect(fl);fl.connect(g);g.connect(BUS);s.start(t);
+}
+
+/* voice table — each module sounds different on purpose */
+const VOICES={
+  nylon:  (f,t,d,v)=>{pluck(f,t,d,{vel:.34*v,bright:.52,damp:.9965});body(f,t,d*.5,.05*v)},
+  marimba:(f,t,d,v)=>{mallet(t,.1*v);fm(f,t,d,{ratio:4,index:3.2,vel:.26*v,atk:.002});body(f,t,d*.7,.07*v)},
+  glass:  (f,t,d,v)=>{fm(f,t,d,{ratio:3.5,index:2.4,vel:.17*v,atk:.004,decayIdx:.04})},
+  warm:   (f,t,d,v)=>{pluck(f,t,d,{vel:.26*v,bright:.2,damp:.998});body(f,t,d*.8,.1*v)},
+  rhodes: (f,t,d,v)=>{fm(f,t,d,{ratio:2,index:1.3,vel:.26*v,atk:.006,decayIdx:.03});body(f,t,d*.6,.06*v)},
+  kalimba:(f,t,d,v)=>{mallet(t,.07*v);fm(f,t,d,{ratio:5.1,index:1.7,vel:.2*v,atk:.002})},
+  brass:  (f,t,d,v)=>{brassy(f,t,d,{vel:.17*v});body(f,t,d,.05*v)},
+  celesta:(f,t,d,v)=>{fm(f,t,d,{ratio:4,index:1.1,vel:.2*v,atk:.003});fm(f*2,t,d*.5,{ratio:4,index:.6,vel:.05*v})},
+  tubular:(f,t,d,v)=>{mallet(t,.09*v);fm(f,t,d,{ratio:2.76,index:3,vel:.2*v,atk:.004,decayIdx:.05});fm(f,t,d*.75,{ratio:5.4,index:1.2,vel:.07*v})},
+};
+const VOICE2={ nylon:'glass', duet:'glass' };
+
+/* ═══════════ game state → derived facts ═══════════ */
+const PLAYERS=['Kate','Blair','Alder'];
+/* each player gets a root and a chord colour of their own */
+const IDENT={
+  Kate: {root:62,quality:[0,4,7,11],  qname:'maj7', hue:'--h5'},  /* D major 7 */
+  Blair:{root:57,quality:[0,4,7,14],  qname:'add9', hue:'--h7'},  /* A add9 */
+  Alder:{root:65,quality:[0,5,7,12],  qname:'sus4', hue:'--h2'},  /* F sus4 */
+};
+const MAJOR=[0,2,4,5,7,9,11];
+const PENTA=[0,2,4,7,9];
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return Math.abs(h)}
+
+function derive(st){
+  const id=IDENT[st.winner];
+  const rng=(n)=>{let h=hashStr(st.winner+st.game+n);return()=>{h=(h*1103515245+12345)&0x7fffffff;return h/0x7fffffff}};
+  const r=rng(st.score+st.margin);
+  /* synthesise plausible round scores so the rhythm module has material */
+  const rounds=[];let left=st.score;
+  for(let i=0;i<st.rounds;i++){
+    const share=left/(st.rounds-i);
+    const v=Math.max(0,Math.round(share*(.45+r()*1.1)));
+    rounds.push(Math.min(v,left));left=Math.max(0,left-v);
+  }
+  if(left>0)rounds[rounds.length-1]+=left;
+  return {...st,id,rounds,runnerUp:PLAYERS.filter(p=>p!==st.winner)[0]};
+}
+
+/* ═══════════ the ten composers ═══════════ */
+/* each returns {notes:[{t,m,d,v,alt}], voice, altVoice, howto} */
+
+/* 01 — the player's own chord, arpeggiated then struck */
+function c01(g){
+  const {root,quality}=g.id;
+  const notes=[];
+  quality.forEach((iv,i)=>notes.push({t:i*.075,m:root+iv,d:1.5,v:.75+i*.06}));
+  quality.forEach(iv=>notes.push({t:.33,m:root+iv,d:2.0,v:.62,alt:true}));
+  return{notes,voice:'nylon',altVoice:'glass',
+    howto:`${g.winner} owns ${mname(root)}${g.id.qname}. Roll it up, then strike the whole chord.`};
+}
+/* 02 — score decides how far the melody climbs */
+function c02(g){
+  const steps=Math.max(3,Math.min(7,2+Math.round(g.score/45)));
+  const root=60;const notes=[];
+  for(let i=0;i<steps;i++){
+    const deg=MAJOR[i%7]+12*Math.floor(i/7);
+    notes.push({t:i*.085,m:root+deg,d:.7,v:.6+i*.05});
+  }
+  const top=root+12+(g.score>=250?12:0);
+  notes.push({t:steps*.085+.04,m:top,d:1.6,v:1});
+  notes.push({t:steps*.085+.04,m:top-5,d:1.4,v:.5,alt:true});
+  return{notes,voice:'marimba',altVoice:'marimba',
+    howto:`${g.score} pts → ${steps} steps up the scale, landing on ${mname(top)}.`};
+}
+/* 03 — margin becomes the interval: tight game, tight harmony */
+function c03(g){
+  const m=g.margin;const root=64;
+  let iv,word;
+  if(m<=5){iv=1;word='minor 2nd — a squeak'}
+  else if(m<=20){iv=5;word='perfect 4th — settled'}
+  else if(m<=60){iv=7;word='perfect 5th — open'}
+  else{iv=19;word='octave + 5th — wide'}
+  const notes=[
+    {t:0,m:root,d:1.3,v:.85},
+    {t:.1,m:root+iv,d:1.3,v:.85},
+  ];
+  /* tight games resolve outward; blowouts just bloom */
+  if(m<=5){notes.push({t:.42,m:root+2,d:1.5,v:.9});notes.push({t:.42,m:root+7,d:1.5,v:.6,alt:true})}
+  else {[0,4,7].forEach((x,i)=>notes.push({t:.4+i*.03,m:root+x+12,d:1.6,v:.55,alt:true}))}
+  return{notes,voice:'glass',altVoice:'glass',
+    howto:`Won by ${m} → ${word}.`};
+}
+/* 04 — the comeback arc: sink, then lift */
+function c04(g){
+  const root=57;const notes=[];
+  if(g.comeback){
+    notes.push({t:0,m:root-5,d:.9,v:.5});
+    notes.push({t:.11,m:root-7,d:.9,v:.44});
+    notes.push({t:.22,m:root-3,d:.8,v:.56});
+    notes.push({t:.4,m:root+4,d:1.2,v:.8});
+    notes.push({t:.52,m:root+12,d:2.2,v:1});
+    [0,4,7,11].forEach((x,i)=>notes.push({t:.56+i*.035,m:root+x+12,d:2.2,v:.4,alt:true}));
+  }else{
+    notes.push({t:0,m:root+7,d:1,v:.8});
+    notes.push({t:.1,m:root+12,d:1.7,v:.9});
+    [0,4,7].forEach((x,i)=>notes.push({t:.14+i*.03,m:root+x+12,d:1.7,v:.42,alt:true}));
+  }
+  return{notes,voice:'warm',altVoice:'celesta',
+    howto:g.comeback?`Trailed by ${g.deficit} → dips under, then leaps a 6th into the major.`
+                    :'Led throughout → no dip, just a clean lift. Toggle Comeback to hear the arc.'};
+}
+/* 05 — each win on the streak stacks another chord tone */
+function c05(g){
+  const root=55;const stack=[0,7,16,22,26];           /* R, 5, 3(+8ve), 7, 9 */
+  const n=Math.max(1,Math.min(5,g.streak||1));
+  const notes=[];
+  for(let i=0;i<n;i++)notes.push({t:i*.09,m:root+stack[i],d:2.4-i*.15,v:.55+i*.1});
+  if(n>=4)notes.push({t:n*.09+.06,m:root+33,d:1.6,v:.5,alt:true});
+  return{notes,voice:'rhodes',altVoice:'celesta',
+    howto:`${n} in a row → ${n} stacked tone${n>1?'s':''}: ${notes.filter(x=>!x.alt).map(x=>mname(x.m)).join(' ')}.`};
+}
+/* 06 — the game's own rounds become the rhythm */
+function c06(g){
+  const rs=g.rounds.slice(-5);
+  const max=Math.max(1,...rs);
+  const notes=[];let t=0;
+  rs.forEach((v,i)=>{
+    const dur=.1+ (v/max)*.42;
+    const deg=PENTA[Math.min(4,Math.round((v/max)*4))];
+    notes.push({t,m:60+deg+(i>=3?12:0),d:dur+.3,v:.45+(v/max)*.5});
+    t+=dur*.72+.05;
+  });
+  notes.push({t:t+.03,m:72,d:1.4,v:.85});
+  notes.push({t:t+.03,m:67,d:1.4,v:.45,alt:true});
+  return{notes,voice:'kalimba',altVoice:'kalimba',
+    howto:`Last ${rs.length} rounds (${rs.join(', ')}) set note length and height.`};
+}
+/* 07 — curated motifs, picked by what the win meant */
+function c07(g){
+  const root=60;let seq,label;
+  if(g.champ==='new'){seq=[[0,0],[.09,7],[.18,12],[.27,16],[.42,19]];label='New champion — a climbing fanfare'}
+  else if(g.champ==='defend'){seq=[[0,12],[.1,7],[.2,12],[.34,19]];label='Champion defends — steady, then up'}
+  else if(g.streak===0&&g.first){seq=[[0,0],[.1,4],[.2,7],[.3,12]];label='First ever win — simple major arpeggio'}
+  else if(g.champ==='upset'){seq=[[0,3],[.09,2],[.18,0],[.3,12],[.4,16]];label='Upset — falls, then vaults'}
+  else{seq=[[0,7],[.09,12],[.2,16]];label='Routine win — a short three-note tag'}
+  const notes=seq.map(([t,m],i)=>({t,m:root+m,d:1.3,v:.6+i*.08}));
+  const last=seq[seq.length-1];
+  [0,4,7].forEach((x,i)=>notes.push({t:last[0]+.05+i*.025,m:root+x+12,d:1.5,v:.35,alt:true}));
+  return{notes,voice:'brass',altVoice:'celesta',howto:label+'.'};
+}
+/* 08 — the game name picks the key; the winner picks the degree */
+function c08(g){
+  const key=hashStr(g.game)%12;
+  const degIdx=PLAYERS.indexOf(g.winner)*2%7;
+  const oct=g.score>=200?12:0;
+  const root=60+key;
+  const deg=MAJOR[degIdx];
+  const triad=[deg,MAJOR[(degIdx+2)%7]+(degIdx+2>6?12:0),MAJOR[(degIdx+4)%7]+(degIdx+4>6?12:0)];
+  const notes=[
+    {t:0,m:root+deg+oct,d:1.1,v:.8},
+    {t:.085,m:root+triad[2]+oct,d:1.1,v:.78},
+    {t:.17,m:root+deg+12+oct,d:1.6,v:.9},
+  ];
+  triad.forEach((x,i)=>notes.push({t:.3+i*.03,m:root+x+oct,d:1.8,v:.42,alt:true}));
+  return{notes,voice:'celesta',altVoice:'glass',
+    howto:`"${g.game}" → key of ${NAMES[key]}. ${g.winner} → degree ${degIdx+1}. Every ${g.game} chime is a relative.`};
+}
+/* 09 — a struck bell whose partials are tuned by the margin */
+function c09(g){
+  const fund=52+Math.min(12,Math.round(g.score/28));
+  const tension=g.margin<=10?1:g.margin<=40?.55:.18;
+  const notes=[
+    {t:0,m:fund,d:2.8,v:1},
+    {t:0,m:fund+(tension>.6?13:12),d:2.2,v:.4,alt:true},
+    {t:.015,m:fund+19,d:1.8,v:.28,alt:true},
+    {t:.5,m:fund+24,d:1.4,v:.3,alt:true},
+  ];
+  return{notes,voice:'tubular',altVoice:'glass',
+    howto:`One strike. ${mname(fund)} from the score; ${g.margin<=10?'a clashing partial — close game still humming':'clean partials — it was decided'}.`};
+}
+/* 10 — winner calls, runner-up answers */
+function c10(g){
+  const root=62;
+  const call=[0,4,7],ans=[-3,0,4];
+  const notes=[];
+  call.forEach((x,i)=>notes.push({t:i*.085,m:root+x+12,d:1.1,v:.85}));
+  ans.forEach((x,i)=>notes.push({t:.33+i*.085,m:root+x,d:1.1,v:.5,alt:true}));
+  notes.push({t:.63,m:root+12,d:1.9,v:.9});
+  notes.push({t:.63,m:root+9,d:1.9,v:.55,alt:true});
+  return{notes,voice:'nylon',altVoice:'warm',
+    howto:`${g.winner} calls up high, ${g.runnerUp} answers a third below, they land on a 6th together.`};
+}
+
+const MODULES=[
+  {n:1,hue:'--h1',name:'Signature Chord',thesis:"Every player owns a chord. The winner's rolls up, then rings.",reacts:['winner'],fn:c01},
+  {n:2,hue:'--h2',name:'Score Climb',thesis:'The bigger the score, the further the melody walks up the scale.',reacts:['score'],fn:c02},
+  {n:3,hue:'--h3',name:'Margin Interval',thesis:'The gap between first and second becomes the interval you hear.',reacts:['margin'],fn:c03},
+  {n:4,hue:'--h4',name:'Comeback Arc',thesis:'A win from behind sinks below the root before it leaps.',reacts:['comeback','deficit'],fn:c04},
+  {n:5,hue:'--h5',name:'Streak Stack',thesis:'Each consecutive win adds another tone to the chord.',reacts:['streak'],fn:c05},
+  {n:6,hue:'--h6',name:'Round Rhythm',thesis:"The game's own round scores set the rhythm and the shape.",reacts:['rounds','score'],fn:c06},
+  {n:7,hue:'--h7',name:'Tiered Fanfare',thesis:'Five hand-written motifs. The occasion picks one.',reacts:['champ','first'],fn:c07},
+  {n:8,hue:'--h8',name:'Key of the Game',thesis:'The game name sets the key, the winner sets the degree.',reacts:['game','winner','score'],fn:c08},
+  {n:9,hue:'--h9',name:'Bell Spectrum',thesis:'One struck bell. A close game leaves a partial still clashing.',reacts:['margin','score'],fn:c09},
+  {n:10,hue:'--h10',name:'Call & Answer',thesis:'The winner plays a phrase, the runner-up answers underneath.',reacts:['winner','runnerUp'],fn:c10},
+];
+
+/* ═══════════ playback ═══════════ */
+function schedule(spec){
+  const c=ac();if(!c)return 0;
+  const t0=c.currentTime+.06;
+  let end=0;
+  spec.notes.forEach(n=>{
+    const v=VOICES[n.alt?(spec.altVoice||spec.voice):spec.voice]||VOICES.nylon;
+    v(mtof(n.m),t0+n.t,n.d,n.v);
+    end=Math.max(end,n.t+n.d);
+  });
+  return end;
+}
+
+/* ═══════════ view pieces ═══════════ */
+const IC={
+  play:'M8 5.5v13l11-6.5z',
+  stop:'M7 7h10v10H7z',
+  sun:'M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8',
+  moon:'M19.5 14.3A8 8 0 1 1 9.7 4.5a6.3 6.3 0 0 0 9.8 9.8z',
+  dice:'M5 5h14v14H5zM9 9h.01M15 15h.01M12 12h.01',
+  all:'M4 18V6l9 6zM15 6h2v12h-2z',
+};
+const Icon=({d,size=20,fill=false,stroke=2})=>html`<svg width=${size} height=${size} viewBox="0 0 24 24"
+  fill=${fill?'currentColor':'none'} stroke=${fill?'none':'currentColor'} strokeWidth=${stroke}
+  strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d=${d}/></svg>`;
+
+function Roll({spec,hue,playing,startedAt}){
+  const W=560,H=76,PAD=5;
+  const notes=spec.notes;
+  const lastT=Math.max(...notes.map(n=>n.t));
+  const maxT=lastT+.5;
+  const lo=Math.min(...notes.map(n=>n.m)),hi=Math.max(...notes.map(n=>n.m));
+  const span=Math.max(7,hi-lo);
+  const x=t=>PAD+(t/maxT)*(W-PAD*2);
+  const y=m=>PAD+(1-(m-lo)/span)*(H-PAD*2-9);
+  const [ph,setPh]=useState(-1);
+  useEffect(()=>{
+    if(!playing){setPh(-1);return}
+    let raf;const t0=performance.now();
+    const loop=()=>{
+      const e=(performance.now()-t0)/1000;
+      if(e>maxT+.25){setPh(-1);return}
+      setPh(e);raf=requestAnimationFrame(loop);
+    };
+    raf=requestAnimationFrame(loop);
+    return()=>cancelAnimationFrame(raf);
+  },[playing,startedAt,maxT]);
+  return html`<div className="roll-box"><svg className="roll" viewBox=${`0 0 ${W} ${H}`} preserveAspectRatio="none"
+      role="img" aria-label=${`Piano roll, ${notes.length} notes from ${mname(lo)} to ${mname(hi)}`}>
+    ${[0,1,2,3].map(i=>html`<line key=${i} className="gl" x1="0" x2=${W} y1=${PAD+i*(H-PAD*2)/3} y2=${PAD+i*(H-PAD*2)/3}/>`)}
+    ${notes.map((n,i)=>{
+      const w=Math.max(8,(Math.min(n.d,.42)/maxT)*(W-PAD*2));
+      const hit=ph>=0&&ph>=n.t&&ph<n.t+.16;
+      return html`<rect key=${i} className=${'nb'+(n.alt?' v2':'')+(hit?' hit':'')}
+        x=${x(n.t)} y=${y(n.m)} width=${w} height="9" rx="4.5"/>`;
+    })}
+    <line className=${'ph'+(ph>=0?' go':'')} x1=${x(Math.max(0,ph))} x2=${x(Math.max(0,ph))} y1="0" y2=${H}/>
+  </svg></div>`;
+}
+
+function Module({mod,game,live,onPlay,tick}){
+  const spec=useMemo(()=>mod.fn(game),[mod,game]);
+  const names=spec.notes.filter(n=>!n.alt).map(n=>mname(n.m));
+  const chord=spec.notes.filter(n=>n.alt).map(n=>mname(n.m));
+  return html`<article className=${'mod'+(live?' live':'')} style=${{'--hue':`var(${mod.hue})`}}>
+    <div className="mod-head">
+      <span className="mod-no">${String(mod.n).padStart(2,'0')}</span>
+      <div className="mod-id">
+        <h3>${mod.name}</h3>
+        <p>${mod.thesis}</p>
+      </div>
+      <button className=${'play'+(live?' on':'')} onClick=${()=>onPlay(mod,spec)}
+        aria-label=${`Play the ${mod.name} chime`}>
+        <${Icon} d=${live?IC.stop:IC.play} size=${20} fill=${true}/>
+      </button>
+    </div>
+    <div className="chips">
+      ${mod.reacts.map(r=>html`<span key=${r} className="chip hot">${r}</span>`)}
+      <span className="chip">${spec.voice}</span>
+    </div>
+    <${Roll} spec=${spec} hue=${mod.hue} playing=${live} startedAt=${tick}/>
+    <div className="mod-foot">
+      <p className="notes">${names.join(' ')}${chord.length?html` <span>+ ${[...new Set(chord)].join(' ')}</span>`:''}</p>
+      <p className="howto">${spec.howto}</p>
+    </div>
+  </article>`;
+}
+
+/* ═══════════ app ═══════════ */
+const GAMES=['Flip 7','Sushi Go','Skull King'];
+function App(){
+  const [theme,setTheme]=useState(()=>{
+    try{const s=localStorage.getItem('chimelab.theme');if(s)return s}catch(e){}
+    return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  });
+  useEffect(()=>{
+    document.documentElement.setAttribute('data-theme',theme);
+    try{localStorage.setItem('chimelab.theme',theme)}catch(e){}
+  },[theme]);
+
+  const [st,setSt]=useState({
+    winner:'Kate',game:'Flip 7',score:212,margin:38,rounds:7,
+    comeback:false,deficit:34,streak:2,champ:'defend',first:false,
+  });
+  const game=useMemo(()=>derive(st),[st]);
+  const [live,setLive]=useState(null);
+  const [allOn,setAllOn]=useState(false);
+  const [tick,setTick]=useState(0);
+  const timer=useRef(null);
+  const queue=useRef(null);
+  const set=(k,v)=>setSt(s=>({...s,[k]:v}));
+
+  const stopAll=useCallback(()=>{
+    if(timer.current){clearTimeout(timer.current);timer.current=null}
+    queue.current=null;setAllOn(false);setLive(null);
+  },[]);
+
+  const play=useCallback((mod,spec)=>{
+    if(timer.current){clearTimeout(timer.current);timer.current=null}
+    if(live===mod.n&&!queue.current){setLive(null);return}
+    queue.current=null;
+    const end=schedule(spec);
+    setLive(mod.n);setTick(t=>t+1);
+    timer.current=setTimeout(()=>{setLive(null);timer.current=null},Math.min(end,2.4)*1000);
+  },[live]);
+
+  const playAll=useCallback(()=>{
+    if(queue.current){stopAll();return}
+    queue.current=true;setAllOn(true);
+    let i=0;
+    const step=()=>{
+      if(!queue.current||i>=MODULES.length){queue.current=null;setAllOn(false);setLive(null);return}
+      const m=MODULES[i++];
+      const spec=m.fn(game);
+      schedule(spec);
+      setLive(m.n);setTick(t=>t+1);
+      const el=document.getElementById('mod-'+m.n);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+      timer.current=setTimeout(step,1500);
+    };
+    step();
+  },[game,stopAll]);
+
+  const shuffle=()=>{
+    const r=()=>Math.random();
+    const cb=r()<.45;
+    setSt({
+      winner:PLAYERS[Math.floor(r()*3)],
+      game:GAMES[Math.floor(r()*3)],
+      score:40+Math.floor(r()*280),
+      margin:1+Math.floor(r()*110),
+      rounds:3+Math.floor(r()*10),
+      comeback:cb,
+      deficit:cb?12+Math.floor(r()*60):0,
+      streak:Math.floor(r()*6),
+      champ:['new','defend','upset','none'][Math.floor(r()*4)],
+      first:r()<.2,
+    });
+    stopAll();
+  };
+
+  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+
+  const champLabel={new:'Newly crowned',defend:'Champ defending',upset:'Upset win',none:'Ordinary night'}[st.champ];
+
+  return html`<${React.Fragment}>
+    <div className="wrap">
+      <header className="mast">
+        <div className="mast-txt">
+          <p className="kicker">Tally Ho! · sound study</p>
+          <h1>Ten ways to ring a <em>win</em></h1>
+          <p className="lede">Ten rules for turning a finished card game into a chime under two seconds long.
+            Set the game state on the bench, then play them against each other.</p>
+        </div>
+        <button className="icon-btn" onClick=${()=>setTheme(t=>t==='dark'?'light':'dark')}
+          aria-label=${theme==='dark'?'Switch to light mode':'Switch to dark mode'}>
+          <${Icon} d=${theme==='dark'?IC.sun:IC.moon} size=${19}/>
+        </button>
+      </header>
+
+      <section className="bench" aria-label="Game state">
+        <div className="bench-head">
+          <h2>The bench</h2>
+          <button className="mini-btn" onClick=${shuffle}>Shuffle</button>
+        </div>
+        <div className="bench-body">
+          <div className="seg-row">
+            <span className="lab" id="lab-winner">Winner</span>
+            <div className="seg" role="radiogroup" aria-labelledby="lab-winner">
+              ${PLAYERS.map(p=>html`<button key=${p} role="radio" aria-checked=${st.winner===p}
+                onClick=${()=>set('winner',p)}>${p}</button>`)}
+            </div>
+          </div>
+          <div className="seg-row">
+            <span className="lab" id="lab-game">Game</span>
+            <div className="seg" role="radiogroup" aria-labelledby="lab-game">
+              ${GAMES.map(gm=>html`<button key=${gm} role="radio" aria-checked=${st.game===gm}
+                onClick=${()=>set('game',gm)}>${gm}</button>`)}
+            </div>
+          </div>
+
+          <div className="sliders">
+            ${[['score','Winning score',20,320,1],['margin','Won by',1,140,1],['rounds','Rounds played',3,14,1],['streak','Wins in a row',0,5,1]]
+              .map(([k,lbl,mn,mx,stp])=>html`<div className="sld" key=${k}>
+                <div className="sld-top"><label className="lab" htmlFor=${'r-'+k}>${lbl}</label><span className="sld-val num">${st[k]}</span></div>
+                <input id=${'r-'+k} type="range" min=${mn} max=${mx} step=${stp} value=${st[k]}
+                  onChange=${e=>set(k,+e.target.value)}/>
+              </div>`)}
+            ${st.comeback&&html`<div className="sld">
+              <div className="sld-top"><label className="lab" htmlFor="r-deficit">Trailed by</label><span className="sld-val num">${st.deficit}</span></div>
+              <input id="r-deficit" type="range" min="5" max="90" value=${st.deficit} onChange=${e=>set('deficit',+e.target.value)}/>
+            </div>`}
+          </div>
+
+          <div className="seg-row">
+            <span className="lab">The occasion</span>
+            <div className="toggles">
+              <button className="tog" aria-pressed=${st.comeback} onClick=${()=>set('comeback',!st.comeback)}>
+                <span className="dot"></span>Comeback</button>
+              <button className="tog" aria-pressed=${st.first} onClick=${()=>set('first',!st.first)}>
+                <span className="dot"></span>First ever win</button>
+              ${[['new','New champ'],['defend','Defending'],['upset','Upset'],['none','Ordinary']].map(([k,l])=>html`
+                <button key=${k} className="tog" aria-pressed=${st.champ===k} onClick=${()=>set('champ',k)}>
+                  <span className="dot"></span>${l}</button>`)}
+            </div>
+          </div>
+
+          <p className="readout">
+            <b>${st.winner}</b> took <b>${st.game}</b> ${st.score}–${Math.max(0,st.score-st.margin)} over ${st.rounds} rounds,
+            by <b>${st.margin}</b>${st.comeback?html` after trailing by <b>${st.deficit}</b>`:''}.
+            ${st.streak>0?html` That is <b>${st.streak}</b> in a row.`:' No streak.'} ${champLabel}.<br/>
+            Rounds: ${game.rounds.join(' · ')}
+          </p>
+        </div>
+      </section>
+
+      <div className="rack-lab"><h2>Ten approaches</h2><span className="rule"></span></div>
+      <div className="rack">
+        ${MODULES.map(m=>html`<div key=${m.n} id=${'mod-'+m.n}>
+          <${Module} mod=${m} game=${game} live=${live===m.n} onPlay=${play} tick=${tick}/>
+        </div>`)}
+      </div>
+
+      <footer>
+        <b>Sound starts on your first tap</b> — browsers block audio before that, which suits a chime that only ever
+        follows the tap that ends the game. Every chime here is deterministic: the same game state always rings the
+        same way, so a family hears its own patterns over time.
+      </footer>
+    </div>
+
+    <nav className="dock" aria-label="Playback">
+      <div className="dock-in">
+        <button className="dock-btn primary" onClick=${playAll}>
+          <${Icon} d=${allOn?IC.stop:IC.all} size=${16} fill=${true}/>${allOn?'Stop':'Play all ten'}
+        </button>
+        <button className="dock-btn ghost" onClick=${shuffle}>
+          <${Icon} d=${IC.dice} size=${16}/>New game
+        </button>
+      </div>
+    </nav>
+  <//>`;
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(html`<${App}/>`);
+})();
+</script>
+
+</body></html>

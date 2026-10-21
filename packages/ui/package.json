@@ -8,6 +8,7 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./splash": "./src/brand/Splash.tsx",
     "./styles.css": "./src/styles/index.css"
   },
   "scripts": {

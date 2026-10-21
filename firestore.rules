@@ -78,6 +78,18 @@ service cloud.firestore {
             || d.maxPlayers >= d.minPlayers);
     }
 
+    // A Mixtape song key (decision 27): optional on presets and games (older docs have none).
+    function songKey(d) {
+      return !('song' in d) || (
+        d.song is map
+        && d.song.keys().hasAll(['tonic', 'mode', 'loop'])
+        && d.song.keys().hasOnly(['tonic', 'mode', 'loop'])
+        && d.song.tonic is int && d.song.tonic >= 0 && d.song.tonic <= 11
+        && d.song.mode in ['major', 'minor']
+        && d.song.loop is int && d.song.loop >= 0 && d.song.loop <= 3
+      );
+    }
+
     function nullableStr(v) {
       return v == null || str(v, 1, 64);
     }
@@ -96,7 +108,7 @@ service cloud.firestore {
       return d.keys().hasAll(['id', 'name', 'goal', 'target', 'lowWins', 'updatedAt'])
         && d.keys().hasOnly([
           'id', 'name', 'goal', 'target', 'lowWins', 'updatedAt', 'roundsPerPlayer',
-          'minPlayers', 'maxPlayers'
+          'minPlayers', 'maxPlayers', 'song'
         ])
         && d.id == id
         && str(d.name, 1, 32)
@@ -106,6 +118,7 @@ service cloud.firestore {
         && d.lowWins is bool
         && optBool(d, 'roundsPerPlayer')
         && playerLimits(d)
+        && songKey(d)
         && stamp(d.updatedAt);
     }
 
@@ -118,7 +131,7 @@ service cloud.firestore {
         ])
         && d.keys().hasOnly([
           'id', 'name', 'goal', 'target', 'lowWins', 'playerIds', 'startedAt',
-          'completedAt', 'winnerId', 'updatedAt', 'rounds', 'startedBy', 'deletedAt'
+          'completedAt', 'winnerId', 'updatedAt', 'rounds', 'startedBy', 'deletedAt', 'song'
         ])
         && d.id == id
         && str(d.name, 1, 40)
@@ -133,6 +146,7 @@ service cloud.firestore {
         && stamp(d.updatedAt)
         && d.rounds is map && d.rounds.size() <= 1000
         && optStr(d, 'startedBy')
+        && songKey(d)
         && (!('deletedAt' in d) || stamp(d.deletedAt));
     }
 

@@ -14,6 +14,11 @@ export function HistoryScreen() {
   const [fw, setFw] = useState<string>('all')
 
   const games = useMemo(() => all.filter(isCompleted), [all])
+  // Every finished game's number, counting from the first ever: filters never renumber them.
+  const numberOf = useMemo(() => {
+    const oldest = [...games].sort((x, y) => x.completedAt.localeCompare(y.completedAt))
+    return new Map(oldest.map((g, i) => [g.id, i + 1]))
+  }, [games])
   const names = useMemo(() => [...new Set(games.map((g) => g.name))], [games])
   const players = useMemo(() => [...new Set(games.flatMap((g) => g.playerIds))], [games])
   const list = games.filter(
@@ -95,7 +100,7 @@ export function HistoryScreen() {
       ) : (
         list.map((g, i) => (
           <div className="rise" style={{ '--i': Math.min(i, 8) } as CSSProperties} key={g.id}>
-            <GameRowFor game={g} roster={roster} />
+            <GameRowFor game={g} roster={roster} number={numberOf.get(g.id)} />
           </div>
         ))
       )}

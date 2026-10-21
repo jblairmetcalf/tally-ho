@@ -156,6 +156,38 @@
     flex: 1;
     min-width: 0;
   }
+  /* Home's header with its subheading: the badge spans both rows; the wordmark and the buttons
+     share the top one; the subheading sits right under the wordmark and runs on under the buttons */
+  .topbar.has-tagline {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    column-gap: 12px;
+    row-gap: 2px;
+  }
+  .topbar.has-tagline > .badge-slot {
+    grid-row: 1 / span 2;
+  }
+  .topbar.has-tagline > .wordmark {
+    align-self: end;
+  }
+  .topbar.has-tagline > .tagline {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    align-self: start;
+  }
+  /* the subheading, after the letters drop in */
+  .tagline {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--muted);
+    animation: fadeIn 0.4s ease 0.55s both;
+  }
+  .tagline b {
+    font-weight: 900;
+    color: var(--text);
+  }
   .wordmark span span {
     display: inline-block;
     font-family: var(--f-display);

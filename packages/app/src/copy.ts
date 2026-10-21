@@ -17,6 +17,8 @@ export const COPY = {
   sheetBack: 'Back',
 
   home: {
+    /** The subheading under the wordmark in Home's header. */
+    tagline: { lead: 'Scorekeeper:', rest: "The family's game night record." },
     samples:
       'These are sample games so you can see the scoreboard. They clear when you start your first real game.',
     clear: 'Clear',

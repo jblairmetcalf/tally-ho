@@ -233,7 +233,7 @@ test('a shared link unfurls: absolute Open Graph and Twitter card tags, and the 
   expect((await res.body()).length).toBeLessThan(300_000)
 })
 
-test('launch screen: shows at once, stays at least a second, then fades into the app', async ({
+test('launch screen: shows at once, stays at least two seconds, then fades into the app', async ({
   page,
 }) => {
   // Note when the app comes up and when the splash leaves (ms since the page started).
@@ -253,14 +253,14 @@ test('launch screen: shows at once, stays at least a second, then fades into the
   const splash = page.getByRole('status', { name: 'Loading Tally Ho!' })
   await expect(splash).toBeVisible()
   await expect(splash.getByText('Good cards. Better company.')).toBeVisible()
-  await expect(splash).toHaveCount(0, { timeout: 4000 })
+  await expect(splash).toHaveCount(0, { timeout: 5000 })
   const { __readyAt: readyAt, __goneAt: goneAt } = await page.evaluate(() => {
     const w = window as unknown as { __readyAt: number; __goneAt: number }
     return { __readyAt: w.__readyAt, __goneAt: w.__goneAt }
   })
-  // The app came up first (fast, from the cache), yet the splash held for at least a second.
+  // The app came up first (fast, from the cache), yet the splash held for at least two seconds.
   expect(readyAt).toBeLessThan(goneAt)
-  expect(goneAt).toBeGreaterThanOrEqual(1000)
+  expect(goneAt).toBeGreaterThanOrEqual(2000)
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
   // Its art is precached for offline launches.
   const art = await page.request.get('/splash-art.webp')

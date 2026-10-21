@@ -32,10 +32,10 @@ const NO_ZOOM = `(function(){var n=function(e){e.preventDefault()};['gesturestar
 
 /**
  * The launch screen leaves once the app says it's up ('tally:ready', READY_EVENT in @tally/app),
- * but never before the page is a second old, so a fast load still shows it; if the app never
+ * but never before the page is two seconds old, so a fast load still shows it; if the app never
  * comes up, it goes after 8 s rather than hide an error.
  */
-const SPLASH_OUT = `(function(){var s=document.getElementById('splash');if(!s)return;var d=0;function go(){if(d)return;d=1;setTimeout(function(){s.classList.add('out');setTimeout(function(){s.remove()},340)},Math.max(0,1000-performance.now()))}addEventListener('tally:ready',go);setTimeout(go,8000)})()`
+const SPLASH_OUT = `(function(){var s=document.getElementById('splash');if(!s)return;var d=0;function go(){if(d)return;d=1;setTimeout(function(){s.classList.add('out');setTimeout(function(){s.remove()},340)},Math.max(0,2000-performance.now()))}addEventListener('tally:ready',go);setTimeout(go,8000)})()`
 
 /**
  * Where the app lives, for the absolute URLs link previews need (iMessage, Slack and WhatsApp

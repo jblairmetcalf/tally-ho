@@ -17,7 +17,7 @@ const meta: Meta<typeof Splash> = {
 export default meta
 type Story = StoryObj<typeof Splash>
 
-/** Launch: the art, the tagline rising, the bar filling (at least a second, then it fades). */
+/** Launch: the art, the tagline rising, the bar filling (at least two seconds, then it fades). */
 export const Loading: Story = {}
 /** Leaving: it fades into the app. */
 export const Leaving: Story = { args: { out: true } }

@@ -77,7 +77,7 @@ export function HomeScreen() {
 
   return (
     <main className="app">
-      <header className="topbar has-tagline">
+      <header className="topbar">
         {/* The bar is full at phone width, so sync status pins to the fox badge. */}
         <div className="badge-slot">
           <Badge />
@@ -101,8 +101,10 @@ export function HomeScreen() {
               </button>
             ))}
         </div>
-        <Wordmark />
-        <span style={{ flex: 1 }} />
+        <div className="brand">
+          <Wordmark />
+          <p className="tagline">{COPY.home.tagline}</p>
+        </div>
         <IconButton
           icon={muted ? 'mute' : 'volume'}
           label={muted ? COPY.soundOn : COPY.soundOff}
@@ -114,9 +116,6 @@ export function HomeScreen() {
           label={COPY.settingsLabel}
           onClick={() => a.openSheet({ type: 'settings' })}
         />
-        <p className="tagline">
-          <b>{COPY.home.tagline.lead}</b> {COPY.home.tagline.rest}
-        </p>
       </header>
 
       {hasSamples && (

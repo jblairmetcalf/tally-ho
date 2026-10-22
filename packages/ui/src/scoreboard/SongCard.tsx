@@ -1,4 +1,11 @@
-import { Children, type CSSProperties, isValidElement, type ReactNode } from 'react'
+import {
+  Children,
+  type CSSProperties,
+  isValidElement,
+  type ReactNode,
+  useEffect,
+  useRef,
+} from 'react'
 import { paletteVar } from '../brand/palette'
 import { cx } from '../cx'
 import { IconButton } from '../primitives/IconButton'
@@ -40,8 +47,24 @@ export function SongCard({
   playLabel,
   openLabel,
 }: SongCardProps) {
+  // Playing (one after another in a set): bring this card to the middle of its shelf. Only the
+  // shelf scrolls, never the page; reduced motion jumps instead of gliding.
+  const card = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = card.current
+    const shelf = el?.closest<HTMLElement>('.mixtape')
+    if (!playing || !el || !shelf) return
+    const a = el.getBoundingClientRect()
+    const b = shelf.getBoundingClientRect()
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    shelf.scrollTo({
+      left: shelf.scrollLeft + (a.left - b.left) - (b.width - a.width) / 2,
+      behavior: still ? 'auto' : 'smooth',
+    })
+  }, [playing])
   return (
     <article
+      ref={card}
       className={cx('song-card', playing && 'playing', isNew && 'pressed')}
       style={{ '--c': paletteVar(color) } as CSSProperties}
     >

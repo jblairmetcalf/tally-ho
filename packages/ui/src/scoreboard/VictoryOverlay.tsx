@@ -68,13 +68,16 @@ export function VictoryOverlay({
       aria-label={`${winner} wins`}
     >
       <div className="sunburst" />
-      <div className="v-badge">
-        <Fox crown wink />
+      {/* The celebration scrolls when it's taller than the screen; the actions never move. */}
+      <div className="v-scroll">
+        <div className="v-badge">
+          <Fox crown wink />
+        </div>
+        <div className="v-name">{winner}</div>
+        <div className="v-sub">{sub ?? `wins ${gameName} with ${total}`}</div>
+        {children}
+        <Podium rows={rows} showLast />
       </div>
-      <div className="v-name">{winner}</div>
-      <div className="v-sub">{sub ?? `wins ${gameName} with ${total}`}</div>
-      {children}
-      <Podium rows={rows} showLast />
       <div className="v-actions">
         <Button variant="ghost" onClick={onDone}>
           Done

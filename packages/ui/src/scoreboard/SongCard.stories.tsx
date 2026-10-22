@@ -43,12 +43,12 @@ export const Pressed: Story = { args: { isNew: true } }
 /** A long game name wraps on the cover. */
 export const LongName: Story = { args: { game: 'Ticket to Ride: Europe Legacy' } }
 
-/** Home's Fox Trots: the latest six, one line edge to edge. */
+/** Home's Fox Trots: the latest six, one line edge to edge; the second is playing (lifted above the rest, nothing clipped). */
 export const Shelf: StoryObj<typeof MixtapeShelf> = {
   render: () => (
     <MixtapeShelf label="Fox Trots" empty="Finish a game for your first fox trot">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <SongCard key={i} {...cardFor(i)} />
+        <SongCard key={i} {...cardFor(i, i === 1 ? { playing: true } : {})} />
       ))}
     </MixtapeShelf>
   ),

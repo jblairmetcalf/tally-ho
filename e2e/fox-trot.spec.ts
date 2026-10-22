@@ -129,10 +129,28 @@ test('the shelf: the latest six, one at a time, Play all, a card opens the game;
     timeout: 8000,
   })
   await expect(page.getByRole('button', { name: 'Play the set' })).toHaveCount(0)
+  // As the set plays on, the shelf brings each playing card to the middle.
+  const third = items.nth(2)
+  await expect(third.getByRole('button', { name: /^Stop .+ fox trot$/ })).toBeVisible({
+    timeout: 15000,
+  })
+  await expect.poll(() => shelf.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0)
+  const box = (await third.boundingBox())!
+  const view = page.viewportSize()!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(view.width)
   await page.getByRole('button', { name: 'Stop', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Play the set' })).toBeVisible()
   // Songs are computed from the rounds: playing them saved nothing.
   expect(await saved()).toBe(before)
+
+  // The whole card is a tap target: its bottom corner (beside the play button) opens the game too.
+  // (the set left the shelf on the third card, so that's the one in view)
+  const corner = (await third.locator('.song-card').boundingBox())!
+  await page.mouse.click(corner.x + corner.width - 12, corner.y + corner.height - 12)
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
 
   // A card opens the game, with its song.
   const name = (await one

@@ -6,6 +6,7 @@ import {
   freshStore,
   type Game,
   hash,
+  keyPreview,
   leaderOf,
   leadersOf,
   MATCH_POINT,
@@ -19,6 +20,7 @@ import {
   parseScore,
   rangeForGame,
   roundNotes,
+  type SongKey,
   type Store,
   scheduleOf,
   slug,
@@ -157,6 +159,8 @@ export interface TallyActions {
   /** Play these games' songs back to back (the shelf's Play all), or stop. */
   playAll(gameIds: string[]): void
   stopSong(): void
+  /** Hear a song key as it's picked (Settings › Games): its chord, or its loop of chords. */
+  previewKey(key: SongKey, what: 'chord' | 'loop'): void
   /** Hear one round as it would sound (Edit round's preview, before saving). */
   previewRound(g: Game, idx: number): void
 
@@ -535,6 +539,11 @@ export function createTallyStore(
         run(0)
       },
       stopSong,
+      previewKey(key, what) {
+        songToken++
+        if (get().song) set({ song: null })
+        fx.song(keyPreview(key, what))
+      },
       previewRound(g, idx) {
         singRound(g, idx, 'preview')
       },

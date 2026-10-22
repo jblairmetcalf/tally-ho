@@ -629,4 +629,11 @@ describe('the Mixtape', () => {
     vi.advanceTimersByTime(SONG_AFTER_MS)
     expect(ripped.s().song).toBeNull()
   })
+
+  it('hearing a song key stops any song (one sound at a time)', () => {
+    const { a, s } = setup(freshStore(fixedClock))
+    a.playSong(s().data.games[0]!.id)
+    a.previewKey({ tonic: 7, mode: 'major', loop: 0 }, 'loop')
+    expect(s().song).toBeNull()
+  })
 })

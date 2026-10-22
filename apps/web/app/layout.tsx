@@ -3,7 +3,7 @@ import { Splash } from '@tally/ui/splash'
 import type { Metadata, Viewport } from 'next'
 import { Lilita_One, Nunito } from 'next/font/google'
 import type { ReactNode } from 'react'
-import { SPLASH, SPLASH_ART, splashFile, splashMedia } from './splash'
+import { SPLASH, SPLASH_ART, SPLASH_BG, splashFile, splashMedia } from './splash'
 import { SwRegister } from './sw-register'
 import './globals.css'
 
@@ -22,6 +22,12 @@ const INK = '#13112E'
  * flashes the dark page while the app loads. Mirrors `useThemePref`, which takes over after.
  */
 const THEME_BOOT = `(function(){try{var t='system';var r=localStorage.getItem('tallyho.v3');if(r){var p=JSON.parse(r).prefs;if(p&&p.theme)t=p.theme}if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var d=document.documentElement;d.dataset.theme=t;d.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.removeAttribute('media');m.content=t==='light'?'#FFF4E2':'${INK}'}}catch(e){}})()`
+
+/**
+ * Painted before any stylesheet arrives: while the launch screen is up, the page is its ground,
+ * so nothing flashes white between the iOS launch image (or a blank tab) and the splash.
+ */
+const FIRST_PAINT = `html:has(#splash),html:has(#splash) body{background:${SPLASH_BG}}`
 
 /**
  * A native app doesn't zoom: no pinch, no double-tap (decision 28). The viewport meta covers
@@ -109,6 +115,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: fixed first-paint colours */}
+        <style dangerouslySetInnerHTML={{ __html: FIRST_PAINT }} />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed inline boot script */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed inline boot script */}

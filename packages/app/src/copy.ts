@@ -18,7 +18,7 @@ export const COPY = {
 
   home: {
     /** The subheading under the wordmark in Home's header. */
-    tagline: "The family's game night record.",
+    tagline: 'Flip the record!',
     samples:
       'These are sample games so you can see the scoreboard. They clear when you start your first real game.',
     clear: 'Clear',
@@ -435,10 +435,10 @@ export const COPY = {
     fromGame: 'Stickers from this game',
     earnedBy: (sticker: string, who: string) => `${sticker}, ${who}`,
     openBook: 'Open sticker book',
-    pack: 'Tear open the sticker pack',
+    pack: 'Open the sticker pack',
     packTitle: 'Game night pack',
     packSub: (n: number) => `${n} ${plural(n, 'sticker', 'stickers')} inside`,
-    packHint: 'Tap the pack to tear it open',
+    packHint: 'Tap the seal to open it',
     winner: 'Winner',
     isNew: 'new',
   },

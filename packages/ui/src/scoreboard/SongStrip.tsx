@@ -26,7 +26,8 @@ export interface SongStripProps {
 
 /**
  * A game's song as one tappable strip (the Fox Trot, decision 27): its staff and a play/stop
- * glyph, the whole strip one 44px+ button. Before the first round, its caption instead.
+ * button (44px) beside it; the staff itself is a picture, not a control. Before the first round,
+ * its caption instead.
  */
 export function SongStrip({
   title,
@@ -45,14 +46,10 @@ export function SongStrip({
   const started = song.notes.some((n) => n.beat >= 0)
   return (
     <div className={cx('song-strip', bare && 'bare', compact && 'compact')}>
-      {title && !(compact && started) && <span className="eyebrow">{title}</span>}
+      {title && !compact && <span className="eyebrow">{title}</span>}
       {started ? (
-        <button
-          type="button"
-          className={cx('song-strip-btn', playing && 'playing')}
-          onClick={onPlay}
-          aria-label={label}
-        >
+        // The staff is a picture of the song; only the round button plays it.
+        <div className="song-strip-row">
           <Staff
             notes={song.notes}
             length={song.length}
@@ -61,10 +58,21 @@ export function SongStrip({
             highlight={highlight}
             dropFrom={dropFrom}
           />
-          <span className="song-strip-icon" aria-hidden="true">
+          <button
+            type="button"
+            className={cx('song-strip-icon', playing && 'playing')}
+            onClick={onPlay}
+            aria-label={label}
+          >
             <Icon name={playing ? 'stop' : 'play'} size={18} />
-          </span>
-        </button>
+          </button>
+        </div>
+      ) : compact ? (
+        // Holds the staff's height, so the first note arrives in place.
+        <div className="song-strip-wait">
+          {title && <span className="eyebrow">{title}</span>}
+          {caption && <p className="hint song-strip-caption">{caption}</p>}
+        </div>
       ) : (
         caption && <p className="hint song-strip-caption">{caption}</p>
       )}

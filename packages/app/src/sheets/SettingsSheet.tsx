@@ -279,10 +279,8 @@ function PresetEditor({ preset, onDeleted }: { preset: Preset; onDeleted: () => 
           name={preset.name}
           lowWins={preset.lowWins}
           song={preset.song}
-          onChange={(song) => {
-            a.play('pick')
-            save({ song })
-          }}
+          onChange={(song) => save({ song })}
+          onHear={a.previewKey}
         />
       </div>
       <ConfirmButton
@@ -400,10 +398,8 @@ function GameCreator({ onDone }: { onDone: () => void }) {
           name={trimmed}
           lowWins={goal === 'wins' ? false : lowWins}
           song={song}
-          onChange={(s) => {
-            a.play('pick')
-            setSong(s)
-          }}
+          onChange={setSong}
+          onHear={a.previewKey}
         />
       </div>
       <div className="sheet-cta">

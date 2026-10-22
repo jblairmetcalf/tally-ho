@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { SPLASH_BG } from './splash'
 
 export const dynamic = 'force-static'
 
@@ -16,7 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     orientation: 'portrait',
     theme_color: INK,
-    background_color: INK,
+    // Android's launch screen: the splash's own ground, so the hand-off to it has no seam.
+    background_color: SPLASH_BG,
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

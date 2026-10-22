@@ -12,6 +12,8 @@ export interface SongFieldsProps {
   song: SongKey | undefined
   /** A pick (or `undefined`: back to Auto). */
   onChange: (song: SongKey | undefined) => void
+  /** Hear the pick: the key's chord (a key, major or minor) or its loop (a loop, or Auto). */
+  onHear: (key: SongKey, what: 'chord' | 'loop') => void
 }
 
 /**
@@ -19,21 +21,26 @@ export interface SongFieldsProps {
  * alike) or a key, major or minor, and one of four chord loops. Games keep the key they were
  * dealt with, so changing it only changes games from now on.
  */
-export function SongFields({ name, lowWins, song, onChange }: SongFieldsProps) {
+export function SongFields({ name, lowWins, song, onChange, onHear }: SongFieldsProps) {
   const auto = keyOf({ name: name || '?', lowWins })
   const cur = song ?? auto
+  // Every press plays what it picked, on the app's synth.
+  const pick = (next: SongKey | undefined, what: 'chord' | 'loop') => {
+    onChange(next)
+    onHear(next ?? auto, what)
+  }
   return (
     <div className="group">
       <span className="hint">{M.key}</span>
       <PillRow scroll label={M.key}>
-        <Pill on={!song} onClick={() => onChange(undefined)}>
+        <Pill on={!song} onClick={() => pick(undefined, 'loop')}>
           {M.keyAuto}
         </Pill>
         {NOTE_NAMES.map((n, tonic) => (
           <Pill
             key={n}
             on={!!song && song.tonic === tonic}
-            onClick={() => onChange({ ...cur, tonic })}
+            onClick={() => pick({ ...cur, tonic }, 'chord')}
           >
             {n}
           </Pill>
@@ -48,12 +55,16 @@ export function SongFields({ name, lowWins, song, onChange }: SongFieldsProps) {
               { value: 'minor', label: M.mode.minor },
             ]}
             value={song.mode}
-            onChange={(mode) => onChange({ ...song, mode })}
+            onChange={(mode) => pick({ ...song, mode }, 'chord')}
           />
           <span className="hint">{M.loop}</span>
           <PillRow label={M.loop}>
             {[0, 1, 2, 3].map((loop) => (
-              <Pill key={loop} on={song.loop === loop} onClick={() => onChange({ ...song, loop })}>
+              <Pill
+                key={loop}
+                on={song.loop === loop}
+                onClick={() => pick({ ...song, loop }, 'loop')}
+              >
                 {loopName(song.mode, loop)}
               </Pill>
             ))}

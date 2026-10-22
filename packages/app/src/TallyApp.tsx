@@ -18,6 +18,7 @@ import {
   Sheet,
   SongStrip,
   StickerPack,
+  SwipeView,
   ThemeRoot,
   Toast,
   VictoryOverlay,
@@ -102,6 +103,10 @@ const providerId = (p: DataProvider) => {
   }
   return id
 }
+
+/** The tabs in order, left to right: swiping left goes to the next one. */
+const TABS = ['home', 'history'] as const
+const TAB_ORDER: Record<(typeof TABS)[number], number> = { home: 0, history: 1 }
 
 /** Told to the web shell once the app has mounted: its launch screen can fade (decision 28). */
 export const READY_EVENT = 'tally:ready'
@@ -197,9 +202,26 @@ function Shell({ embedded, silent }: { embedded: boolean; silent: boolean }) {
     }
   }, [silent, a])
 
+  // Which way the tab arrived (by tab order), fixed for its mount so the slide-in runs once:
+  // a swipe or a tap on the tab bar both slide it in from the side it lives on.
+  const last = useRef(screen)
+  const enter = useRef<'from-next' | 'from-prev' | null>(null)
+  if (last.current !== screen) {
+    enter.current = TAB_ORDER[screen] > TAB_ORDER[last.current] ? 'from-next' : 'from-prev'
+    last.current = screen
+  }
+
   return (
     <ThemeRoot theme={theme} fixed={!embedded} className="min-h-dvh">
-      {screen === 'history' ? <HistoryScreen /> : <HomeScreen />}
+      <SwipeView
+        key={screen}
+        enter={enter.current}
+        hasPrev={TAB_ORDER[screen] > 0}
+        hasNext={TAB_ORDER[screen] < TABS.length - 1}
+        onSwipe={(to) => a.go(TABS[TAB_ORDER[screen] + (to === 'next' ? 1 : -1)] ?? screen, 'tap')}
+      >
+        {screen === 'history' ? <HistoryScreen /> : <HomeScreen />}
+      </SwipeView>
 
       <BottomNav
         screen={screen}

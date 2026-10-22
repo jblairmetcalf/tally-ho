@@ -334,23 +334,6 @@ const TILES: Tile[] = [
     demo: <Fox twitch className="h-[80px] w-[80px]" />,
   },
   {
-    name: 'foil',
-    timing: '5s linear, forever',
-    use: 'The shine sliding across the sticker pack',
-    loop: true,
-    demo: (
-      <div
-        className="h-[80px] w-[120px] rounded-[14px]"
-        style={{
-          background:
-            'linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade))',
-          backgroundSize: '220% 220%',
-          ...anim('foil', '5s linear infinite'),
-        }}
-      />
-    ),
-  },
-  {
     name: 'themeReveal',
     timing: '0.7s ease-in-out',
     use: 'Changing the theme: the next one grows out of the button you tapped',

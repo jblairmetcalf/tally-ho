@@ -103,7 +103,15 @@ export function HomeScreen() {
         </div>
         <div className="brand">
           <Wordmark />
-          <p className="tagline">{COPY.home.tagline}</p>
+          <p className="tagline">
+            {COPY.home.tagline}{' '}
+            <span className="suits" aria-hidden="true">
+              <i>♠</i>
+              <i>♥</i>
+              <i>♦</i>
+              <i>♣</i>
+            </span>
+          </p>
         </div>
         <IconButton
           icon={muted ? 'mute' : 'volume'}

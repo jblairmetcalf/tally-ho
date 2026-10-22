@@ -45,7 +45,7 @@ const meta: Meta<typeof StickerPack> = {
 export default meta
 type Story = StoryObj<typeof StickerPack>
 
-/** Sealed: a foil pack with the crowned fox, waiting to be torn open. */
+/** Sealed: a cream envelope with a crowned-fox sticker for its seal, waiting to be opened. */
 export const Sealed: Story = {}
 /** Tearing open: the winner's chip and the first sticker have landed. */
 export const Revealing: Story = { args: { open: true, shown: 2 } }

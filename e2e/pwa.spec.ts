@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { household, KEY, seed, startPreset } from './helpers'
+import { expect, type Page, test } from '@playwright/test'
+import { household, KEY, seed, startPreset, withSamples } from './helpers'
 
 test('opens offline after a single online visit (the shell is precached on install)', async ({
   page,
@@ -70,6 +70,10 @@ test('a Daylight phone paints Daylight before the app loads (no dark flash)', as
   await page.route('**/_next/static/chunks/**', (r) => r.abort())
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  // Under the launch screen the page is its ground (never white); once it goes, Daylight cream.
+  const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+  expect(ground).toBe('rgb(12, 16, 43)')
+  await page.evaluate(() => document.getElementById('splash')?.remove())
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
   expect(bg).toBe('rgb(255, 244, 226)')
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#FFF4E2')
@@ -284,4 +288,63 @@ test('feels native: the window never pinch- or double-tap-zooms', async ({ page 
     return e.defaultPrevented
   })
   expect(cancelled).toBe(true)
+})
+
+test("first paint is the launch screen's ground, never white", async ({ page }) => {
+  await seed(page, household())
+  // The page as served, before any script: the colour is in an inline style in <head>.
+  const html = await (await page.request.get('/')).text()
+  expect(html).toMatch(/<style>html:has\(#splash\)[^<]*background:#0C102B/)
+  await page.goto('/')
+  const bg = await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)
+  expect(bg).toBe('rgb(12, 16, 43)')
+})
+
+/** A horizontal swipe made of real touch events (Playwright's iPhone has touch). */
+async function swipe(page: Page, from: { x: number; y: number }, dx: number) {
+  await page.evaluate(
+    ({ x, y, dx }) => {
+      const el = document.elementFromPoint(x, y) ?? document.body
+      const touch = (cx: number) =>
+        new Touch({ identifier: 1, target: el, clientX: cx, clientY: y, pageX: cx, pageY: y })
+      const fire = (type: string, cx: number) =>
+        el.dispatchEvent(
+          new TouchEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            touches: type === 'touchend' ? [] : [touch(cx)],
+            changedTouches: [touch(cx)],
+          }),
+        )
+      fire('touchstart', x)
+      for (let k = 1; k <= 6; k++) fire('touchmove', x + (dx * k) / 6)
+      fire('touchend', x + dx)
+    },
+    { ...from, dx },
+  )
+}
+
+test('swipe between Home and History; a swipe in a sideways row stays with the row', async ({
+  page,
+}) => {
+  await seed(page, withSamples())
+  await page.goto('/')
+  await expect(page.getByRole('status', { name: 'Loading Tally Ho!' })).toHaveCount(0, {
+    timeout: 5000,
+  })
+  const standings = page.getByRole('heading', { name: 'Standings' })
+  const box = (await standings.boundingBox())!
+  // Swipe left: History slides in.
+  await swipe(page, { x: box.x + 200, y: box.y + 10 }, -160)
+  await expect(page.getByRole('heading', { name: 'The record' })).toBeVisible()
+  await page.waitForTimeout(500) // let History's slide-in finish before measuring its rows
+  // In History's game pills (a sideways scroller), a swipe scrolls the pills, not the tabs.
+  const pills = page.getByRole('group', { name: 'Game' })
+  const p = (await pills.boundingBox())!
+  await swipe(page, { x: p.x + 150, y: p.y + p.height / 2 }, 160)
+  await expect(page.getByRole('heading', { name: 'The record' })).toBeVisible()
+  // Swipe right on the page itself (a game row): back Home.
+  const row = (await page.locator('.game-row').first().boundingBox())!
+  await swipe(page, { x: row.x + 60, y: row.y + row.height / 2 }, 160)
+  await expect(standings).toBeVisible()
 })

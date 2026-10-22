@@ -34,7 +34,12 @@ test('the song so far grows a note per round, plays and stops, and an edit is he
   const game = gameSheet(page, 'Flip 7')
   // Before the first round: the caption, not an empty staff.
   await expect(game.getByText("Each round adds a step in the round winner's color")).toBeVisible()
+  // The caption holds the staff's height: the first note arrives without moving the page.
+  const strip = game.locator('.song-strip')
+  const tall = (await strip.boundingBox())?.height
   await scoreRound(page, { Kate: 12, Blair: 4, Alder: 0 })
+  await expect(game.locator('.song-strip .staff')).toBeVisible()
+  expect((await strip.boundingBox())?.height).toBeCloseTo(tall ?? 0, 0)
   const play = game.getByRole('button', { name: 'Play Flip 7 fox trot' })
   await expect(play).toBeVisible()
   await expect.poll(() => roundsOn(game)).toBe(1)
@@ -136,6 +141,9 @@ test('the shelf: the latest six, one at a time, Play all, a card opens the game;
   await one.getByRole('button', { name: new RegExp(`^${name}, won by .+ Open game$`) }).click()
   const detail = page.getByRole('dialog', { name })
   await expect(detail.getByRole('button', { name: `Play ${name} fox trot` })).toBeVisible()
+  // The staff is a picture of the song; only the round play button is a button.
+  await expect(detail.locator('button .staff')).toHaveCount(0)
+  await expect(detail.locator('.song-strip-row .staff')).toHaveCount(1)
 })
 
 test('a game type can pick its song key; Auto is the default', async ({ page }) => {
@@ -252,4 +260,43 @@ test('the victory fox trot ends on a coda: more synth notes than its riff and ro
   // the chord) adds at least 7 more.
   expect(after.notes - before.notes).toBeGreaterThanOrEqual(15)
   expect(after.buffers - before.buffers).toBeLessThanOrEqual(1)
+})
+
+test('the key picker plays each pick: a key its chord, a loop its four chords', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const Real = window.AudioContext
+    const log = { notes: 0 }
+    ;(window as unknown as { __audio: typeof log }).__audio = log
+    window.AudioContext = class extends Real {
+      constructor(...args: ConstructorParameters<typeof Real>) {
+        super(...args)
+        const osc = this.createOscillator.bind(this)
+        this.createOscillator = () => {
+          log.notes++
+          return osc()
+        }
+      }
+    }
+  })
+  await seed(page, household({ muted: false }))
+  await page.goto('/')
+  const notes = () =>
+    page.evaluate(() => (window as unknown as { __audio: { notes: number } }).__audio.notes)
+  const { sheet: games } = await openSettingsArea(page, 'Games')
+  await games.getByRole('button', { name: /^Edit Flip 7/ }).click()
+  const flip = page.getByRole('dialog', { name: 'Flip 7' })
+  const key = flip.getByRole('group', { name: 'Song key' })
+  let before = await notes()
+  await key.getByRole('button', { name: 'D', exact: true }).click()
+  // D: its chord (three tones) over its root.
+  await expect.poll(async () => (await notes()) - before).toBe(4)
+  before = await notes()
+  await flip.getByRole('radio', { name: 'Minor' }).click()
+  await expect.poll(async () => (await notes()) - before).toBe(4)
+  before = await notes()
+  await flip.getByRole('group', { name: 'Chord loop' }).getByRole('button').nth(1).click()
+  // A loop: four chords of four notes.
+  await expect.poll(async () => (await notes()) - before).toBe(16)
 })

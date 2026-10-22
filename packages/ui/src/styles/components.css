@@ -181,6 +181,26 @@
     color: var(--muted);
     animation: fadeIn 0.4s ease 0.55s both;
   }
+  /* the tagline's four suits, each in its accent */
+  .tagline .suits {
+    white-space: nowrap;
+    letter-spacing: 0.08em;
+  }
+  .tagline .suits i {
+    font-style: normal;
+  }
+  .tagline .suits i:nth-child(1) {
+    color: var(--lav);
+  }
+  .tagline .suits i:nth-child(2) {
+    color: var(--coral);
+  }
+  .tagline .suits i:nth-child(3) {
+    color: var(--amber);
+  }
+  .tagline .suits i:nth-child(4) {
+    color: var(--jade);
+  }
   .wordmark span span {
     display: inline-block;
     font-family: var(--f-display);
@@ -1585,12 +1605,18 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
+  /* Done and Rematch stay within reach: when the overlay is taller than the screen (the sticker
+     haul on a small phone), they pin to its bottom edge over a fade and the rest scrolls under */
   .v-actions {
-    position: relative;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
     display: flex;
     gap: 10px;
-    width: 100%;
-    max-width: 380px;
+    align-self: stretch;
+    margin: 0 -20px calc(-24px - env(safe-area-inset-bottom, 0px));
+    padding: 18px max(20px, calc((100% - 340px) / 2)) calc(18px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, var(--page) 60%, transparent);
     animation: rise 0.5s var(--spring) 1.3s both;
   }
   .v-actions .btn {
@@ -2538,6 +2564,17 @@
 
 /* ---------- the victory sticker pack ---------- */
 @layer components {
+  /* the envelope and the haul share one spot: the taller sets the height, opening never moves the page */
+  .pack-stage {
+    display: grid;
+    width: 100%;
+    max-width: 360px;
+    justify-items: center;
+    align-items: center;
+  }
+  .pack-stage > * {
+    grid-area: 1 / 1;
+  }
   .pack-wrap {
     position: relative;
     display: flex;
@@ -2549,52 +2586,67 @@
       rise 0.5s var(--spring) 0.6s both,
       wobble 0.9s ease-in-out 2.4s 2;
   }
+  .pack-wrap.gone {
+    animation: fadeOut 0.2s ease forwards;
+    pointer-events: none;
+  }
+  /* a sealed envelope, made of the stickers' own stuff: the die-cut white and its soft shadow */
   .pack {
-    display: flex;
-    flex-direction: column;
-    width: 170px;
-    border-radius: 14px;
-    overflow: hidden;
-    color: var(--on-accent);
-    box-shadow:
-      0 0 0 4px var(--die),
-      0 16px 30px var(--drop);
-    transition: transform 0.2s var(--spring);
-  }
-  .pack:active {
-    transform: scale(0.94);
-  }
-  .pack .crimp {
-    height: 12px;
-    background: repeating-linear-gradient(90deg, var(--die) 0 6px, var(--sunk) 6px 12px);
-  }
-  .pack-body {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 12px 10px 14px;
-    /* foil: the accents sliding past */
-    background: linear-gradient(115deg, var(--lav), var(--coral) 40%, var(--amber) 70%, var(--jade));
-    background-size: 220% 220%;
-    animation: foil 5s linear infinite;
+    width: 196px;
+    padding: 46px 14px 16px;
+    border-radius: 14px;
+    background: var(--die);
+    color: var(--on-accent);
+    box-shadow: 0 14px 28px var(--drop);
+    transition: transform 0.2s var(--spring);
   }
-  .pack-fox {
-    width: 64px;
-    height: 64px;
+  .pack:active {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  /* the flap, folded down to the seal */
+  .pack-flap {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 58px;
+    border-radius: 14px 14px 0 0;
+    background: color-mix(in srgb, var(--die) 86%, var(--ink));
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+  /* the seal: a crowned-fox sticker */
+  .pack-seal {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    width: 58px;
+    height: 58px;
+    margin-left: -29px;
     display: grid;
     place-items: center;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow:
+      0 0 0 4px var(--die),
+      0 6px 12px var(--drop);
   }
-  .pack-fox .fox {
-    width: 64px;
-    height: 64px;
+  .pack-seal .fox {
+    width: 50px;
+    height: 50px;
   }
   .pack-title {
+    margin-top: 40px;
     font-family: var(--f-display);
-    font-size: 19px;
+    font-size: 21px;
     line-height: 1.05;
   }
   .pack-sub {
+    margin-top: 8px;
+    padding: 2px 10px 3px;
+    border-radius: 999px;
+    background: var(--jade);
     font-weight: 900;
     font-size: 12.5px;
   }
@@ -2616,8 +2668,18 @@
     gap: 3px;
     text-align: center;
   }
-  .haul li > :first-child {
+  /* every slot is laid out from the start (the stage keeps its height); each shows as it lands */
+  .haul li {
+    visibility: hidden;
+  }
+  .haul li.in {
+    visibility: visible;
+  }
+  .haul li.in > :first-child {
     animation: pop 0.45s var(--spring) both;
+  }
+  .haul.waiting {
+    pointer-events: none;
   }
   .haul .hi-name {
     font-weight: 900;
@@ -2934,20 +2996,21 @@
   .song-strip-caption {
     margin: 2px 0;
   }
-  .song-strip-btn {
+  /* before the first round (the game screen): the caption holds the staff's height, so the
+     first note arrives in place instead of pushing the page down */
+  .song-strip-wait {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+  }
+  .song-strip-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    width: 100%;
-    min-height: 44px;
-    color: inherit;
-    text-align: left;
-    transition: transform 0.2s var(--spring);
   }
-  .song-strip-btn:active {
-    transform: scale(0.97);
-  }
-  .song-strip-btn .staff {
+  .song-strip-row .staff {
     flex: 1;
     min-width: 0;
   }
@@ -2962,7 +3025,10 @@
     color: var(--on-accent);
     box-shadow: 0 3px 0 var(--jade-deep);
   }
-  .song-strip-btn.playing .song-strip-icon {
+  .song-strip-icon:active {
+    transform: scale(0.9);
+  }
+  .song-strip-icon.playing {
     background: var(--amber);
     box-shadow: 0 3px 0 var(--amber-deep);
   }
@@ -3043,5 +3109,22 @@
     text-transform: uppercase;
     color: var(--lav);
     animation: fadeIn 0.4s ease 0.3s both;
+  }
+}
+
+/* ---------- swiping between the tabs (Home ⇄ History) ---------- */
+@layer components {
+  /* let go: spring back (or hand over) on the app's spring */
+  .swipe-view.settling {
+    transition:
+      transform 0.32s var(--spring),
+      opacity 0.2s ease;
+  }
+  /* the new tab slides in from the side you swiped toward, like a sheet's pages */
+  .swipe-view.from-next {
+    animation: navInPush 0.42s var(--glide) both;
+  }
+  .swipe-view.from-prev {
+    animation: navInPop 0.42s var(--glide) both;
   }
 }

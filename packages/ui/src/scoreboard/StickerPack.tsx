@@ -3,6 +3,7 @@ import { Chip } from '../brand/Chip'
 import { Fox } from '../brand/Fox'
 import type { IconName } from '../brand/Icon'
 import { Sticker, type StickerShape, type StickerTone } from '../brand/Sticker'
+import { cx } from '../cx'
 
 export interface PackItem {
   key: string
@@ -36,7 +37,7 @@ export interface StickerPackProps {
 }
 
 /**
- * The victory sticker pack (the Sticker Club): a foil "Game night pack" to tear open, then the
+ * The victory sticker pack (the Sticker Club): a sealed "Game night pack" envelope to open, then the
  * winner's crowned chip and every sticker the game gave out, slapped down one by one. The caller
  * owns the timing and the sounds (`open`, `shown`), so the reveal follows the app's effects.
  */
@@ -57,48 +58,56 @@ export function StickerPack({
   useEffect(() => {
     if (open) haul.current?.focus({ preventScroll: true })
   }, [open])
-  if (!open)
-    return (
-      <div className="pack-wrap">
-        <button type="button" className="pack" onClick={onOpen} aria-label={openLabel}>
-          <span className="crimp" aria-hidden="true" />
-          <span className="pack-body" aria-hidden="true">
-            <span className="pack-fox">
-              <Fox crown wink />
-            </span>
-            <span className="pack-title">{title}</span>
-            <span className="pack-sub">{sub}</span>
+  // The envelope and the haul share one spot (one grid cell), and every slot of the haul is
+  // there from the start, invisible until its sticker lands: opening never moves the page.
+  return (
+    <div className="pack-stage">
+      <div className={cx('pack-wrap', open && 'gone')} aria-hidden={open || undefined}>
+        <button
+          type="button"
+          className="pack"
+          onClick={onOpen}
+          aria-label={openLabel}
+          tabIndex={open ? -1 : undefined}
+        >
+          <span className="pack-flap" aria-hidden="true" />
+          <span className="pack-seal" aria-hidden="true">
+            <Fox crown wink />
           </span>
-          <span className="crimp" aria-hidden="true" />
+          <span className="pack-title" aria-hidden="true">
+            {title}
+          </span>
+          <span className="pack-sub" aria-hidden="true">
+            {sub}
+          </span>
         </button>
         <p className="hint">{hint}</p>
       </div>
-    )
-  return (
-    <ul className="haul" aria-live="polite" ref={haul} tabIndex={-1}>
-      {items.slice(0, shown).map((it) => (
-        <li key={it.key}>
-          {it.sticker ? (
-            // Decorative: its name and owner are the text right under it (announced once).
-            <Sticker
-              tone={it.sticker.tone}
-              icon={it.sticker.icon}
-              shape={it.sticker.shape}
-              size={66}
-            />
-          ) : (
-            <span className="win-stk">
-              <Chip name={it.who} color={it.color ?? 0} size={54} crown />
-              <b>{winnerLabel}</b>
+      <ul className={cx('haul', !open && 'waiting')} aria-live="polite" ref={haul} tabIndex={-1}>
+        {items.map((it, i) => (
+          <li key={it.key} className={open && i < shown ? 'in' : undefined}>
+            {it.sticker ? (
+              // Decorative: its name and owner are the text right under it (announced once).
+              <Sticker
+                tone={it.sticker.tone}
+                icon={it.sticker.icon}
+                shape={it.sticker.shape}
+                size={66}
+              />
+            ) : (
+              <span className="win-stk">
+                <Chip name={it.who} color={it.color ?? 0} size={54} crown />
+                <b>{winnerLabel}</b>
+              </span>
+            )}
+            <span className="hi-name">{it.name}</span>
+            <span className="hi-who">
+              {it.who}
+              {it.isNew && <em> · {newLabel}</em>}
             </span>
-          )}
-          <span className="hi-name">{it.name}</span>
-          <span className="hi-who">
-            {it.who}
-            {it.isNew && <em> · {newLabel}</em>}
-          </span>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

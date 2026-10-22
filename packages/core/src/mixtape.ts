@@ -675,3 +675,25 @@ export function plotOf(sched: Schedule, colorOf: ColorOf): PlotNote[] {
     }))
     .sort((a, b) => a.t - b.t || a.midi - b.midi)
 }
+
+/**
+ * What a key sounds like, for the key picker (Settings › Games): `chord` rolls the tonic chord
+ * up over its root (a key, or major against minor); `loop` plays the loop's four chords in turn,
+ * the harmony every fox trot in that key will walk through.
+ */
+export function keyPreview(key: SongKey, what: 'chord' | 'loop'): SongNote[] {
+  const m = (n: number) => degreeMidi(key, n)
+  const chord = (root: number, t: number, len: number): SongNote[] => [
+    { t, midi: m(root) - 12, dur: len, part: 'bass', beat: 0 },
+    ...[0, 2, 4].map((s, k) => ({
+      t: t + k * 0.05,
+      midi: m(root + s + 7),
+      dur: len - k * 0.05,
+      part: 'chord' as const,
+      beat: 0,
+    })),
+  ]
+  if (what === 'chord') return chord(0, 0, 0.5)
+  const loop = LOOPS[key.mode][key.loop] ?? LOOPS[key.mode][0]
+  return loop.flatMap((root, i) => chord(root, i * 0.24, 0.24))
+}

@@ -7,6 +7,7 @@ import {
   chordOf,
   codaOf,
   keyOf,
+  keyPreview,
   LOOPS,
   loopName,
   outcomesOf,
@@ -772,6 +773,19 @@ describe('mixtape', () => {
       const out = { story, streak: 9, seal: 'photo' as const, strength: 1, runnerUp: 'b' }
       expect(scheduleOf(songOf(long, colorOf, out)).length).toBeLessThanOrEqual(5.0)
     }
+  })
+
+  it('the key picker hears the key: its tonic chord, or its loop of four chords', () => {
+    const c = { tonic: 0, mode: 'major' as const, loop: 0 }
+    const pcs = (ns: { midi: number; part: string }[]) =>
+      ns.filter((n) => n.part === 'chord').map((n) => n.midi % 12)
+    expect(pcs(keyPreview(c, 'chord'))).toEqual([0, 4, 7]) // C major
+    expect(pcs(keyPreview({ ...c, mode: 'minor' }, 'chord'))).toEqual([0, 3, 7]) // C minor
+    expect(pcs(keyPreview({ ...c, tonic: 2 }, 'chord'))).toEqual([2, 6, 9]) // D major
+    // I–V–vi–IV in C: C, G, Am, F, a chord every 0.24 s.
+    const loop = keyPreview(c, 'loop').filter((n) => n.part === 'bass')
+    expect(loop.map((n) => n.midi % 12)).toEqual([0, 7, 9, 5])
+    expect(loop.map((n) => n.t)).toEqual([0, 0.24, 0.48, 0.72])
   })
 
   it('outcomes read the history before each game, the way stickers do', () => {

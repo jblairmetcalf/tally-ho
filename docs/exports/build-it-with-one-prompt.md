@@ -132,7 +132,7 @@ New game's main button stays disabled, with a line above it saying why, until th
   screenshot to prove they still scan before shipping a change to them.
 - A Sticker Club: a dozen collectible stickers computed from the game history (never stored, so
   every phone agrees), scaled to each game's own numbers; each player's sticker book in a sheet,
-  a "5 stickers · 7 to go" line under each name in the standings, a foil sticker pack to tear
+  a "5 stickers · 7 to go" line under each name in the standings, a sealed-envelope sticker pack to tear
   open after every win (the stickers slap down one by one with a peel-and-slap sound), and the
   latest stickers on Home.
 - Little moments of feel: New game opens to the app's own short tune; changing the theme grows

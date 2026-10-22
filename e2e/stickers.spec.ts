@@ -61,11 +61,24 @@ test('a win opens to a sticker pack: tear it open for the stickers; Done works w
   }
   // Kate's first win: her crowned chip and her First Crown.
   await uno('Kate')
-  const pack = victory(page).getByRole('button', { name: 'Tear open the sticker pack' })
+  const pack = victory(page).getByRole('button', { name: 'Open the sticker pack' })
   await expect(victory(page)).toContainText('2 stickers inside')
+  // Opening it never moves the page: the envelope and the haul share one spot.
+  const podium = victory(page).locator('.podium')
+  await page.waitForTimeout(1200) // let the overlay's entrances settle before measuring
+  const before = await podium.boundingBox()
   await pack.click()
+  await expect(victory(page).getByText('Winner')).toBeVisible()
+  expect((await podium.boundingBox())?.y).toBeCloseTo(before?.y ?? 0, 0)
   await expect(victory(page).getByText('First Crown')).toBeVisible()
   await expect(victory(page).getByText('Winner')).toBeVisible()
+  // On a short screen the haul makes the overlay taller than it: Done and Rematch stay in reach.
+  await page.setViewportSize({ width: 390, height: 560 })
+  for (const name of ['Done', 'Rematch']) {
+    const b = (await victory(page).getByRole('button', { name }).boundingBox())!
+    expect(b.y + b.height).toBeLessThanOrEqual(560)
+  }
+  await page.setViewportSize({ width: 390, height: 664 })
   await victory(page).getByRole('button', { name: 'Done' }).click()
   await expect(victory(page)).toBeHidden()
 
